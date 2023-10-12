@@ -101,7 +101,6 @@ function Dashboard() {
         variant="persistent"
         anchor="left"
         open={open}
-        style={useStyles.drawerPaper}
       >
         <List>
           <Link to="/entidad" style={linkStyle}>
