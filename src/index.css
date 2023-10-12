@@ -1,13 +1,57 @@
+/* 
+PALETA DE COLORES
+
+#6A0F49 Morado Oficial
+#701e45 Morado Propuesto
+
+#6D807F Gris Oficial
+#7c858c Gris Propuesto
+*/
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    font-family: 'Gibson', sans-serif; /* Aplicar la fuente Gibson a todo el cuerpo de la página */
+  }
+  
+  .icono-blanco {
+    color: white;
+  }
+  /* Agrega una regla de animación para la clase confirmed-icon */
+.confirmed-icon {
+  transform: scale(1);
+  transition: transform 0.3s;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Agrega una regla de animación para la clase confirmed-icon-visible */
+.confirmed-icon-visible {
+  transform: scale(1.2); /* Escala el icono a un 120% cuando está visible */
 }
+  
+  @font-face {
+    font-family: 'Gibson';
+    src: url('./assets/fonts/Gibson/Gibson.woff2') format('woff2'); /* Ajusta la ruta a tu archivo local */
+    font-weight: normal;
+    font-style: normal;
+  }
+    
+  @font-face {
+    font-family: 'Gibson';
+    src: url('./assets/fonts/Gibson/Gibson-Bold.woff2') format('woff2'); /* Ajusta la ruta a tu archivo local */
+    font-weight: bold;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'Gibson';
+    src: url('./assets/fonts/Gibson/Gibson-Italic.woff2') format('woff2'); /* Ajusta la ruta a tu archivo local */
+    font-weight: normal;
+    font-style: italic;
+  }
+  
+  @font-face {
+    font-family: 'Gibson';
+    src: url('./assets/fonts/Gibson/Gibson-BoldItalic.woff2') format('woff2'); /* Ajusta la ruta a tu archivo local */
+    font-weight: bold;
+    font-style: italic;
+  }
+  
