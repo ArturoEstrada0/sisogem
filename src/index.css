@@ -33,7 +33,7 @@ body {
     font-weight: normal;
     font-style: normal;
   }
-    
+  
   @font-face {
     font-family: 'Gibson';
     src: url('./assets/fonts/Gibson/Gibson-Bold.woff2') format('woff2'); /* Ajusta la ruta a tu archivo local */
@@ -54,4 +54,5 @@ body {
     font-weight: bold;
     font-style: italic;
   }
+
   
