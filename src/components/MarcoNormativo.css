@@ -1,0 +1,21 @@
+/* UploadCard.css */
+.menu-col {
+    background-color: #f2f2f2; /* Cambia el color de fondo según tu preferencia */
+    padding: 16px; /* Añade espaciado interno */
+  }
+  
+  .list-col {
+    padding: 16px; /* Añade espaciado interno */
+  }
+  
+  .custom-list-container {
+    max-height: 400px; /* Establece la altura máxima que prefieras */
+    overflow-y: auto; /* Agrega una barra de desplazamiento vertical si es necesario */
+  }
+  
+  .list-container {
+    max-height: 400px; /* Establece la altura máxima que prefieras */
+    overflow-y: auto; /* Agrega una barra de desplazamiento vertical si es necesario */
+  }
+  
+  

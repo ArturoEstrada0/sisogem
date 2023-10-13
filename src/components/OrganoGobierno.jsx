@@ -76,7 +76,8 @@ const OrganoGobierno = () => {
               onClick={() => confirm()}
               icon={<SearchOutlined />}
               size="small"
-              style={{ width: 90 }}
+              style={{ width: 90, backgroundColor: '#6A0F49' }}
+
             >
               Buscar
             </Button>
@@ -109,7 +110,7 @@ const OrganoGobierno = () => {
               onClick={() => confirm()}
               icon={<SearchOutlined />}
               size="small"
-              style={{ width: 90 }}
+              style={{ width: 90, backgroundColor: '#6A0F49' }}
             >
               Buscar
             </Button>
@@ -166,7 +167,7 @@ const OrganoGobierno = () => {
               onClick={() => confirm()}
               icon={<SearchOutlined />}
               size="small"
-              style={{ width: 90 }}
+              style={{ width: 90, backgroundColor: '#6A0F49' }}
             >
               Buscar
             </Button>
@@ -199,7 +200,7 @@ const OrganoGobierno = () => {
               onClick={() => confirm()}
               icon={<SearchOutlined />}
               size="small"
-              style={{ width: 90 }}
+              style={{ width: 90, backgroundColor: '#6A0F49' }}
             >
               Buscar
             </Button>
@@ -241,7 +242,8 @@ const OrganoGobierno = () => {
 
   return (
     <div className="container">
-      <Button type="primary" onClick={() => setFormVisible(true)}>
+      <Button type="primary" onClick={() => setFormVisible(true)} style={{ backgroundColor: '#6A0F49' }} // Set button background color
+      >
         Agregar Integrante
       </Button>
 
@@ -277,6 +279,7 @@ const OrganoGobierno = () => {
             name="representacionDe"
             label="Representación de"
             rules={[{ required: true, message: 'Por favor, selecciona la representación' }]}
+            
           >
             <Select>
               <Option value="opcion1">Secretaría de Turismo</Option>
@@ -326,8 +329,9 @@ const OrganoGobierno = () => {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit">
-              {editingIndex === -1 ? 'Crear' : 'Actualizar'}
+            <Button type="primary" htmlType="submit" style={{ backgroundColor: '#6A0F49' }} // Set button background color
+            >
+              {editingIndex === -1 ? 'Agregar' : 'Actualizar'}
             </Button>
           </Form.Item>
         </Form>

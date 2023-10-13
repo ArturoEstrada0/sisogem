@@ -311,7 +311,7 @@ function Dashboard() {
                   }
                 />
               </ListItemIcon>
-              <ListItemText primary="Buzón de Reportes" />
+              <ListItemText primary="Login" />
             </ListItem>
           </Link>
         </List>
