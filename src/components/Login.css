@@ -1,0 +1,26 @@
+/* Login.css */
+
+/* Animación de entrada */
+.login-enter {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .login-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms, transform 300ms;
+  }
+  
+  /* Animación de salida */
+  .login-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .login-exit-active {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 300ms, transform 300ms;
+  }
+  
