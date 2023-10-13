@@ -7,10 +7,6 @@
     width: 100%;
     height: 100%;
 }
-.radio-ordinaria.Mui-checked {
+.radio.Mui-checked {
     color: #F1CDD3;
-  }
-  
-  .radio-extraordinaria.Mui-checked {
-    color: #F1CDD3;
-  }
+}
