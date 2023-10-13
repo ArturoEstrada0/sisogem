@@ -44,7 +44,7 @@ const Entidad = () => {
       <Grid item xs={12}>
         <Typography variant="h4" align="center">
           <BusinessIcon fontSize="large" />
-          Bienvenido a Entidad
+          Bienvenida Lic. Guadalupe Palacios
         </Typography>
       </Grid>
       <Grid item xs={12} sm={6}>
@@ -57,9 +57,19 @@ const Entidad = () => {
             onChange={(event) => setOrganismo(event.target.value)}
             label="Seleccione un organismo"
           >
-            <MenuItem value="organismo1">Organismo 1</MenuItem>
-            <MenuItem value="organismo2">Organismo 2</MenuItem>
-            <MenuItem value="organismo3">Organismo 3</MenuItem>
+            <MenuItem value="Servicios de Salud de Michoacán">Servicios de Salud de Michoacán</MenuItem>
+            <MenuItem value="Sistema Integral de Financiamiento para el Desarrollo de Michoacán (SI Financia)">Sistema Integral de Financiamiento para el Desarrollo de Michoacán (SI Financia)</MenuItem>
+            <MenuItem value="Sistema Michoacano de Radio y Televisión SMRyTV">Sistema Michoacano de Radio y Televisión SMRyTV</MenuItem>
+            <MenuItem value="Sistema para el Desarrollo Integral de la Familia, Michoacán">Sistema para el Desarrollo Integral de la Familia, Michoacán</MenuItem>
+            <MenuItem value="Telebachillerato Michoacán">Telebachillerato Michoacán</MenuItem>
+            <MenuItem value="Universidad de la Ciénega del Estado de Michoacán de Ocampo (UCEMICH)">Universidad de la Ciénega del Estado de Michoacán de Ocampo (UCEMICH)</MenuItem>
+            <MenuItem value="Universidad Intercultural Indígena del Estado de Michoacán">Universidad Intercultural Indígena del Estado de Michoacán</MenuItem>
+            <MenuItem value="Universidad Politécnica de Lázaro Cárdenas Michoacán">Universidad Politécnica de Lázaro Cárdenas Michoacán</MenuItem>
+            <MenuItem value="Universidad Politécnica de Uruapan">Universidad Politécnica de Uruapan</MenuItem>
+            <MenuItem value="Universidad Tecnológica de Morelia (UTM)">Universidad Tecnológica de Morelia (UTM)</MenuItem>
+            <MenuItem value="Universidad Tecnológica del Oriente de Michoacán (UTOM)">Universidad Tecnológica del Oriente de Michoacán (UTOM)</MenuItem>
+            <MenuItem value="Universidad Virtual de Michoacán (UNIVIM)">Universidad Virtual de Michoacán (UNIVIM)</MenuItem>
+            <MenuItem value="Compañía Inmobiliaria Fomento Turistico de Michoacán SA de CV">Compañía Inmobiliaria Fomento Turistico de Michoacán SA de CV</MenuItem>
           </Select>
         </FormControl>
       </Grid>

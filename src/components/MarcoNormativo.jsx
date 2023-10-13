@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Card, Menu, Upload, message, Table, Space, Row, Col, Pagination, Spin } from 'antd';
 import { UploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
-import './MarcoNormativo.css'; 
+import './MarcoNormativo.css';
+import { Tooltip } from 'antd';
+
 
 const { SubMenu } = Menu;
 const { Dragger } = Upload;
@@ -79,29 +81,33 @@ const UploadCard = () => {
 
   return (
     <Card
-    title={<span style={{ color: '#FFF', padding: '0.5rem' }}>Marco Normativo Vigente</span>}
-    headStyle={{ backgroundColor: '#6A0F49' }}
+      title={<span style={{ color: '#FFF', padding: '0.5rem' }}>Marco Normativo Vigente</span>}
+      headStyle={{ backgroundColor: '#6A0F49' }}
 
-  >
-  
-  
+    >
+
+
       <Row gutter={16}>
-      <Col span={12} className="menu-col" style={{ background: '#FFC3D0', padding: '1rem' }}>
-  
+        <Col span={12} className="menu-col" style={{ background: '#FFC3D0', padding: '1rem' }}>
+
           <Menu
             onClick={handleMenuClick}
             selectedKeys={[selectedMenuItem]}
             mode="vertical"
             style={{ color: '#6A0F49' }}
           >
-            <SubMenu key="sub1" title={<span style={{ color: '#6A0F49' }}>{menuText}</span>}>
-              <Menu.Item key="Decreto">Decreto</Menu.Item>
-              <Menu.Item key="Ley de Creacion">Ley de Creación</Menu.Item>
-              <Menu.Item key="Reglamento Interior">Reglamento Interior</Menu.Item>
-              <Menu.Item key="Manual Organizacional">Manual Organizacional</Menu.Item>
-              <Menu.Item key="Manual de Procedimientos">Manual de Procedimientos</Menu.Item>
-              <Menu.Item key="Ordenamiento">Ordenamientos</Menu.Item>
-            </SubMenu>
+            <Tooltip title="Selecciona la Denominación del Instrumento Normativo">
+
+              <SubMenu key="sub1" title={<span style={{ color: '#6A0F49' }}>{menuText}</span>}>
+                <Menu.Item key="Decreto">Decreto</Menu.Item>
+                <Menu.Item key="Ley de Creacion">Ley de Creación</Menu.Item>
+                <Menu.Item key="Reglamento Interior">Reglamento Interior</Menu.Item>
+                <Menu.Item key="Manual Organizacional">Manual Organizacional</Menu.Item>
+                <Menu.Item key="Manual de Procedimientos">Manual de Procedimientos</Menu.Item>
+                <Menu.Item key="Ordenamiento">Ordenamientos</Menu.Item>
+              </SubMenu>
+            </Tooltip>
+
           </Menu>
 
           <Spin spinning={isLoading}>
@@ -136,7 +142,7 @@ const UploadCard = () => {
               dataSource={paginatedFiles}
               pagination={false}
             >
-              <Column  title={<span style={{ color: '#6A0F49 ' }}>Nombre</span>} dataIndex="name" key="name" width={150} ellipsis />
+              <Column title={<span style={{ color: '#6A0F49 ' }}>Nombre</span>} dataIndex="name" key="name" width={150} ellipsis />
               <Column title={<span style={{ color: '#6A0F49 ' }}>Tipo</span>} dataIndex="option" key="option" width={150} ellipsis />
               <Column
                 title={<span style={{ color: '#6A0F49 ' }}>Accion</span>}

@@ -3,6 +3,8 @@ import { Form, Select, Input, DatePicker, Button, Upload, Modal, Drawer, Table, 
 import { ExclamationCircleOutlined, UploadOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import './OrganoGobierno.css';
 import moment from 'moment'; // Asegúrate de importar moment
+import { Tooltip } from 'antd';
+
 
 const { Option } = Select;
 const { confirm } = Modal;
@@ -242,10 +244,13 @@ const OrganoGobierno = () => {
 
   return (
     <div className="container">
-      <Button type="primary" onClick={() => setFormVisible(true)} style={{ backgroundColor: '#6A0F49' }} // Set button background color
-      >
-        Agregar Integrante
-      </Button>
+      <Tooltip title="Agregar Integrante">
+
+        <Button type="primary" onClick={() => setFormVisible(true)} style={{ backgroundColor: '#6A0F49' }} // Set button background color
+        >
+          Agregar Integrante
+        </Button>
+      </Tooltip>
 
       <Drawer
         title="Formulario del Organo de Gobierno"
@@ -261,9 +266,18 @@ const OrganoGobierno = () => {
             rules={[{ required: true, message: 'Por favor, selecciona el tipo de integrante' }]}
           >
             <Select>
-              <Option value="tipo1">Tipo 1</Option>
-              <Option value="tipo2">Tipo 2</Option>
-              <Option value="tipo3">Tipo 3</Option>
+              <Option value="Comisario">Comisario</Option>
+              <Option value="Comisario Suplente">Comisario Suplente</Option>
+              <Option value="Integrante Propietario">Integrante Propietario</Option>
+              <Option value="Integrante Suplente">Integrante Suplente</Option>
+              <Option value="Presidente">Presidente</Option>
+              <Option value="PresidenteSuplente">Presidente Suplente</Option>
+              <Option value="Secretario Técnico Homólogo">Secretario Técnico / Homólogo</Option>
+              <Option value="Secretario Técnico Suplente">Secreatario Técnico Suplente</Option>
+              <Option value="Titular OPD">Titular De La OPD</Option>
+              <Option value="Vicepresidente">Vicepresidente</Option>
+              <Option value="Vicepresidente Suplente">Vicepresidente Suplente</Option>
+              <Option value="Otro">Otro</Option>
             </Select>
           </Form.Item>
 
@@ -279,7 +293,7 @@ const OrganoGobierno = () => {
             name="representacionDe"
             label="Representación de"
             rules={[{ required: true, message: 'Por favor, selecciona la representación' }]}
-            
+
           >
             <Select>
               <Option value="opcion1">Secretaría de Turismo</Option>
@@ -340,7 +354,7 @@ const OrganoGobierno = () => {
       <div className="list-container">
         <Table columns={columns} dataSource={integrantes} />
       </div>
-    </div>
+    </div >
   );
 };
 
