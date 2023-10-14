@@ -97,26 +97,7 @@ const Archivo = () => {
           Archivo
         </HeaderTypography>
       </Grow>
-      <ButtonContainer>
-        <Zoom in={true} timeout={1000}>
-          <CustomButton
-            variant="contained"
-            onClick={() => handleFileTypeClick("actas")}
-            selected={selectedFileType === "actas"}
-          >
-            Archivo de Actas
-          </CustomButton>
-        </Zoom>
-        <Zoom in={true} timeout={1000}>
-          <CustomButton
-            variant="contained"
-            onClick={() => handleFileTypeClick("acuerdos")}
-            selected={selectedFileType === "acuerdos"}
-          >
-            Archivo de Acuerdos
-          </CustomButton>
-        </Zoom>
-      </ButtonContainer>
+
       <Grow in={true} timeout={1000}>
         <InfoCard>
           <CardContent>
@@ -149,15 +130,15 @@ const Archivo = () => {
             <Typography variant="body2">Lugar: Fewfef</Typography>
           </Grid>
           <Grid item xs={4}>
-  <CustomButton variant="contained" style={{ backgroundColor: "#701e45", color: "white" }}>
-    <EventIcon style={{ marginRight: '8px' }} />
-    Orden del Día
-  </CustomButton>
-  <CustomButton variant="contained" style={{ backgroundColor: "#701e45", color: "white" }}>
-    <MenuBookIcon style={{ marginRight: '8px' }} />
-    Cuadernillo de Trabajo
-  </CustomButton>
-</Grid>
+            <CustomButton variant="contained" style={{ backgroundColor: "#701e45", color: "white" }}>
+              <EventIcon style={{ marginRight: '8px' }} />
+              Orden del Día
+            </CustomButton>
+            <CustomButton variant="contained" style={{ backgroundColor: "#701e45", color: "white" }}>
+              <MenuBookIcon style={{ marginRight: '8px' }} />
+              Cuadernillo de Trabajo
+            </CustomButton>
+          </Grid>
         </DataRowGrid>
       </Zoom>
     </Container>
