@@ -44,7 +44,7 @@ const Entidad = () => {
       <Grid item xs={12}>
         <Typography variant="h4" align="center">
           <BusinessIcon fontSize="large" />
-          Bienvenido a Entidad
+          Bienvenida Lic. Guadalupe Palacios
         </Typography>
       </Grid>
       <Grid item xs={12} sm={6}>
