@@ -1,0 +1,21 @@
+.custom-pagination .ant-pagination-item {
+    background: #701e45;
+    border: 1px solid #701e45;
+    color: white;
+    transition: background 0.3s, border 0.3s;
+  }
+  
+  .custom-pagination .ant-pagination-item:hover {
+    background: #F1CDD3;
+    border: 1px solid #F1CDD3;
+    color: white;
+  }
+  
+  .custom-pagination .ant-pagination-item-active a {
+    color: white; /* Cambia el color del número al elemento activo a blanco */
+  }
+
+  .custom-pagination .ant-pagination-item:hover a {
+    color: black; /* Cambia el color del número al elemento activo a blanco */
+  }
+  
