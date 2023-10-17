@@ -88,7 +88,7 @@ const UploadCard = () => {
 
 
       <Row gutter={16}>
-        <Col span={12} className="menu-col" style={{ background: '#FFC3D0', padding: '1rem' }}>
+        <Col span={12} className="menu-col" style={{ background: 'cccccc40', padding: '1rem' }}>
 
           <Menu
             onClick={handleMenuClick}

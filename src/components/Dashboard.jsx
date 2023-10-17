@@ -63,12 +63,12 @@ function Dashboard() {
   }, []);
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "#fff" }}>
+    <Layout style={{ minHeight: "calc(100vh-52.8px)", background: "#fff" }}>
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={toggleCollapsed}
-        style={{ background: "#701e45" }}
+        style={{ background: "#cccccc40" }}
         theme="dark"
       >
         <Menu
