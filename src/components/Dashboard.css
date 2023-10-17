@@ -1,0 +1,8 @@
+.ant-layout-sider-collapsed .ant-layout-sider-trigger {
+    background-color: #6A0F49;
+}
+
+.ant-layout-sider-collapsed .ant-layout-sider-trigger,
+.ant-layout-sider .ant-layout-sider-trigger {
+    background-color: #6A0F49;
+}

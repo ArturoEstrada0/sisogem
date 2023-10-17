@@ -1,15 +1,18 @@
 /* 
 PALETA DE COLORES
 
+
 #6A0F49 Morado Oficial
 #701e45 Morado Propuesto
 
 #6D807F Gris Oficial
 #7c858c Gris Propuesto
+
+#F1CDD3 Rosa Propuesto
+
 */
 
 body {
-    overflow: hidden;
     font-family: 'Gibson', sans-serif; /* Aplicar la fuente Gibson a todo el cuerpo de la página */
   }
   
