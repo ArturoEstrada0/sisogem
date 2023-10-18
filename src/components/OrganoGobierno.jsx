@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { Form, Select, Input, DatePicker, Button, Upload, Modal, Drawer, Table, Space } from 'antd';
-import { ExclamationCircleOutlined, UploadOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined, UploadOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ExportOutlined } from '@ant-design/icons';
 import './OrganoGobierno.css';
 import moment from 'moment'; // Asegúrate de importar moment
 import { Tooltip } from 'antd';
-
+import Papa from 'papaparse';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { utils as XLSXUtils, writeFile } from 'xlsx';
+import * as XLSX from 'xlsx';
 
 const { Option } = Select;
 const { confirm } = Modal;
@@ -242,15 +246,131 @@ const OrganoGobierno = () => {
     },
   ];
 
+  const exportToCSV = () => {
+    const dataToExport = integrantes.map((integrante) => ({
+      NombreCompleto: integrante.nombreCompleto,
+      CargoCompleto: integrante.cargoCompleto,
+      Representacion: integrante.representacionDe,
+      Email: integrante.email,
+      FechaInicioDesignacion: integrante.fechaInicioDesignacion
+        ? integrante.fechaInicioDesignacion.format('YYYY-MM-DD')
+        : 'N/A',
+      OficioDesignacion: integrante.oficioDesignacion ? integrante.oficioDesignacion[0].name : 'N/A',
+    }));
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+
+    link.href = URL.createObjectURL(blob);
+    link.download = 'datos_integrantes.csv';
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
+  const exportToPDF = () => {
+    // Crea un nuevo objeto jsPDF
+    const pdf = new jsPDF();
+
+    // Define el título y las columnas de la tabla en el PDF
+    const headers = [['Nombre Completo', 'Cargo Completo', 'Representación', 'Email', 'Fecha de Inicio de Designación', 'Oficio de Designación']];
+
+    // Convierte los datos de la tabla a un arreglo 2D
+    const data = integrantes.map((integrante) => [
+      integrante.nombreCompleto,
+      integrante.cargoCompleto,
+      integrante.representacionDe,
+      integrante.email,
+      integrante.fechaInicioDesignacion
+        ? integrante.fechaInicioDesignacion.format('YYYY-MM-DD')
+        : 'N/A',
+      integrante.oficioDesignacion ? integrante.oficioDesignacion[0].name : 'N/A',
+    ]);
+
+    // Configura la posición inicial de la tabla en el PDF
+    const tableX = 10;
+    const tableY = 10;
+
+    // Establece la fuente y el tamaño de texto
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+
+    // Agrega el título de la tabla
+    pdf.text('Datos de Integrantes', tableX, tableY);
+
+    // Genera la tabla en el PDF
+    pdf.autoTable({
+      startY: tableY + 10,
+      head: headers,
+      body: data,
+    });
+
+    // Guarda el PDF con un nombre
+    pdf.save('datos_integrantes.pdf');
+  };
+
+  const exportToExcel = () => {
+    // Convierte los datos de la tabla a un arreglo 2D
+    const data = integrantes.map((integrante) => [
+      integrante.nombreCompleto,
+      integrante.cargoCompleto,
+      integrante.representacionDe,
+      integrante.email,
+      integrante.fechaInicioDesignacion
+        ? integrante.fechaInicioDesignacion.format('YYYY-MM-DD')
+        : 'N/A',
+      integrante.oficioDesignacion ? integrante.oficioDesignacion[0].name : 'N/A',
+    ]);
+
+    // Crea un objeto Worksheet
+    const ws = XLSX.utils.aoa_to_sheet([['Nombre Completo', 'Cargo Completo', 'Representación', 'Email', 'Fecha de Inicio de Designación', 'Oficio de Designación'], ...data]);
+
+    // Crea un objeto Workbook y agrega la hoja
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Integrantes');
+
+    // Guarda el archivo Excel
+    XLSX.writeFile(wb, 'datos_integrantes.xlsx');
+  };
+
   return (
     <div className="container">
       <Tooltip title="Agregar Integrante">
-
-        <Button type="primary" onClick={() => setFormVisible(true)} style={{ backgroundColor: '#6A0F49' }} // Set button background color
-        >
+        <Button type="primary" onClick={() => setFormVisible(true)} style={{ backgroundColor: '#6A0F49' }}>
           Agregar Integrante
         </Button>
       </Tooltip>
+
+      <Button
+        icon={<ExportOutlined />}
+        onClick={exportToCSV}
+        style={{ marginLeft: '10px' }}
+      >
+        Exportar a CSV
+      </Button>
+
+      <Button
+        icon={<ExportOutlined />}
+        onClick={exportToPDF}
+        style={{ marginLeft: '10px' }}
+      >
+        Exportar a PDF
+      </Button>
+
+      <Button
+        icon={<ExportOutlined />}
+        onClick={exportToExcel}
+        style={{ marginLeft: '10px' }}
+        className="export-button"
+      >
+        Exportar a Excel
+      </Button>
+
+
 
       <Drawer
         title="Formulario del Organo de Gobierno"
