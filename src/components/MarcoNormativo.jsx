@@ -100,7 +100,7 @@ const UploadCard = () => {
 
               <SubMenu key="sub1" title={<span style={{ color: '#6A0F49' }}>{menuText}</span>}>
                 <Menu.Item key="Decreto">Decreto</Menu.Item>
-                <Menu.Item key="Ley de Creacion">Ley de Creación</Menu.Item>
+                <Menu.Item key="Ley">Ley</Menu.Item>
                 <Menu.Item key="Reglamento Interior">Reglamento Interior</Menu.Item>
                 <Menu.Item key="Manual Organizacional">Manual Organizacional</Menu.Item>
                 <Menu.Item key="Manual de Procedimientos">Manual de Procedimientos</Menu.Item>
