@@ -82,7 +82,7 @@ function Dashboard() {
     key={item.path}
     icon={item.icon}
     style={{
-        backgroundColor: item.path === location.pathname ? '#701e45' : '#fff', // Fondo morado cuando seleccionado, blanco cuando no
+        backgroundColor: item.path === location.pathname ? '#6A0F49' : '#fff', // Fondo morado cuando seleccionado, blanco cuando no
         color: item.path === location.pathname ? '#fff' : 'black', // Texto blanco cuando seleccionado, negro cuando no
       }}
   >

@@ -18,14 +18,14 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 const HeaderTypography = styled(Typography)({
   textAlign: "center",
   fontFamily: "Gibson, sans-serif",
-  color: "#701e45",
+  color: "#6A0F49",
   fontSize: "32px",
   margin: "16px 0",
-  borderBottom: "2px solid #701e45",
+  borderBottom: "2px solid #6A0F49",
   paddingBottom: "8px",
   transition: "color 0.3s",
   "&:hover": {
-    color: "#6a0f49",
+    color: "#6A0F49",
   },
 });
 
@@ -37,12 +37,12 @@ const ButtonContainer = styled(Box)({
 
 const CustomButton = styled(Button)(({ selected }) => ({
   margin: "0 16px",
-  backgroundColor: selected ? "#701e45" : "#7c858c",
+  backgroundColor: selected ? "#6A0F49" : "#7c858c",
   color: "white",
   fontFamily: "Gibson, sans-serif",
   transition: "background-color 0.3s",
   "&:hover": {
-    backgroundColor: "#6a0f49",
+    backgroundColor: "#6A0F49",
   },
 }));
 
@@ -61,7 +61,7 @@ const InfoCard = styled(Card)({
 const TableGrid = styled(Grid)({
   display: "flex",
   justifyContent: "space-between",
-  backgroundColor: "#6a0f49",
+  backgroundColor: "#6A0F49",
   color: "white",
   padding: "8px",
   fontFamily: "Gibson, sans-serif",
@@ -130,11 +130,11 @@ const Archivo = () => {
             <Typography variant="body2">Lugar: Fewfef</Typography>
           </Grid>
           <Grid item xs={4}>
-            <CustomButton variant="contained" style={{ backgroundColor: "#701e45", color: "white" }}>
+            <CustomButton variant="contained" style={{ backgroundColor: "#6A0F49", color: "white" }}>
               <EventIcon style={{ marginRight: '8px' }} />
               Orden del Día
             </CustomButton>
-            <CustomButton variant="contained" style={{ backgroundColor: "#701e45", color: "white" }}>
+            <CustomButton variant="contained" style={{ backgroundColor: "#6A0F49", color: "white" }}>
               <MenuBookIcon style={{ marginRight: '8px' }} />
               Cuadernillo de Trabajo
             </CustomButton>

@@ -41,7 +41,7 @@ const styles = {
   },
   submitButton: {
     width: "100%",
-    background: "#701e45",
+    background: "#6A0F49",
     border: "none",
     fontSize: "16px",
     fontWeight: "bold",

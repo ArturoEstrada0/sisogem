@@ -4,7 +4,7 @@ import './SesionesProgramadas.css'
 
 const ButtonProgramar = () => (
     <Space wrap>
-        <Button type="primary" style={{ backgroundColor: "#701e45" }}>Programar Sesión</Button>
+        <Button type="primary" style={{ backgroundColor: "#6A0F49" }}>Programar Sesión</Button>
     </Space>
 );
 export default ButtonProgramar;
