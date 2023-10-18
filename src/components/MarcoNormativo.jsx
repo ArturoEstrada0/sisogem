@@ -68,7 +68,7 @@ const UploadCard = () => {
     setUploadedFiles(updatedFiles);
   };
 
-  const fileTypes = ['.doc', '.docx', '.pdf', '.xls', '.xlsx'];
+  const fileTypes = ['.pdf'];
   const acceptTypes = fileTypes.join(',');
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -117,7 +117,7 @@ const UploadCard = () => {
               customRequest={customRequest}
               beforeUpload={file => {
                 if (!fileTypes.includes(file.name.slice(file.name.lastIndexOf('.')))) {
-                  message.error('Solo se permiten archivos Word, PDF y Excel.');
+                  message.error('Solo se permiten archivos PDF');
                   return false;
                 }
                 handlePreview(file);
@@ -142,10 +142,10 @@ const UploadCard = () => {
               dataSource={paginatedFiles}
               pagination={false}
             >
-              <Column title={<span style={{ color: '#6A0F49 ' }}>Nombre</span>} dataIndex="name" key="name" width={150} ellipsis />
-              <Column title={<span style={{ color: '#6A0F49 ' }}>Tipo</span>} dataIndex="option" key="option" width={150} ellipsis />
+              <Column title={<span style={{ color: '#701e45' }}>Nombre</span>} dataIndex="name" key="name" width={150} ellipsis />
+              <Column title={<span style={{ color: '#701e45' }}>Tipo</span>} dataIndex="option" key="option" width={150} ellipsis />
               <Column
-                title={<span style={{ color: '#6A0F49 ' }}>Accion</span>}
+                title={<span style={{ color: '#701e45' }}>Accion</span>}
                 key="action"
                 width={150}
                 ellipsis

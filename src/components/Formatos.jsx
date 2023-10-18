@@ -29,8 +29,8 @@ const FormatosMenu = () => {
               height: '120px',
               display: 'flex',
               flexDirection: 'column',
-              borderColor: '#701e45', // Cambiamos el color del contorno
-              color: '#701e45', // Cambiamos el color del texto
+              borderColor: '#6A0F49', // Cambiamos el color del contorno
+              color: '#6A0F49', // Cambiamos el color del texto
             }}
           >
             {formato.name}

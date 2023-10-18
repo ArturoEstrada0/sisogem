@@ -12,7 +12,7 @@ import {
   DialogContent,
   DialogActions,
   Slide,
-  Tooltip, // Importa el componente Tooltip
+  Tooltip,
 } from "@mui/material";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -40,7 +40,7 @@ const Entidad = () => {
   };
 
   return (
-    <Grid container spacing={3} justifyContent="center">
+    <Grid container spacing={3} justifyContent="center" className="grid-container">
       <Grid item xs={12}>
         <Typography variant="h4" align="center">
           <BusinessIcon fontSize="large" />

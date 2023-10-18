@@ -10,7 +10,7 @@
   .circle {
     width: 60px;
     height: 60px;
-    background-color: #701e45;
+    background-color: #6A0F49;
     border-radius: 50%;
     position: absolute;
     animation: moveCircle 1s linear;

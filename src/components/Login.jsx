@@ -40,7 +40,7 @@ const Login = () => {
 
   // Definir las funciones setInputStyle y setButtonStyle
   const [inputStyle, setInputStyle] = useState({
-    borderColor: '#6D807F',
+    borderColor: '#7c858c',
     width: '100%',
     marginBottom: '10px',
     transition: 'border-color 0.3s',
@@ -76,7 +76,7 @@ const Login = () => {
           ]}
         >
           <Input
-            prefix={<MailOutlined style={{ color: '#6D807F' }} />}
+            prefix={<MailOutlined style={{ color: '#7c858c' }} />}
             placeholder="Correo Electrónico"
             style={inputStyle}
             onMouseEnter={() => setInputStyle({ ...inputStyle, ...inputHoverStyle })}
@@ -88,7 +88,7 @@ const Login = () => {
           rules={[{ required: true, message: 'Por favor ingresa tu contraseña' }]}
         >
           <Input.Password
-            prefix={<LockOutlined style={{ color: '#6D807F' }} />}
+            prefix={<LockOutlined style={{ color: '#7c858c' }} />}
             placeholder="Contraseña"
             style={inputStyle}
             onMouseEnter={() => setInputStyle({ ...inputStyle, ...inputHoverStyle })}
