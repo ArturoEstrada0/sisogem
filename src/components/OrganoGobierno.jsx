@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { Form, Select, Input, DatePicker, Button, Upload, Modal, Drawer, Table, Space } from 'antd';
 import { ExclamationCircleOutlined, UploadOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ExportOutlined } from '@ant-design/icons';
 import './OrganoGobierno.css';
-import moment from 'moment'; // Asegúrate de importar moment
 import { Tooltip } from 'antd';
 import Papa from 'papaparse';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { utils as XLSXUtils, writeFile } from 'xlsx';
 import * as XLSX from 'xlsx';
 
 const { Option } = Select;
