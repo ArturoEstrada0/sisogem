@@ -135,19 +135,19 @@ const OrganoGobierno = () => {
       filters: [
         {
           text: 'Secretaría de Turismo',
-          value: 'opcion1',
+          value: 'Secretaría de Turismo',
         },
         {
           text: 'Centro de Convenciones de Morelia',
-          value: 'opcion2',
+          value: 'Centro de Convenciones de Morelia',
         },
         {
           text: 'Secretaría de Desarrollo Económico',
-          value: 'opcion3',
+          value: 'Secretaría de Desarrollo Económico',
         },
         {
           text: 'Secretaría de Educación',
-          value: 'opcion4',
+          value: 'Secretaría de Educación',
         },
       ],
       onFilter: (value, record) => record.representacionDe === value,
@@ -373,7 +373,7 @@ const OrganoGobierno = () => {
       <Drawer
         title="Formulario del Organo de Gobierno"
         placement="right"
-        width={400}
+        width={525}
         onClose={() => setFormVisible(false)}
         visible={formVisible}
       >
@@ -414,10 +414,10 @@ const OrganoGobierno = () => {
 
           >
             <Select>
-              <Option value="opcion1">Secretaría de Turismo</Option>
-              <Option value="opcion2">Centro de Convenciones de Morelia</Option>
-              <Option value="opcion3">Secretaría de Desarrollo Económico</Option>
-              <Option value="opcion4">Secretaría de Educación</Option>
+              <Option value="Secretaría de Turismo">Secretaría de Turismo</Option>
+              <Option value="Centro de Convenciones de Morelia">Centro de Convenciones de Morelia</Option>
+              <Option value="Secretaría de Desarrollo Económico">Secretaría de Desarrollo Económico</Option>
+              <Option value="Secretaría de Educación">Secretaría de Educación</Option>
             </Select>
           </Form.Item>
 
