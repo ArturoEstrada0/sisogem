@@ -63,7 +63,7 @@ function Dashboard() {
   }, []);
 
   return (
-    <Layout style={{ minHeight: "calc(100vh-52.8px)", background: "#fff" }}>
+    <Layout style={{ minHeight: "calc(100vh-70px)", background: "#fff" }}>
       <Sider
         collapsible
         collapsed={collapsed}
@@ -90,7 +90,7 @@ function Dashboard() {
   </Menu.Item>
 ))}
         </Menu>
-        <div style={{ textAlign: "center", marginTop: "70px" }}>
+        <div style={{ textAlign: "center", marginTop: "35px" }}>
           <img
             src={EscudoImg}
             alt="Logo"
