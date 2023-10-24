@@ -67,7 +67,7 @@ function BuzonReportes() {
 
   const handleCategoryChange = (value) => {
     setCategory(value);
-  };
+  }; 
 
   const handleSubmit = () => {
     setTimeout(() => {
