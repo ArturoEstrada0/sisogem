@@ -10,8 +10,8 @@ const SeleccionaFecha = () => {
         if (!dates) {
             return false;
         }
-        const tooLate = dates[0] && current.diff(dates[0], 'days') >= 3;
-        const tooEarly = dates[1] && dates[1].diff(current, 'days') >= 3;
+        const tooLate = dates[0] && current.diff(dates[0], 'days') >= 2;
+        const tooEarly = dates[1] && dates[1].diff(current, 'days') >= 2;
         return !!tooEarly || !!tooLate;
     };
     const onOpenChange = (open) => {
