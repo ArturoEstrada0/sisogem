@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@aws-amplify/core": "^5.8.5",
+    "@aws-amplify/pubsub": "^5.5.5",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.13",
@@ -13,7 +15,9 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "amazon-cognito-identity-js": "^6.3.6",
     "antd": "^5.10.1",
+    "aws-amplify": "^5.3.11",
     "aws-sdk": "^2.1485.0",
     "file-saver": "^2.0.5",
     "firebase": "^10.5.0",
