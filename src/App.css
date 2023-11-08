@@ -1,0 +1,15 @@
+/* Añade esto para tu botón de cierre de sesión */
+.btn-logout {
+    background-color: #701e45;
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    border-width: 0px;
+    font-size: 16px;
+    cursor: pointer; /* Para que el mouse muestre un puntero de mano */
+    margin-top: 20px; /* Espacio por encima del botón */
+  }
+  
+  .btn-logout:hover {
+    background-color: #5a1236; /* Un tono más oscuro para el efecto hover */
+  }
