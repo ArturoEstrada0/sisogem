@@ -1,0 +1,20 @@
+{
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-sisogem-staging-04528-authRole",
+      "UnauthRoleArn": "arn:aws:iam::137925017158:role/amplify-sisogem-staging-04528-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::137925017158:role/amplify-sisogem-staging-04528-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-sisogem-staging-04528-deployment",
+      "UnauthRoleName": "amplify-sisogem-staging-04528-unauthRole",
+      "StackName": "amplify-sisogem-staging-04528",
+      "StackId": "arn:aws:cloudformation:us-east-1:137925017158:stack/amplify-sisogem-staging-04528/f2b49220-7d06-11ee-a132-0e6aba30884b",
+      "AmplifyAppId": "d30ooawe0yadkc"
+    },
+    "categories": {
+      "auth": {
+        "sisogem": {}
+      }
+    }
+  }
+}

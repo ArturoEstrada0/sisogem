@@ -93,16 +93,15 @@ const Archivo = () => {
   return (
     <Container>
       <Grow in={true} timeout={1000}>
-        <HeaderTypography variant="h4">
-          Archivo
-        </HeaderTypography>
+        <HeaderTypography variant="h4">Archivo</HeaderTypography>
       </Grow>
 
       <Grow in={true} timeout={1000}>
         <InfoCard>
           <CardContent>
             <Typography variant="body1">
-              Se muestran las actas y documentos relativos a las sesiones celebradas por el órgano de gobierno.
+              Se muestran las actas y documentos relativos a las sesiones
+              celebradas por el órgano de gobierno.
             </Typography>
           </CardContent>
         </InfoCard>
@@ -130,12 +129,18 @@ const Archivo = () => {
             <Typography variant="body2">Lugar: Fewfef</Typography>
           </Grid>
           <Grid item xs={4}>
-            <CustomButton variant="contained" style={{ backgroundColor: "#6A0F49", color: "white" }}>
-              <EventIcon style={{ marginRight: '8px' }} />
+            <CustomButton
+              variant="contained"
+              style={{ backgroundColor: "#6A0F49", color: "white" }}
+            >
+              <EventIcon style={{ marginRight: "8px" }} />
               Orden del Día
             </CustomButton>
-            <CustomButton variant="contained" style={{ backgroundColor: "#6A0F49", color: "white" }}>
-              <MenuBookIcon style={{ marginRight: '8px' }} />
+            <CustomButton
+              variant="contained"
+              style={{ backgroundColor: "#6A0F49", color: "white" }}
+            >
+              <MenuBookIcon style={{ marginRight: "8px" }} />
               Cuadernillo de Trabajo
             </CustomButton>
           </Grid>

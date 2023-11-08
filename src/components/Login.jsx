@@ -1,119 +1,58 @@
-import React, { useState } from 'react';
-import { Form, Input, Button } from 'antd';
-import { MailOutlined, LockOutlined } from '@ant-design/icons';
-import ReCAPTCHA from 'react-google-recaptcha';
+import "./Login.css";
+import Fondo from "../assets/img/mich2.png";
+import Icono from "../assets/img/logo_mich.png";
+import { Auth } from "aws-amplify";
 
-const Login = () => {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [recaptchaValue, setRecaptchaValue] = useState(null);
+const Login = ({ setUser, changeView }) => { // Asegúrate de recibir changeView como una prop
+  const signIn = async (event) => {
+    event.preventDefault(); // para prevenir la recarga de la página
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-  const onFinish = (values) => {
-    // Lógica de inicio de sesión
-    console.log('Valores del formulario:', values);
-    console.log('Valor del CAPTCHA:', recaptchaValue);
-  };
-
-  const formStyle = {
-    width: '80%',
-    maxWidth: '400px',
-    margin: '0 auto',
-  };
-
-  const containerStyle = {
-    width: '80%',
-    maxWidth: '400px',
-    margin: '0 auto',
-    background: 'url(./assets/img/escudo.png)', // Reemplaza "URL_DE_LA_IMAGEN" con la ruta o URL de tu imagen de fondo
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-    padding: '20px', // Espacio interno para el formulario
-  };
-
-  const titleStyle = {
-    color: '#6A0F49',
-    fontSize: '32px',
-    marginBottom: '20px',
-    textAlign: 'center',
-  };
-
-  // Definir las funciones setInputStyle y setButtonStyle
-  const [inputStyle, setInputStyle] = useState({
-    borderColor: '#7c858c',
-    width: '100%',
-    marginBottom: '10px',
-    transition: 'border-color 0.3s',
-  });
-
-  const [buttonStyle, setButtonStyle] = useState({
-    backgroundColor: '#6A0F49',
-    borderColor: '#6A0F49',
-    color: 'white',
-    width: '100%',
-  });
-
-  const inputHoverStyle = {
-    borderColor: '#6A0F49',
-  };
-
-  const buttonHoverStyle = {
-    backgroundColor: '#5B0D3C',
+    try {
+      const user = await Auth.signIn(email, password);
+      setUser(user); // Actualizar el estado del usuario en el componente padre
+    } catch (error) {
+      console.log("error signing in", error);
+    }
   };
 
   return (
-    <div style={formStyle}>
-      <h2 style={titleStyle}>Iniciar Sesión</h2>
-      <Form
-        name="login-form"
-        onFinish={onFinish}
-      >
-        <Form.Item
-          name="email"
-          rules={[
-            { required: true, message: 'Por favor ingresa tu dirección de correo electrónico' },
-            { type: 'email', message: 'Por favor ingresa una dirección de correo electrónico válida' }
-          ]}
-        >
-          <Input
-            prefix={<MailOutlined style={{ color: '#7c858c' }} />}
-            placeholder="Correo Electrónico"
-            style={inputStyle}
-            onMouseEnter={() => setInputStyle({ ...inputStyle, ...inputHoverStyle })}
-            onMouseLeave={() => setInputStyle({ ...inputStyle })}
-          />
-        </Form.Item>
-        <Form.Item
-          name="password"
-          rules={[{ required: true, message: 'Por favor ingresa tu contraseña' }]}
-        >
-          <Input.Password
-            prefix={<LockOutlined style={{ color: '#7c858c' }} />}
-            placeholder="Contraseña"
-            style={inputStyle}
-            onMouseEnter={() => setInputStyle({ ...inputStyle, ...inputHoverStyle })}
-            onMouseLeave={() => setInputStyle({ ...inputStyle })}
-          />
-        </Form.Item>
-        <Form.Item>
-          <ReCAPTCHA
-            sitekey="TU_SITE_KEY" // Reemplaza con tu clave de sitio reCAPTCHA
-            onChange={(value) => setRecaptchaValue(value)}
-          />
-        </Form.Item>
-        <Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading}
-            style={buttonStyle}
-            onMouseEnter={() => setButtonStyle({ ...buttonStyle, ...buttonHoverStyle })}
-            onMouseLeave={() => setButtonStyle({ ...buttonStyle })}
-          >
-            Iniciar Sesión
-          </Button>
-        </Form.Item>
-      </Form>
+    <div className="container">
+      <div className="row">
+        <div className="col-md-4">
+          <div className="container-login">
+            <div className="card card-body shadow-lg">
+              <img src={Icono} alt="Icono" className="profile" />
+              <form onSubmit={signIn}>
+                <input
+                  type="text"
+                  placeholder="Email"
+                  className="input-text"
+                  id="email"
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  className="input-text"
+                  id="password"
+                />
+                <button type="submit" className="btn-form">
+                  Iniciar Sesión
+                </button>
+              </form>
+              <div>
+                {/* Usar changeView para navegar a otras vistas */}
+                <button onClick={() => changeView('forgotPassword')} className='btn-switch'>Olvidé mi contraseña</button>
+                <button onClick={() => changeView('signup')} className='btn-switch'>Registrarse</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-8">
+          <img src={Fondo} alt="Fondo" className="img-fondo" />
+        </div>
+      </div>
     </div>
   );
 };
