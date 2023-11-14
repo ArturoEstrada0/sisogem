@@ -2,8 +2,9 @@ import "./Login.css";
 import Fondo from "../assets/img/mich2.png";
 import Icono from "../assets/img/logo_mich.png";
 import { Auth } from "aws-amplify";
+import { UserService } from "../services/UserService";
 
-const Login = ({ setUser, changeView }) => { // Asegúrate de recibir changeView como una prop
+const Login = ({ setUser, setRole, changeView }) => { // Asegúrate de recibir changeView como una prop
   const signIn = async (event) => {
     event.preventDefault(); // para prevenir la recarga de la página
     const email = document.getElementById("email").value;
@@ -11,6 +12,9 @@ const Login = ({ setUser, changeView }) => { // Asegúrate de recibir changeView
 
     try {
       const user = await Auth.signIn(email, password);
+      const { email: emailCognito } = user.attributes
+      const response = await UserService.getUserInfoByEmail(emailCognito)
+      setRole(response.roles)
       setUser(user); // Actualizar el estado del usuario en el componente padre
     } catch (error) {
       console.log("error signing in", error);

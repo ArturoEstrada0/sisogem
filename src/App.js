@@ -14,9 +14,11 @@ import ResetPassword from "./components/ResetPassword";
 
 Amplify.configure(awsExports);
 
+
 function App() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("login");
+  const [role, setRole] = useState(null);
   const [email, setEmail] = useState(""); // Estado para almacenar el email durante el proceso de registro
 
   // Efecto para verificar el usuario actual cuando el componente se monta
@@ -111,7 +113,7 @@ function App() {
       <div>
         {view === "dashboard" && user && (
           <>
-            <Header user={user} signOut={handleSignOut} />
+            <Header user={user} signOut={handleSignOut} userRole={role}/>
             <Dashboard />
             <button onClick={handleSignOut} className="btn-logout">
               Cerrar Sesión
@@ -119,7 +121,7 @@ function App() {
           </>
         )}
         {view === "login" && !user && (
-          <Login setUser={setUser} changeView={setView} />
+          <Login setUser={setUser} setRole={setRole} changeView={setView} />
         )}
         {view === "signup" && (
           <SignUp setSignUpData={setSignUpData} changeView={setView} />

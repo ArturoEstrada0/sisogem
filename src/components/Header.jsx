@@ -1,7 +1,7 @@
 import React from 'react';
 import logo from '../assets/img/EscudoMichoacanHorizontal6.png'; // Importa la imagen
 
-const Header = () => {
+const Header = ({ userRole }) => {
   const headerStyle = {
     backgroundColor: '#6A0F49',
     color: 'white',
@@ -37,6 +37,7 @@ const Header = () => {
       <p style={{ fontSize: "20px" }}>Sistema de Seguimiento a Órganos de Gobierno del Estado de Michoacán</p>
       <nav>
         <ul style={navigationStyle}>
+          <li style={listItemStyle}>{userRole}</li>
           <li style={listItemStyle}>FAQ</li>
           <li style={listItemStyle}>Cuenta</li>
         </ul>
