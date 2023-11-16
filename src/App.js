@@ -113,9 +113,6 @@ function App() {
           <>
             <Header user={user} signOut={handleSignOut} />
             <Dashboard />
-            <button onClick={handleSignOut} className="btn-logout">
-              Cerrar Sesión
-            </button>
           </>
         )}
         {view === "login" && !user && (

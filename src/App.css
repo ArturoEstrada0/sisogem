@@ -7,7 +7,7 @@
     border-width: 0px;
     font-size: 16px;
     cursor: pointer; /* Para que el mouse muestre un puntero de mano */
-    margin-top: 20px; /* Espacio por encima del botón */
+    margin-top: 10px; /* Espacio por encima del botón */
   }
   
   .btn-logout:hover {

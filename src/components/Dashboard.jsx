@@ -77,7 +77,7 @@ function Dashboard() {
   }, []);
 
   return (
-    <Layout style={{ minHeight: "calc(100vh-70px)", background: "#fff" }}>
+    <Layout style={{ minHeight: "calc(90.5vh - 1px)", background: "#fff", width: "100%" }}>
       <Sider
         collapsible
         collapsed={collapsed}
@@ -97,15 +97,18 @@ function Dashboard() {
               icon={item.icon}
               style={{
                 backgroundColor:
-                  item.path === location.pathname ? "#6A0F49" : "#fff", // Fondo morado cuando seleccionado, blanco cuando no
-                color: item.path === location.pathname ? "#fff" : "black", // Texto blanco cuando seleccionado, negro cuando no
+                  item.path === location.pathname ? "#6A0F49" : "#fff",
+                color: item.path === location.pathname ? "#fff" : "black",
               }}
             >
-              <Link to={item.path}>{item.text}</Link>
+              {/* Apply the style to remove underline */}
+              <Link to={item.path} style={{ textDecoration: 'none' }}>
+                {item.text}
+              </Link>
             </Menu.Item>
           ))}
         </Menu>
-        <div style={{ textAlign: "center", marginTop: "35px" }}>
+        <div style={{ textAlign: "center", marginTop: "43px" }}>
           <img src={EscudoImg} alt="Logo" style={{ width: "85px" }} />
         </div>
       </Sider>

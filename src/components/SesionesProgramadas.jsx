@@ -1,15 +1,16 @@
-import * as React from 'react';
+// SesionesProgramadas.js
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import ProgramarSesion from './ProgramarSesion';
-import NumeroSesion from './NumeroSesion';
-import SelectDate from './SelectDate';
-import SeleccionaFecha from './SeleccionaFecha';
-import ButtonProgramar from './ButtonProgramar';
-import './SesionesProgramadas.css';
+import Button from '@mui/material/Button';
+import { DatePicker, Space } from 'antd';
+import { FormControl, InputLabel, Select, MenuItem, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import SavedSessions from './SesionGuardada';
+
+const { RangePicker } = DatePicker;
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -45,10 +46,56 @@ function a11yProps(index) {
 }
 
 export default function SesionesProgramadas() {
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = useState(0);
+  const [sesionValue, setSesionValue] = useState('');
+  const [dateValue, setDateValue] = useState(null);
+  const [radioOption, setRadioOption] = useState('option1');
+  const [savedSessions, setSavedSessions] = useState([]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  const handleNumeroSesionChange = (event) => {
+    setSesionValue(event.target.value);
+  };
+
+  const handleSelectDateChange = (value) => {
+    setDateValue(value);
+  };
+
+  const handleRadioChange = (event) => {
+    setRadioOption(event.target.value);
+  };
+
+  const handleDelete = (index) => {
+    const updatedSessions = [...savedSessions];
+    updatedSessions.splice(index, 1);
+    setSavedSessions(updatedSessions);
+  };
+
+  const handleEnter = (index) => {
+    console.log(`Entering session at index ${index}`);
+  };
+
+  const handleSave = () => {
+    // Validaciones
+    if (!sesionValue || !dateValue) {
+      alert('Por favor, complete todos los campos antes de guardar la sesión.');
+      return;
+    }
+
+    const newSession = {
+      sesionValue,
+      dateValue,
+      radioOption,
+    };
+
+    setSavedSessions((prevSessions) => [...prevSessions, newSession]);
+
+    setSesionValue('');
+    setDateValue(null);
+    setRadioOption('option1');
   };
 
   return (
@@ -60,19 +107,128 @@ export default function SesionesProgramadas() {
           <Tab label="Sesión en Progreso" {...a11yProps(2)} />
         </Tabs>
       </Box>
-      <CustomTabPanel value={value} index={0} className='programar-sesion'>
-        <ProgramarSesion />
-        <NumeroSesion />
-        <SelectDate />
+      <CustomTabPanel value={value} index={0} className="programar-sesion">
+        <RadioGroup
+          row
+          aria-label="radio-options"
+          name="radio-options"
+          value={radioOption}
+          onChange={handleRadioChange}
+        >
+          <FormControlLabel value="option1" control={<Radio />} label="Ordinaria" />
+          <FormControlLabel value="option2" control={<Radio />} label="Extraordinaria" />
+        </RadioGroup>
+        <NumeroSesion
+          value={sesionValue}
+          onChange={handleNumeroSesionChange}
+          radioOption={radioOption}
+        />
+        <SelectDate value={dateValue} onChange={handleSelectDateChange} onSave={handleSave} />
         <SeleccionaFecha />
-        <ButtonProgramar />
+        <Button variant="contained" onClick={() => handleSave(dateValue)} disabled={!sesionValue || !dateValue}>
+          Guardar
+        </Button>
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
-        Sesiones Programadas
+        <SavedSessions
+          savedSessions={savedSessions}
+          onDelete={handleDelete}
+          onEnter={handleEnter}
+        />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={2}>
         Sesión en Progreso
       </CustomTabPanel>
     </Box>
   );
+}
+
+export function NumeroSesion(props) {
+  const { value, onChange, radioOption } = props;
+
+  const getMenuItemText = (index) => {
+    return radioOption === 'option1' ? `Sesión ${index}` : `Sesión ${index}`;
+  };
+
+  return (
+    <Box sx={{ minWidth: 120 }}>
+      <FormControl fullWidth>
+        <InputLabel id="demo-simple-select-label">Qué sesión es esta?</InputLabel>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={value}
+          label="Sesion"
+          onChange={onChange}
+        >
+          {radioOption === 'option1' ? (
+            Array.from({ length: 4 }, (_, index) => (
+              <MenuItem key={index + 1} value={index + 1}>
+                {getMenuItemText(index + 1)}
+              </MenuItem>
+            ))
+          ) : (
+            Array.from({ length: 20 }, (_, index) => (
+              <MenuItem key={index + 1} value={index + 1}>
+                {getMenuItemText(index + 1)}
+              </MenuItem>
+            ))
+          )}
+        </Select>
+      </FormControl>
+    </Box>
+  );
+}
+
+export function SelectDate(props) {
+  const { value, onChange, onSave } = props;
+
+  return (
+    <Space direction="vertical">
+      <PickerWithType type="time" value={value} onChange={onChange} onSave={onSave} />
+    </Space>
+  );
+}
+
+export function SeleccionaFecha() {
+  const [dates, setDates] = useState(null);
+  const [value, setValue] = useState(null);
+
+  const disabledDate = (current) => {
+    if (!dates) {
+      return false;
+    }
+    const tooLate = dates[0] && current.diff(dates[0], 'days') >= 2;
+    const tooEarly = dates[1] && dates[1].diff(current, 'days') >= 2;
+    return !!tooEarly || !!tooLate;
+  };
+
+  const onOpenChange = (open) => {
+    if (open) {
+      setDates([null, null]);
+    } else {
+      setDates(null);
+    }
+  };
+
+  return (
+    <RangePicker
+      value={dates || value}
+      disabledDate={disabledDate}
+      onCalendarChange={(val) => {
+        setDates(val);
+      }}
+      onChange={(val) => {
+        setValue(val);
+      }}
+      onOpenChange={onOpenChange}
+      changeOnBlur
+    />
+  );
+}
+
+export function PickerWithType(props) {
+  const { type, onChange, value, onSave } = props;
+
+  return <DatePicker picker={type} value={value} onChange={onChange} onSave={onSave} />;
 }

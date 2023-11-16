@@ -1,27 +1,34 @@
-import React, { useState, useEffect } from "react";
-import { Button, Space } from "antd";
-import { FileAddOutlined } from "@ant-design/icons";
-import { uploadFileToS3, downloadFileFromS3, listObjectsInS3Bucket } from "../services/S3Service"; // Asegúrate de que la ruta sea correcta
+import React, { useState, useEffect, useRef } from "react";
+import { Button, Space, Modal, Dropdown, Menu, Pagination, Card, Empty } from "antd";
+import { FileAddOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons";
+import { uploadFileToS3, downloadFileFromS3, listObjectsInS3Bucket } from "../services/S3Service";
 
 const FormatosMenu = () => {
   const [objectList, setObjectList] = useState([]);
+  const [deleteFileName, setDeleteFileName] = useState("");
+  const fileInputRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    // Llama a una función que obtiene la lista de objetos en el bucket de S3 y actualiza el estado.
     listS3Objects();
-  }, []);
+  }, [currentPage]);
 
   const listS3Objects = async () => {
     try {
-      const objects = await listObjectsInS3Bucket("sisogem"); // Reemplaza "sisogem" con el nombre de tu bucket.
+      const objects = await listObjectsInS3Bucket("sisogem");
       setObjectList(objects);
     } catch (error) {
       console.error("Error al listar objetos de S3:", error);
-      // Puedes mostrar una alerta u otro mensaje de error aquí.
     }
   };
 
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = async () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) {
       return;
@@ -29,12 +36,9 @@ const FormatosMenu = () => {
 
     try {
       await uploadFileToS3(file);
-      alert("Archivo subido con éxito!");
-      // Vuelve a listar los objetos después de cargar uno nuevo.
       listS3Objects();
     } catch (error) {
       console.error("Error al subir el archivo:", error);
-      alert("Error al subir el archivo");
     }
   };
 
@@ -45,43 +49,133 @@ const FormatosMenu = () => {
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", fileName);
-      // Append to html page
       document.body.appendChild(link);
-      // Force download
       link.click();
-      // Clean up and remove the link
       link.parentNode.removeChild(link);
     } catch (error) {
       console.error("Error al descargar el archivo:", error);
-      alert("Error al descargar el archivo");
     }
   };
+
+  const showDeleteConfirm = (fileName) => {
+    setDeleteFileName(fileName);
+    Modal.confirm({
+      title: "Confirmar eliminación",
+      content: `¿Seguro que deseas eliminar el archivo "${fileName}"?`,
+      okText: "Sí",
+      okType: "danger",
+      cancelText: "No",
+      onOk: () => handleFileDelete(fileName),
+      onCancel: () => setDeleteFileName(""),
+    });
+  };
+
+  const handleFileDelete = async (fileName) => {
+    try {
+      const updatedObjectList = objectList.filter((object) => object.Key !== fileName);
+      setObjectList(updatedObjectList);
+      setDeleteFileName("");
+    } catch (error) {
+      console.error("Error al eliminar el archivo:", error);
+    }
+  };
+
+  const menu = (fileName) => (
+    <Menu>
+      <Menu.Item
+        key="1"
+        icon={<DownloadOutlined />}
+        onClick={() => handleFileDownload(fileName)}
+        style={{ color: "#1890ff" }}
+      >
+        Descargar
+      </Menu.Item>
+      <Menu.Item
+        key="2"
+        icon={<DeleteOutlined />}
+        onClick={() => showDeleteConfirm(fileName)}
+        style={{ color: "#701e45" }}
+      >
+        Eliminar
+      </Menu.Item>
+    </Menu>
+  );
+
+  const itemsPerPage = 8;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedObjects = objectList.slice(startIndex, endIndex);
 
   return (
     <div>
       <h2>Formatos editables</h2>
-      <Space size={20}>
-        {objectList.map((object, index) => (
-          <Button
-            key={index}
-            icon={<FileAddOutlined style={{ fontSize: "50px" }} />}
-            size="large"
-            style={{
-              width: "220px",
-              height: "120px",
-              display: "flex",
-              flexDirection: "column",
-              borderColor: "#6A0F49",
-              color: "#6A0F49",
-            }}
-            onClick={() => handleFileDownload(object.Key)}
-          >
-            {object.Key}
+      <Card title="Documentos" style={{ width: "80%", margin: "auto", height: "400px", overflowY: "auto" }}>
+        {objectList.length === 0 ? (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No hay documentos" />
+        ) : (
+          <Space size={20} wrap style={{ justifyContent: "center" }}>
+            {displayedObjects.map((object, index) => (
+              <Dropdown key={index} overlay={menu(object.Key)} trigger={["hover"]}>
+                <div style={{ position: "relative" }}>
+                  <Button
+                    icon={<FileAddOutlined style={{ fontSize: "50px", alignSelf: "center" }} />}
+                    size="large"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "220px",
+                      height: "120px",
+                      borderColor: "#6A0F49",
+                      color: "#6A0F49",
+                      overflow: "hidden",
+                      whiteSpace: "normal",
+                    }}
+                  >
+                    {object.Key}
+                  </Button>
+                </div>
+              </Dropdown>
+            ))}
+          </Space>
+        )}
+      </Card>
+      <div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}>
+        <input
+          type="file"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+          ref={fileInputRef}
+        />
+        <Button
+          type="primary"
+          style={{
+            backgroundColor: "#701e45",
+            color: "#ffffff",
+            borderRadius: "5px",
+          }}
+          onClick={handleFileUpload}
+        >
+          Seleccionar Archivo
+        </Button>
+      </div>
+      {deleteFileName && (
+        <div style={{ marginTop: "20px" }}>
+          <Button type="danger" icon={<DeleteOutlined />} onClick={() => showDeleteConfirm(deleteFileName)}>
+            Eliminar
           </Button>
-        ))}
-      </Space>
-      <div style={{ marginTop: "20px" }}>
-        <input type="file" onChange={handleFileUpload} />
+        </div>
+      )}
+      <div style={{ marginTop: "20px", textAlign: "center" }}>
+        <Pagination
+          current={currentPage}
+          total={objectList.length}
+          onChange={(page) => setCurrentPage(page)}
+          pageSize={itemsPerPage}
+          showSizeChanger={false}
+          showQuickJumper
+        />
       </div>
     </div>
   );

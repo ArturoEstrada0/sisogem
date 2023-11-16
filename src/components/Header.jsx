@@ -1,21 +1,23 @@
 import React from 'react';
-import logo from '../assets/img/EscudoMichoacanHorizontal6.png'; // Importa la imagen
+import { Menu, Dropdown } from 'antd';
+import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import logo from '../assets/img/EscudoMichoacanHorizontal6.png';
 
-const Header = () => {
+const Header = ({ signOut }) => {
   const headerStyle = {
     backgroundColor: '#6A0F49',
     color: 'white',
-    padding: '10px', // Aumenta el relleno
+    padding: '10px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: '70px', // Reduce la altura del encabezado
+    height: '70px',
   };
 
   const logoStyle = {
-    width: '150px', // Ajusta el ancho de la imagen
-    height: 'auto', // Mantiene la relación de aspecto
-    marginLeft: '10px', // Desplaza la imagen hacia la derecha
+    width: '150px',
+    height: 'auto',
+    marginLeft: '10px',
   };
 
   const navigationStyle = {
@@ -23,22 +25,51 @@ const Header = () => {
     display: 'flex',
     margin: 0,
     padding: 0,
+    alignItems: 'center',
   };
 
   const listItemStyle = {
     margin: '0 10px',
   };
 
+  const buttonStyle = {
+    marginLeft: 'auto',
+  };
+
+  const menuStyle = {
+    color: '#701e45', // Color rojo para el texto del menú desplegable
+  };
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="1" onClick={signOut} icon={<LogoutOutlined />} style={menuStyle}>
+        Cerrar Sesión
+      </Menu.Item>
+    </Menu>
+  );
+
+  const cuentaStyle = {
+    color: 'white',
+    textDecoration: 'none',
+    cursor: 'pointer',
+  };
+
   return (
-    <header style={headerStyle}>
+    <header style={headerStyle} className="header">
       <div>
         <img src={logo} alt="Escudo Michoacán" style={logoStyle} />
       </div>
-      <p style={{ fontSize: "20px" }}>Sistema de Seguimiento a Órganos de Gobierno del Estado de Michoacán</p>
+      <p style={{ fontSize: '20px' }}>Sistema de Seguimiento a Órganos de Gobierno del Estado de Michoacán</p>
       <nav>
         <ul style={navigationStyle}>
           <li style={listItemStyle}>FAQ</li>
-          <li style={listItemStyle}>Cuenta</li>
+          <li style={listItemStyle}>
+            <Dropdown overlay={menu} placement="bottomRight" arrow>
+              <a className="ant-dropdown-link" style={cuentaStyle} onClick={(e) => e.preventDefault()}>
+                Cuenta
+              </a>
+            </Dropdown>
+          </li>
         </ul>
       </nav>
     </header>
