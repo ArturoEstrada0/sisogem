@@ -3,7 +3,7 @@ import { Menu, Dropdown } from 'antd';
 import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import logo from '../assets/img/EscudoMichoacanHorizontal6.png';
 
-const Header = ({ signOut }) => {
+const Header = ({ userRole, signOut }) => {
   const headerStyle = {
     backgroundColor: '#6A0F49',
     color: 'white',
