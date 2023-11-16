@@ -10,8 +10,6 @@ import {
   Paper,
 } from "@mui/material";
 import { styled } from "@mui/system";
-import Grow from "@mui/material/Grow";
-import Zoom from "@mui/material/Zoom";
 import EventIcon from "@mui/icons-material/Event";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 
@@ -92,20 +90,16 @@ const Archivo = () => {
 
   return (
     <Container>
-      <Grow in={true} timeout={1000}>
-        <HeaderTypography variant="h4">Archivo</HeaderTypography>
-      </Grow>
+      <HeaderTypography variant="h4">Archivo</HeaderTypography>
 
-      <Grow in={true} timeout={1000}>
-        <InfoCard>
-          <CardContent>
-            <Typography variant="body1">
-              Se muestran las actas y documentos relativos a las sesiones
-              celebradas por el órgano de gobierno.
-            </Typography>
-          </CardContent>
-        </InfoCard>
-      </Grow>
+      <InfoCard>
+        <CardContent>
+          <Typography variant="body1">
+            Se muestran las actas y documentos relativos a las sesiones
+            celebradas por el órgano de gobierno.
+          </Typography>
+        </CardContent>
+      </InfoCard>
       <TableGrid container>
         <Grid item xs={4}>
           <Typography variant="h6">Fecha registro</Typography>
@@ -117,35 +111,33 @@ const Archivo = () => {
           <Typography variant="h6">Adjuntos de la sesión</Typography>
         </Grid>
       </TableGrid>
-      <Zoom in={true} timeout={1000}>
-        <DataRowGrid>
-          <Grid item xs={4}>
-            2022-11-30
-          </Grid>
-          <Grid item xs={4}>
-            <Typography variant="body1">Segunda Ordinaria</Typography>
-            <Typography variant="body2">Fecha celebrada: 2022-12-01</Typography>
-            <Typography variant="body2">Hora: 12:23</Typography>
-            <Typography variant="body2">Lugar: Fewfef</Typography>
-          </Grid>
-          <Grid item xs={4}>
-            <CustomButton
-              variant="contained"
-              style={{ backgroundColor: "#6A0F49", color: "white" }}
-            >
-              <EventIcon style={{ marginRight: "8px" }} />
-              Orden del Día
-            </CustomButton>
-            <CustomButton
-              variant="contained"
-              style={{ backgroundColor: "#6A0F49", color: "white" }}
-            >
-              <MenuBookIcon style={{ marginRight: "8px" }} />
-              Cuadernillo de Trabajo
-            </CustomButton>
-          </Grid>
-        </DataRowGrid>
-      </Zoom>
+      <DataRowGrid>
+        <Grid item xs={4}>
+          2022-11-30
+        </Grid>
+        <Grid item xs={4}>
+          <Typography variant="body1">Segunda Ordinaria</Typography>
+          <Typography variant="body2">Fecha celebrada: 2022-12-01</Typography>
+          <Typography variant="body2">Hora: 12:23</Typography>
+          <Typography variant="body2">Lugar: Fewfef</Typography>
+        </Grid>
+        <Grid item xs={4}>
+          <CustomButton
+            variant="contained"
+            style={{ backgroundColor: "#6A0F49", color: "white" }}
+          >
+            <EventIcon style={{ marginRight: "8px" }} />
+            Orden del Día
+          </CustomButton>
+          <CustomButton
+            variant="contained"
+            style={{ backgroundColor: "#6A0F49", color: "white" }}
+          >
+            <MenuBookIcon style={{ marginRight: "8px" }} />
+            Cuadernillo de Trabajo
+          </CustomButton>
+        </Grid>
+      </DataRowGrid>
     </Container>
   );
 };

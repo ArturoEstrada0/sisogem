@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Card, Menu, Upload, message, Table, Space, Row, Col, Pagination, Spin } from 'antd';
+import { Card, Menu, Upload, message, Table, Space, Row, Col, Pagination, Spin, Modal } from 'antd';
 import { UploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
 import './MarcoNormativo.css';
 import { Tooltip } from 'antd';
-
 
 const { SubMenu } = Menu;
 const { Dragger } = Upload;
@@ -16,6 +15,7 @@ const UploadCard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [menuOptionSelected, setMenuOptionSelected] = useState(false);
+  const [deleteFileUid, setDeleteFileUid] = useState(null);
   const itemsPerPage = 5;
 
   const handleMenuClick = (e) => {
@@ -63,9 +63,23 @@ const UploadCard = () => {
     reader.readAsDataURL(file);
   };
 
+  const showDeleteConfirm = (uid) => {
+    setDeleteFileUid(uid);
+    Modal.confirm({
+      title: 'Confirmar eliminación',
+      content: '¿Seguro que deseas eliminar este archivo?',
+      okText: 'Sí',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: () => handleDeleteFile(uid),
+      onCancel: () => setDeleteFileUid(null),
+    });
+  };
+
   const handleDeleteFile = (uid) => {
     const updatedFiles = uploadedFiles.filter(file => file.uid !== uid);
     setUploadedFiles(updatedFiles);
+    setDeleteFileUid(null);
   };
 
   const fileTypes = ['.pdf'];
@@ -83,13 +97,9 @@ const UploadCard = () => {
     <Card
       title={<span style={{ color: '#FFF', padding: '0.5rem' }}>Marco Normativo Vigente</span>}
       headStyle={{ backgroundColor: '#6A0F49' }}
-
     >
-
-
       <Row gutter={16}>
         <Col span={12} className="menu-col" style={{ background: 'cccccc40', padding: '1rem' }}>
-
           <Menu
             onClick={handleMenuClick}
             selectedKeys={[selectedMenuItem]}
@@ -97,7 +107,6 @@ const UploadCard = () => {
             style={{ color: '#6A0F49' }}
           >
             <Tooltip title="Selecciona la Denominación del Instrumento Normativo">
-
               <SubMenu key="sub1" title={<span style={{ color: '#6A0F49' }}>{menuText}</span>}>
                 <Menu.Item key="Ley">Ley</Menu.Item>
                 <Menu.Item key="Decreto de Creación">Decreto de Creación</Menu.Item>
@@ -107,7 +116,6 @@ const UploadCard = () => {
                 <Menu.Item key="Otros">Otros</Menu.Item>
               </SubMenu>
             </Tooltip>
-
           </Menu>
 
           <Spin spinning={isLoading}>
@@ -115,7 +123,7 @@ const UploadCard = () => {
               onChange={handleFileUpload}
               showUploadList={false}
               customRequest={customRequest}
-              beforeUpload={file => {
+              beforeUpload={(file) => {
                 if (!fileTypes.includes(file.name.slice(file.name.lastIndexOf('.')))) {
                   message.error('Solo se permiten archivos PDF');
                   return false;
@@ -145,7 +153,7 @@ const UploadCard = () => {
               <Column title={<span style={{ color: '#701e45' }}>Nombre</span>} dataIndex="name" key="name" width={150} ellipsis />
               <Column title={<span style={{ color: '#701e45' }}>Tipo</span>} dataIndex="option" key="option" width={150} ellipsis />
               <Column
-                title={<span style={{ color: '#701e45' }}>Accion</span>}
+                title={<span style={{ color: '#701e45' }}>Acción</span>}
                 key="action"
                 width={150}
                 ellipsis
@@ -157,7 +165,7 @@ const UploadCard = () => {
                     <a href={record.url} download>
                       <DownloadOutlined />
                     </a>
-                    <a onClick={() => handleDeleteFile(record.uid)}>Eliminar</a>
+                    <a onClick={() => showDeleteConfirm(record.uid)}>Eliminar</a>
                   </Space>
                 )}
               />
