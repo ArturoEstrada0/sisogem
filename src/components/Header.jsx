@@ -92,7 +92,7 @@ const Header = ({ signOut }) => {
                 onClick={(e) => e.preventDefault()}
               >
                 <UserOutlined style={cuentaIconStyle} />
-                Cuenta
+                {currentUser?.roles}
               </a>
             </Dropdown>
           </li>

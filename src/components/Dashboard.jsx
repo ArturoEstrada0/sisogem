@@ -33,6 +33,7 @@ import BuzonReportes from "./BuzonReportes";
 import EscudoImg from "../assets/img/Escudo.png";
 import { useContext } from "react";
 import { UserRoleContext } from "../context/UserRoleContext";
+import ProgramarSesion from "./ProgramarSesion";
 
 const { Sider, Content } = Layout;
 
@@ -45,7 +46,7 @@ const menuItems = [
     icon: <BankOutlined />,
   },
   {
-    path: "/sesiones-programadas",
+    path: "/programar-sesion",
     text: "Sesiones programadas",
     icon: <CalendarOutlined />,
   },
@@ -142,8 +143,8 @@ function Dashboard({ userRole }) {
               element={<OrganoGobierno />}
             />
             <Route
-              path="/sesiones-programadas"
-              element={<SesionesProgramadas />}
+              path="/programar-sesion"
+              element={<ProgramarSesion />}
             />
             <Route path="/archivo" element={<Archivo />} />
             <Route

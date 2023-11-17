@@ -31,7 +31,7 @@ const Entidad = () => {
   // const { userRole: userRoleFromContext } = useUserRole();
   // console.log("userRole desde prop:", userRole);
   // console.log("userRole desde contexto:", userRoleFromContext);
-const {currentUser} = useContext(UserRoleContext)
+  const { currentUser } = useContext(UserRoleContext);
 
   const [organismo, setOrganismo] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
@@ -46,7 +46,7 @@ const {currentUser} = useContext(UserRoleContext)
       setOpenDialog(false);
     }
   };
-  const arr = ['jhin', 'leona', 'lucian']
+  const arr = ["jhin", "leona", "lucian"];
   return (
     <Grid
       container
@@ -54,15 +54,6 @@ const {currentUser} = useContext(UserRoleContext)
       justifyContent="center"
       className="grid-container"
     >
-      {/* {
-        arr.map(nombre => {
-          return (
-            <MenuItem value="Servicios de Salud de Michoacán">
-              {nombre}
-            </MenuItem>
-          );
-        })
-      } */}
       <Grid item xs={12}>
         <Typography variant="h4" align="center">
           <BusinessIcon fontSize="large" />
@@ -79,9 +70,12 @@ const {currentUser} = useContext(UserRoleContext)
             onChange={(event) => setOrganismo(event.target.value)}
             label="Seleccione un organismo"
           >
-            {currentUser?.organismo.map(organismo => {
-              return (<MenuItem value={organismo} key={organismo}>{organismo}</MenuItem>)
-            })}
+            {currentUser?.organismo.map((organismo, index) => (
+              <MenuItem value={organismo} key={index}>
+                {currentUser?.entidad[index]}
+              </MenuItem>
+            ))}
+
             {/* <MenuItem value="Servicios de Salud de Michoacán">
               Servicios de Salud de Michoacán
             </MenuItem>

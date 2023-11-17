@@ -427,7 +427,7 @@ const OrganoGobierno = () => {
 
   return (
     <div className="container">
-      {currentUser?.roles === "ADMIN" && (
+      {currentUser?.roles === "Secretario Técnico" && (
         <Tooltip title="Agregar Integrante">
           <Button
             type="primary"

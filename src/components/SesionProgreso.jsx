@@ -1,16 +1,31 @@
-import React from "react";
-import { Container } from "@mui/material"; import {
-  Typography,
-} from "@mui/material";
+import React from 'react';
+import { List, Button, Card, Popconfirm } from 'antd';
 
-function SesionProgreso() {
-  return (
-    <Container>
-      <Typography variant="h4" align="center">
-        Sesión en Progreso
-      </Typography>        <p>Este es el contenido del componente Sesion en Progreso.</p>
-    </Container>
+const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
+  const renderItem = sesion => (
+    <List.Item>
+      <Card>
+        <p>Tipo de Sesión: {sesion.tipoSesion}</p>
+        <p>Número de Sesión: {sesion.numeroSesion}</p>
+        <p>Fecha: {sesion.fecha}</p>
+        <p>Hora de Inicio: {sesion.horaInicio}</p>
+        <Button type="primary" onClick={() => onFinalizarSesion(sesion)}>
+          Finalizar Sesión
+        </Button>
+      </Card>
+    </List.Item>
   );
-}
+
+  return (
+    <div>
+      <h2>Sesiones en Progreso</h2>
+      <List
+        dataSource={sesionesEnProgreso}
+        renderItem={renderItem}
+        locale={{ emptyText: 'No hay sesiones en progreso' }}
+      />
+    </div>
+  );
+};
 
 export default SesionProgreso;

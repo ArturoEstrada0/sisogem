@@ -2,7 +2,7 @@ import { s3 } from './AWSConfig';
 
 export const uploadFileToS3 = (file) => {
   const params = {
-    Bucket: 'sisogem',
+    Bucket: 'organismos',
     Key: file.name,
     Body: file,
     ContentType: file.type,
@@ -13,7 +13,7 @@ export const uploadFileToS3 = (file) => {
 
 export const downloadFileFromS3 = async (fileName) => {
   const params = {
-    Bucket: 'sisogem',
+    Bucket: 'organismos',
     Key: fileName,
   };
 

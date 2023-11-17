@@ -30,12 +30,19 @@ const FormatosMenu = () => {
 
   useEffect(() => {
     listS3Objects();
-  }, [currentPage]);
+  }, [currentPage, currentUser]);
 
   const listS3Objects = async () => {
     try {
-      const objects = await listObjectsInS3Bucket("sisogem");
+      let objects = [];
+      if (currentUser?.organismo) {
+        for (const organismo of currentUser.organismo) {
+          const organismoObjects = await listObjectsInS3Bucket(organismo);
+          objects = [ ...objects, ...organismoObjects ];
+        }
+      }
       setObjectList(objects);
+      console.log(objects);
     } catch (error) {
       console.error("Error al listar objetos de S3:", error);
     }
@@ -54,16 +61,21 @@ const FormatosMenu = () => {
     }
 
     try {
-      await uploadFileToS3(file);
+      if (currentUser?.organismo) {
+        for (const organismo of currentUser.organismo) {
+          await uploadFileToS3(file, organismo);
+        }
+      }
+
       listS3Objects();
     } catch (error) {
       console.error("Error al subir el archivo:", error);
     }
   };
 
-  const handleFileDownload = async (fileName) => {
+  const handleFileDownload = async (fileName, bucketName) => {
     try {
-      const blob = await downloadFileFromS3(fileName);
+      const blob = await downloadFileFromS3(fileName, bucketName);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -101,17 +113,17 @@ const FormatosMenu = () => {
     }
   };
 
-  const menu = (fileName, userRole) => (
+  const menu = (fileName, bucketName, userRole) => (
     <Menu>
       <Menu.Item
         key="1"
         icon={<DownloadOutlined />}
-        onClick={() => handleFileDownload(fileName)}
+        onClick={() => handleFileDownload(fileName, bucketName)}
         style={{ color: "#1890ff" }}
       >
         Descargar
       </Menu.Item>
-      {userRole === "ADMIN" && (
+      {currentUser?.roles === "Secretario Técnico" && (
         <Menu.Item
           key="2"
           icon={<DeleteOutlined />}
@@ -151,7 +163,7 @@ const FormatosMenu = () => {
             {displayedObjects.map((object, index) => (
               <Dropdown
                 key={index}
-                overlay={menu(object.Key, currentUser?.roles)}
+                overlay={menu(object.Key, object.bucketName, currentUser?.roles)}
                 trigger={["hover"]}
               >
                 <div style={{ position: "relative" }}>

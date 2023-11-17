@@ -1,26 +1,16 @@
-import React, { useState } from "react";
-import {
-  Card,
-  Menu,
-  Upload,
-  message,
-  Table,
-  Space,
-  Row,
-  Col,
-  Pagination,
-  Spin,
-  Modal,
-} from "antd";
-import {
-  UploadOutlined,
-  EyeOutlined,
-  DownloadOutlined,
-} from "@ant-design/icons";
-import "./MarcoNormativo.css";
+import React, { useState, useEffect } from "react";
+import { Card, Menu, Upload, message, Table, Space, Row, Col, Pagination, Spin, Modal } from "antd";
+import { UploadOutlined, EyeOutlined, DownloadOutlined } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import { useContext } from "react";
 import { UserRoleContext } from "../context/UserRoleContext";
+import AWS from "aws-sdk";
+
+const s3 = new AWS.S3({
+  accessKeyId: 'AKIASAHHYXZDGGYMQIEG',
+  secretAccessKey: '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',
+  region: 'us-east-1',
+});
 
 const { SubMenu } = Menu;
 const { Dragger } = Upload;
@@ -29,9 +19,7 @@ const { Column } = Table;
 const UploadCard = () => {
   const [selectedMenuItem, setSelectedMenuItem] = useState("option1");
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [menuText, setMenuText] = useState(
-    "Denominacion del Instrumento Normativo"
-  );
+  const [menuText, setMenuText] = useState("Denominacion del Instrumento Normativo");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [menuOptionSelected, setMenuOptionSelected] = useState(false);
@@ -39,34 +27,69 @@ const UploadCard = () => {
   const { currentUser } = useContext(UserRoleContext);
   const itemsPerPage = 5;
 
+  useEffect(() => {
+    // Cargar archivos existentes al cargar el componente
+    loadExistingFiles();
+  }, [selectedMenuItem]); // Actualiza la lista cuando cambia la opción del menú
+
+  const loadExistingFiles = async () => {
+    try {
+      const params = {
+        Bucket: "universidad-tom",
+        Prefix: selectedMenuItem, // Filtrar por la opción del menú actual
+      };
+
+      const data = await s3.listObjectsV2(params).promise();
+
+      const files = data.Contents.map((content) => ({
+        name: content.Key.split('/').pop(), // Obtener el nombre del archivo del Key
+        url: s3.getSignedUrl('getObject', { Bucket: "universidad-tom", Key: content.Key }),
+        option: selectedMenuItem,
+      }));
+
+      setUploadedFiles(files);
+    } catch (error) {
+      console.error("Error loading existing files from S3:", error);
+      message.error("Error al cargar los archivos existentes de S3.");
+    }
+  };
+
   const handleMenuClick = (e) => {
     setSelectedMenuItem(e.key);
     setMenuText(e.item.props.children);
     setMenuOptionSelected(true);
   };
 
-  const handleFileUpload = (info) => {
+  const handleFileUpload = async (info) => {
     setIsLoading(true);
 
     if (!menuOptionSelected) {
-      message.error(
-        "Por favor selecciona una opción del menú antes de subir un archivo."
-      );
+      message.error("Por favor selecciona una opción del menú antes de subir un archivo.");
       setIsLoading(false);
       return;
     }
 
-    if (info.file.status === "done") {
-      const uploadedFile = {
-        ...info.file,
-        url: "URL_DEL_ARCHIVO",
-        option: selectedMenuItem,
-      };
+    try {
+      if (info.file.status === "done") {
+        const file = info.file.originFileObj;
 
-      message.success(`${info.file.name} El archivo se subió con éxito.`);
-      setUploadedFiles([...uploadedFiles, uploadedFile]);
-    } else if (info.file.status === "error") {
-      message.error(`${info.file.name} Error al Subir el Archivo.`);
+        const params = {
+          Bucket: "universidad-tom",
+          Key: `${selectedMenuItem}/${file.name}`, // Puedes personalizar la clave según tus necesidades
+          Body: file,
+          ACL: "public-read", // Establece el acl como público
+        };
+
+        const uploadedFile = await s3.upload(params).promise();
+
+        message.success(`${info.file.name} El archivo se subió con éxito.`);
+        setUploadedFiles([...uploadedFiles, { ...info.file, url: uploadedFile.Location, option: selectedMenuItem }]);
+      } else if (info.file.status === "error") {
+        message.error(`${info.file.name} Error al Subir el Archivo.`);
+      }
+    } catch (error) {
+      console.error("Error uploading file to S3:", error);
+      message.error("Error al subir el archivo a S3.");
     }
 
     setIsLoading(false);
@@ -118,19 +141,11 @@ const UploadCard = () => {
 
   return (
     <Card
-      title={
-        <span style={{ color: "#FFF", padding: "0.5rem" }}>
-          Marco Normativo Vigente
-        </span>
-      }
+      title={<span style={{ color: "#FFF", padding: "0.5rem" }}>Marco Normativo Vigente</span>}
       headStyle={{ backgroundColor: "#6A0F49" }}
     >
       <Row gutter={16}>
-        <Col
-          span={12}
-          className="menu-col"
-          style={{ background: "cccccc40", padding: "1rem" }}
-        >
+        <Col span={12} className="menu-col" style={{ background: "cccccc40", padding: "1rem" }}>
           <Menu
             onClick={handleMenuClick}
             selectedKeys={[selectedMenuItem]}
@@ -138,23 +153,12 @@ const UploadCard = () => {
             style={{ color: "#6A0F49" }}
           >
             <Tooltip title="Selecciona la Denominación del Instrumento Normativo">
-              <SubMenu
-                key="sub1"
-                title={<span style={{ color: "#6A0F49" }}>{menuText}</span>}
-              >
+              <SubMenu key="sub1" title={<span style={{ color: "#6A0F49" }}>{menuText}</span>}>
                 <Menu.Item key="Ley">Ley</Menu.Item>
-                <Menu.Item key="Decreto de Creación">
-                  Decreto de Creación
-                </Menu.Item>
-                <Menu.Item key="Reglamento Interior">
-                  Reglamento Interior
-                </Menu.Item>
-                <Menu.Item key="Manual Organizacional">
-                  Manual Organizacional
-                </Menu.Item>
-                <Menu.Item key="Manual de Procedimientos">
-                  Manual de Procedimientos
-                </Menu.Item>
+                <Menu.Item key="Decreto de Creación">Decreto de Creación</Menu.Item>
+                <Menu.Item key="Reglamento Interior">Reglamento Interior</Menu.Item>
+                <Menu.Item key="Manual Organizacional">Manual Organizacional</Menu.Item>
+                <Menu.Item key="Manual de Procedimientos">Manual de Procedimientos</Menu.Item>
                 <Menu.Item key="Otros">Otros</Menu.Item>
               </SubMenu>
             </Tooltip>
@@ -166,11 +170,7 @@ const UploadCard = () => {
               showUploadList={false}
               customRequest={customRequest}
               beforeUpload={(file) => {
-                if (
-                  !fileTypes.includes(
-                    file.name.slice(file.name.lastIndexOf("."))
-                  )
-                ) {
+                if (!fileTypes.includes(file.name.slice(file.name.lastIndexOf(".")))) {
                   message.error("Solo se permiten archivos PDF");
                   return false;
                 }
@@ -216,20 +216,14 @@ const UploadCard = () => {
                 ellipsis
                 render={(text, record) => (
                   <Space size="middle">
-                    <a
-                      href={record.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={record.url} target="_blank" rel="noopener noreferrer">
                       <EyeOutlined />
                     </a>
                     <a href={record.url} download>
                       <DownloadOutlined />
                     </a>
-                    {currentUser?.roles === "ADMIN" && (
-                      <a onClick={() => showDeleteConfirm(record.uid)}>
-                        Eliminar
-                      </a>
+                    {currentUser?.roles === "Secretario Técnico" && (
+                      <a onClick={() => showDeleteConfirm(record.uid)}>Eliminar</a>
                     )}
                   </Space>
                 )}
