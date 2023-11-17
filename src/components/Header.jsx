@@ -1,7 +1,7 @@
-import React from 'react';
-import { Menu, Dropdown } from 'antd';
-import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import logo from '../assets/img/EscudoMichoacanHorizontal6.png';
+import React from 'react'
+import { Menu, Dropdown } from 'antd'
+import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons'
+import logo from '../assets/img/EscudoMichoacanHorizontal6.png'
 
 const Header = ({ userRole, signOut }) => {
   const headerStyle = {
@@ -12,13 +12,13 @@ const Header = ({ userRole, signOut }) => {
     justifyContent: 'space-between',
     alignItems: 'center',
     height: '70px',
-  };
+  }
 
   const logoStyle = {
     width: '150px',
     height: 'auto',
     marginLeft: '10px',
-  };
+  }
 
   const navigationStyle = {
     listStyle: 'none',
@@ -26,46 +26,52 @@ const Header = ({ userRole, signOut }) => {
     margin: 0,
     padding: 0,
     alignItems: 'center',
-  };
+  }
 
   const listItemStyle = {
     margin: '0 10px',
-  };
+  }
 
   const buttonStyle = {
     marginLeft: 'auto',
-  };
+  }
 
   const menuStyle = {
     color: '#701e45', // Color rojo para el texto del menú desplegable
-  };
+  }
 
   const menu = (
     <Menu>
-      <Menu.Item key="1" onClick={signOut} icon={<LogoutOutlined />} style={menuStyle}>
+      <Menu.Item
+        key='1'
+        onClick={signOut}
+        icon={<LogoutOutlined />}
+        style={menuStyle}>
         Cerrar Sesión
       </Menu.Item>
     </Menu>
-  );
+  )
 
   const cuentaStyle = {
     color: 'white',
     textDecoration: 'none',
     cursor: 'pointer',
-  };
+  }
 
   return (
-    <header style={headerStyle} className="header">
+    <header style={headerStyle} className='header'>
       <div>
-        <img src={logo} alt="Escudo Michoacán" style={logoStyle} />
+        <img src={logo} alt='Escudo Michoacán' style={logoStyle} />
       </div>
-      <p style={{ fontSize: '20px' }}>Sistema de Seguimiento a Órganos de Gobierno del Estado de Michoacán</p>
       <nav>
         <ul style={navigationStyle}>
           <li style={listItemStyle}>FAQ</li>
           <li style={listItemStyle}>
-            <Dropdown overlay={menu} placement="bottomRight" arrow>
-              <a className="ant-dropdown-link" style={cuentaStyle} onClick={(e) => e.preventDefault()}>
+            <Dropdown overlay={menu} placement='bottomRight' arrow>
+              <a
+                className='ant-dropdown-link'
+                style={cuentaStyle}
+                onClick={(e) => e.preventDefault()}>
                 Cuenta
               </a>
             </Dropdown>
@@ -73,7 +79,7 @@ const Header = ({ userRole, signOut }) => {
         </ul>
       </nav>
     </header>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header
