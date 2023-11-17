@@ -1,21 +1,42 @@
-import React, { useState } from 'react';
-import { Card, Menu, Upload, message, Table, Space, Row, Col, Pagination, Spin, Modal } from 'antd';
-import { UploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
-import './MarcoNormativo.css';
-import { Tooltip } from 'antd';
+import React, { useState } from "react";
+import {
+  Card,
+  Menu,
+  Upload,
+  message,
+  Table,
+  Space,
+  Row,
+  Col,
+  Pagination,
+  Spin,
+  Modal,
+} from "antd";
+import {
+  UploadOutlined,
+  EyeOutlined,
+  DownloadOutlined,
+} from "@ant-design/icons";
+import "./MarcoNormativo.css";
+import { Tooltip } from "antd";
+import { useContext } from "react";
+import { UserRoleContext } from "../context/UserRoleContext";
 
 const { SubMenu } = Menu;
 const { Dragger } = Upload;
 const { Column } = Table;
 
 const UploadCard = () => {
-  const [selectedMenuItem, setSelectedMenuItem] = useState('option1');
+  const [selectedMenuItem, setSelectedMenuItem] = useState("option1");
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [menuText, setMenuText] = useState('Denominacion del Instrumento Normativo');
+  const [menuText, setMenuText] = useState(
+    "Denominacion del Instrumento Normativo"
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [menuOptionSelected, setMenuOptionSelected] = useState(false);
   const [deleteFileUid, setDeleteFileUid] = useState(null);
+  const { currentUser } = useContext(UserRoleContext);
   const itemsPerPage = 5;
 
   const handleMenuClick = (e) => {
@@ -28,21 +49,23 @@ const UploadCard = () => {
     setIsLoading(true);
 
     if (!menuOptionSelected) {
-      message.error('Por favor selecciona una opción del menú antes de subir un archivo.');
+      message.error(
+        "Por favor selecciona una opción del menú antes de subir un archivo."
+      );
       setIsLoading(false);
       return;
     }
 
-    if (info.file.status === 'done') {
+    if (info.file.status === "done") {
       const uploadedFile = {
         ...info.file,
-        url: 'URL_DEL_ARCHIVO',
-        option: selectedMenuItem
+        url: "URL_DEL_ARCHIVO",
+        option: selectedMenuItem,
       };
 
       message.success(`${info.file.name} El archivo se subió con éxito.`);
       setUploadedFiles([...uploadedFiles, uploadedFile]);
-    } else if (info.file.status === 'error') {
+    } else if (info.file.status === "error") {
       message.error(`${info.file.name} Error al Subir el Archivo.`);
     }
 
@@ -66,24 +89,24 @@ const UploadCard = () => {
   const showDeleteConfirm = (uid) => {
     setDeleteFileUid(uid);
     Modal.confirm({
-      title: 'Confirmar eliminación',
-      content: '¿Seguro que deseas eliminar este archivo?',
-      okText: 'Sí',
-      okType: 'danger',
-      cancelText: 'No',
+      title: "Confirmar eliminación",
+      content: "¿Seguro que deseas eliminar este archivo?",
+      okText: "Sí",
+      okType: "danger",
+      cancelText: "No",
       onOk: () => handleDeleteFile(uid),
       onCancel: () => setDeleteFileUid(null),
     });
   };
 
   const handleDeleteFile = (uid) => {
-    const updatedFiles = uploadedFiles.filter(file => file.uid !== uid);
+    const updatedFiles = uploadedFiles.filter((file) => file.uid !== uid);
     setUploadedFiles(updatedFiles);
     setDeleteFileUid(null);
   };
 
-  const fileTypes = ['.pdf'];
-  const acceptTypes = fileTypes.join(',');
+  const fileTypes = [".pdf"];
+  const acceptTypes = fileTypes.join(",");
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, uploadedFiles.length);
@@ -95,24 +118,43 @@ const UploadCard = () => {
 
   return (
     <Card
-      title={<span style={{ color: '#FFF', padding: '0.5rem' }}>Marco Normativo Vigente</span>}
-      headStyle={{ backgroundColor: '#6A0F49' }}
+      title={
+        <span style={{ color: "#FFF", padding: "0.5rem" }}>
+          Marco Normativo Vigente
+        </span>
+      }
+      headStyle={{ backgroundColor: "#6A0F49" }}
     >
       <Row gutter={16}>
-        <Col span={12} className="menu-col" style={{ background: 'cccccc40', padding: '1rem' }}>
+        <Col
+          span={12}
+          className="menu-col"
+          style={{ background: "cccccc40", padding: "1rem" }}
+        >
           <Menu
             onClick={handleMenuClick}
             selectedKeys={[selectedMenuItem]}
             mode="vertical"
-            style={{ color: '#6A0F49' }}
+            style={{ color: "#6A0F49" }}
           >
             <Tooltip title="Selecciona la Denominación del Instrumento Normativo">
-              <SubMenu key="sub1" title={<span style={{ color: '#6A0F49' }}>{menuText}</span>}>
+              <SubMenu
+                key="sub1"
+                title={<span style={{ color: "#6A0F49" }}>{menuText}</span>}
+              >
                 <Menu.Item key="Ley">Ley</Menu.Item>
-                <Menu.Item key="Decreto de Creación">Decreto de Creación</Menu.Item>
-                <Menu.Item key="Reglamento Interior">Reglamento Interior</Menu.Item>
-                <Menu.Item key="Manual Organizacional">Manual Organizacional</Menu.Item>
-                <Menu.Item key="Manual de Procedimientos">Manual de Procedimientos</Menu.Item>
+                <Menu.Item key="Decreto de Creación">
+                  Decreto de Creación
+                </Menu.Item>
+                <Menu.Item key="Reglamento Interior">
+                  Reglamento Interior
+                </Menu.Item>
+                <Menu.Item key="Manual Organizacional">
+                  Manual Organizacional
+                </Menu.Item>
+                <Menu.Item key="Manual de Procedimientos">
+                  Manual de Procedimientos
+                </Menu.Item>
                 <Menu.Item key="Otros">Otros</Menu.Item>
               </SubMenu>
             </Tooltip>
@@ -124,8 +166,12 @@ const UploadCard = () => {
               showUploadList={false}
               customRequest={customRequest}
               beforeUpload={(file) => {
-                if (!fileTypes.includes(file.name.slice(file.name.lastIndexOf('.')))) {
-                  message.error('Solo se permiten archivos PDF');
+                if (
+                  !fileTypes.includes(
+                    file.name.slice(file.name.lastIndexOf("."))
+                  )
+                ) {
+                  message.error("Solo se permiten archivos PDF");
                   return false;
                 }
                 handlePreview(file);
@@ -138,7 +184,9 @@ const UploadCard = () => {
                 <p className="ant-upload-drag-icon">
                   <UploadOutlined />
                 </p>
-                <p className="ant-upload-text">Click para seleccionar el archivo o arrástralo a este panel</p>
+                <p className="ant-upload-text">
+                  Click para seleccionar el archivo o arrástralo a este panel
+                </p>
               </>
             </Dragger>
           </Spin>
@@ -146,26 +194,43 @@ const UploadCard = () => {
 
         <Col span={12} className="list-col">
           <div className="list-container">
-            <Table
-              dataSource={paginatedFiles}
-              pagination={false}
-            >
-              <Column title={<span style={{ color: '#701e45' }}>Nombre</span>} dataIndex="name" key="name" width={150} ellipsis />
-              <Column title={<span style={{ color: '#701e45' }}>Tipo</span>} dataIndex="option" key="option" width={150} ellipsis />
+            <Table dataSource={paginatedFiles} pagination={false}>
               <Column
-                title={<span style={{ color: '#701e45' }}>Acción</span>}
+                title={<span style={{ color: "#701e45" }}>Nombre</span>}
+                dataIndex="name"
+                key="name"
+                width={150}
+                ellipsis
+              />
+              <Column
+                title={<span style={{ color: "#701e45" }}>Tipo</span>}
+                dataIndex="option"
+                key="option"
+                width={150}
+                ellipsis
+              />
+              <Column
+                title={<span style={{ color: "#701e45" }}>Acción</span>}
                 key="action"
                 width={150}
                 ellipsis
                 render={(text, record) => (
                   <Space size="middle">
-                    <a href={record.url} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={record.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <EyeOutlined />
                     </a>
                     <a href={record.url} download>
                       <DownloadOutlined />
                     </a>
-                    <a onClick={() => showDeleteConfirm(record.uid)}>Eliminar</a>
+                    {currentUser?.roles === "ADMIN" && (
+                      <a onClick={() => showDeleteConfirm(record.uid)}>
+                        Eliminar
+                      </a>
+                    )}
                   </Space>
                 )}
               />

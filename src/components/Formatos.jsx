@@ -1,22 +1,48 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Button, Space, Modal, Dropdown, Menu, Pagination, Card, Empty } from "antd";
-import { FileAddOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons";
-import { uploadFileToS3, downloadFileFromS3, listObjectsInS3Bucket } from "../services/S3Service";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import {
+  Button,
+  Space,
+  Modal,
+  Dropdown,
+  Menu,
+  Pagination,
+  Card,
+  Empty,
+} from "antd";
+import {
+  FileAddOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+} from "@ant-design/icons";
+import {
+  uploadFileToS3,
+  downloadFileFromS3,
+  listObjectsInS3Bucket,
+} from "../services/S3Service";
+import { UserRoleContext } from "../context/UserRoleContext";
 
 const FormatosMenu = () => {
   const [objectList, setObjectList] = useState([]);
   const [deleteFileName, setDeleteFileName] = useState("");
   const fileInputRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const { currentUser } = useContext(UserRoleContext);
 
   useEffect(() => {
     listS3Objects();
-  }, [currentPage]);
+  }, [currentPage, currentUser]);
 
   const listS3Objects = async () => {
     try {
-      const objects = await listObjectsInS3Bucket("sisogem");
+      let objects = [];
+      if (currentUser?.organismo) {
+        for (const organismo of currentUser.organismo) {
+          const organismoObjects = await listObjectsInS3Bucket(organismo);
+          objects = [ ...objects, ...organismoObjects ];
+        }
+      }
       setObjectList(objects);
+      console.log(objects);
     } catch (error) {
       console.error("Error al listar objetos de S3:", error);
     }
@@ -35,16 +61,22 @@ const FormatosMenu = () => {
     }
 
     try {
-      await uploadFileToS3(file);
+      if (currentUser?.organismo) {
+        for (const organismo of currentUser.organismo) {
+          console.log(organismo);
+          await uploadFileToS3(file, organismo);
+        }
+      }
+
       listS3Objects();
     } catch (error) {
       console.error("Error al subir el archivo:", error);
     }
   };
 
-  const handleFileDownload = async (fileName) => {
+  const handleFileDownload = async (fileName, bucketName) => {
     try {
-      const blob = await downloadFileFromS3(fileName);
+      const blob = await downloadFileFromS3(fileName, bucketName);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -72,7 +104,9 @@ const FormatosMenu = () => {
 
   const handleFileDelete = async (fileName) => {
     try {
-      const updatedObjectList = objectList.filter((object) => object.Key !== fileName);
+      const updatedObjectList = objectList.filter(
+        (object) => object.Key !== fileName
+      );
       setObjectList(updatedObjectList);
       setDeleteFileName("");
     } catch (error) {
@@ -80,24 +114,26 @@ const FormatosMenu = () => {
     }
   };
 
-  const menu = (fileName) => (
+  const menu = (fileName, bucketName, userRole) => (
     <Menu>
       <Menu.Item
         key="1"
         icon={<DownloadOutlined />}
-        onClick={() => handleFileDownload(fileName)}
+        onClick={() => handleFileDownload(fileName, bucketName)}
         style={{ color: "#1890ff" }}
       >
         Descargar
       </Menu.Item>
-      <Menu.Item
-        key="2"
-        icon={<DeleteOutlined />}
-        onClick={() => showDeleteConfirm(fileName)}
-        style={{ color: "#701e45" }}
-      >
-        Eliminar
-      </Menu.Item>
+      {currentUser?.roles === "ADMIN" && (
+        <Menu.Item
+          key="2"
+          icon={<DeleteOutlined />}
+          onClick={() => showDeleteConfirm(fileName)}
+          style={{ color: "#701e45" }}
+        >
+          Eliminar
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -109,16 +145,35 @@ const FormatosMenu = () => {
   return (
     <div>
       <h2>Formatos editables</h2>
-      <Card title="Documentos" style={{ width: "80%", margin: "auto", height: "400px", overflowY: "auto" }}>
+      <Card
+        title="Documentos"
+        style={{
+          width: "80%",
+          margin: "auto",
+          height: "400px",
+          overflowY: "auto",
+        }}
+      >
         {objectList.length === 0 ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No hay documentos" />
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="No hay documentos"
+          />
         ) : (
           <Space size={20} wrap style={{ justifyContent: "center" }}>
             {displayedObjects.map((object, index) => (
-              <Dropdown key={index} overlay={menu(object.Key)} trigger={["hover"]}>
+              <Dropdown
+                key={index}
+                overlay={menu(object.Key, object.bucketName, currentUser?.roles)}
+                trigger={["hover"]}
+              >
                 <div style={{ position: "relative" }}>
                   <Button
-                    icon={<FileAddOutlined style={{ fontSize: "50px", alignSelf: "center" }} />}
+                    icon={
+                      <FileAddOutlined
+                        style={{ fontSize: "50px", alignSelf: "center" }}
+                      />
+                    }
                     size="large"
                     style={{
                       display: "flex",
@@ -141,28 +196,40 @@ const FormatosMenu = () => {
           </Space>
         )}
       </Card>
-      <div style={{ marginTop: "20px", display: "flex", justifyContent: "center" }}>
-        <input
-          type="file"
-          onChange={handleFileChange}
-          style={{ display: "none" }}
-          ref={fileInputRef}
-        />
-        <Button
-          type="primary"
+      {currentUser?.roles === "ADMIN" && (
+        <div
           style={{
-            backgroundColor: "#701e45",
-            color: "#ffffff",
-            borderRadius: "5px",
+            marginTop: "20px",
+            display: "flex",
+            justifyContent: "center",
           }}
-          onClick={handleFileUpload}
         >
-          Seleccionar Archivo
-        </Button>
-      </div>
+          <input
+            type="file"
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+            ref={fileInputRef}
+          />
+          <Button
+            type="primary"
+            style={{
+              backgroundColor: "#701e45",
+              color: "#ffffff",
+              borderRadius: "5px",
+            }}
+            onClick={handleFileUpload}
+          >
+            Seleccionar Archivo
+          </Button>
+        </div>
+      )}
       {deleteFileName && (
         <div style={{ marginTop: "20px" }}>
-          <Button type="danger" icon={<DeleteOutlined />} onClick={() => showDeleteConfirm(deleteFileName)}>
+          <Button
+            type="danger"
+            icon={<DeleteOutlined />}
+            onClick={() => showDeleteConfirm(deleteFileName)}
+          >
             Eliminar
           </Button>
         </div>

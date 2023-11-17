@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { Auth } from "aws-amplify";
 import { Layout, Menu } from "antd";
+import { UserService } from "../services/UserService";
 import "./Dashboard.css";
 import {
   HomeOutlined,
@@ -29,6 +31,8 @@ import Indicadores from "./Indicadores";
 import Repositorio from "./Repositorio";
 import BuzonReportes from "./BuzonReportes";
 import EscudoImg from "../assets/img/Escudo.png";
+import { useContext } from "react";
+import { UserRoleContext } from "../context/UserRoleContext";
 
 const { Sider, Content } = Layout;
 
@@ -45,11 +49,7 @@ const menuItems = [
     text: "Sesiones programadas",
     icon: <CalendarOutlined />,
   },
-  {
-    path: "/sesion-en-progreso",
-    text: "Sesión en progreso",
-    icon: <ClockCircleOutlined />,
-  },
+
   { path: "/archivo", text: "Archivo", icon: <FileOutlined /> },
   { path: "/formatos", text: "Formatos", icon: <UnorderedListOutlined /> },
   { path: "/indicadores", text: "Indicadores", icon: <BarChartOutlined /> },
@@ -61,9 +61,10 @@ const menuItems = [
   },
 ];
 
-function Dashboard() {
+function Dashboard({ userRole }) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { setCurrentUser } = useContext(UserRoleContext);
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
@@ -76,8 +77,24 @@ function Dashboard() {
     });
   }, []);
 
+  const updateCurrentUserContext = async () => {
+    const { attributes } = await Auth.currentAuthenticatedUser();
+    const response = await UserService.getUserInfoByEmail(attributes.email);
+    setCurrentUser(response);
+  };
+
+  useEffect(() => {
+    updateCurrentUserContext();
+  }, []);
+
   return (
-    <Layout style={{ minHeight: "calc(90.5vh - 1px)", background: "#fff", width: "100%" }}>
+    <Layout
+      style={{
+        minHeight: "calc(90.5vh - 1px)",
+        background: "#fff",
+        width: "100%",
+      }}
+    >
       <Sider
         collapsible
         collapsed={collapsed}
@@ -102,7 +119,7 @@ function Dashboard() {
               }}
             >
               {/* Apply the style to remove underline */}
-              <Link to={item.path} style={{ textDecoration: 'none' }}>
+              <Link to={item.path} style={{ textDecoration: "none" }}>
                 {item.text}
               </Link>
             </Menu.Item>
@@ -116,18 +133,35 @@ function Dashboard() {
         <Content style={{ margin: "16px" }}>
           <Routes>
             <Route path="/entidad" element={<Entidad />} />
-            <Route path="/marco-normativo" element={<MarcoNormativo />} />
-            <Route path="/organos-de-gobierno" element={<OrganoGobierno />} />
+            <Route
+              path="/marco-normativo"
+              element={<MarcoNormativo />}
+            />
+            <Route
+              path="/organos-de-gobierno"
+              element={<OrganoGobierno />}
+            />
             <Route
               path="/sesiones-programadas"
               element={<SesionesProgramadas />}
             />
-            <Route path="/sesion-en-progreso" element={<SesionProgreso />} />
             <Route path="/archivo" element={<Archivo />} />
-            <Route path="/formatos" element={<Formatos />} />
-            <Route path="/indicadores" element={<Indicadores />} />
-            <Route path="/repositorio" element={<Repositorio />} />
-            <Route path="/buzon-de-reportes" element={<BuzonReportes />} />
+            <Route
+              path="/formatos"
+              element={<Formatos />}
+            />
+            <Route
+              path="/indicadores"
+              element={<Indicadores />}
+            />
+            <Route
+              path="/repositorio"
+              element={<Repositorio />}
+            />
+            <Route
+              path="/buzon-de-reportes"
+              element={<BuzonReportes />}
+            />
           </Routes>
         </Content>
       </Layout>

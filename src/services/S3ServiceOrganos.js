@@ -1,8 +1,8 @@
 import { s3 } from './AWSConfig';
 
-export const uploadFileToS3 = (file, organismo) => {
+export const uploadFileToS3 = (file) => {
   const params = {
-    Bucket: organismo,
+    Bucket: 'organismos',
     Key: file.name,
     Body: file,
     ContentType: file.type,
@@ -11,9 +11,9 @@ export const uploadFileToS3 = (file, organismo) => {
   return s3.upload(params).promise();
 };
 
-export const downloadFileFromS3 = async (fileName , bucketName) => {
+export const downloadFileFromS3 = async (fileName) => {
   const params = {
-    Bucket: bucketName,
+    Bucket: 'organismos',
     Key: fileName,
   };
 
@@ -33,13 +33,7 @@ export const listObjectsInS3Bucket = async (bucketName) => {
 
   try {
     const data = await s3.listObjects(params).promise();
-    const dataToReturn = data.Contents.map(doc => {
-      return {
-        ...doc,
-        bucketName
-      }
-    })
-    return dataToReturn;
+    return data.Contents;
   } catch (error) {
     throw new Error(`Error al listar objetos en el bucket: ${error.message}`);
   }

@@ -11,9 +11,9 @@ import SignUp from "./components/SignUp";
 import ConfirmSignUp from "./components/ConfirmSignUp";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
+import { UserRoleProvider } from "./context/UserRoleContext";
 
 Amplify.configure(awsExports);
-
 
 function App() {
   const [user, setUser] = useState(null);
@@ -109,42 +109,44 @@ function App() {
   };
 
   return (
-    <Router key={user ? user.username : "login"}>
-      <div>
-        {view === "dashboard" && user && (
-          <>
-            <Header user={user} signOut={handleSignOut} userRole={role}/>
-            <Dashboard />
-          </>
-        )}
-        {view === "login" && !user && (
-          <Login setUser={setUser} setRole={setRole} changeView={setView} />
-        )}
-        {view === "signup" && (
-          <SignUp setSignUpData={setSignUpData} changeView={setView} />
-        )}
-        {view === "confirmSignUp" && (
-          <ConfirmSignUp
-            confirmSignUpData={confirmSignUpData}
-            email={email}
-            changeView={setView}
-          />
-        )}
-        {view === "forgotPassword" && (
-          <ForgotPassword
-            onResetPassword={handleForgotPassword}
-            changeView={setView}
-          />
-        )}
-        {view === "resetPassword" && (
-          <ResetPassword
-            onResetPasswordSubmit={handleResetPasswordSubmit}
-            changeView={setView}
-          />
-        )}
-        {/* Aquí puedes agregar la lógica de la vista 'resetPassword' si es necesario */}
-      </div>
-    </Router>
+    <UserRoleProvider>
+      <Router key={user ? user.username : "login"}>
+        <div>
+          {view === "dashboard" && user && (
+            <>
+              <Header user={user} signOut={handleSignOut} userRole={role} />
+              <Dashboard userRole={role} />
+            </>
+          )}
+          {view === "login" && !user && (
+            <Login setUser={setUser} setRole={setRole} changeView={setView} />
+          )}
+          {view === "signup" && (
+            <SignUp setSignUpData={setSignUpData} changeView={setView} />
+          )}
+          {view === "confirmSignUp" && (
+            <ConfirmSignUp
+              confirmSignUpData={confirmSignUpData}
+              email={email}
+              changeView={setView}
+            />
+          )}
+          {view === "forgotPassword" && (
+            <ForgotPassword
+              onResetPassword={handleForgotPassword}
+              changeView={setView}
+            />
+          )}
+          {view === "resetPassword" && (
+            <ResetPassword
+              onResetPasswordSubmit={handleResetPasswordSubmit}
+              changeView={setView}
+            />
+          )}
+          {/* Aquí puedes agregar la lógica de la vista 'resetPassword' si es necesario */}
+        </div>
+      </Router>
+    </UserRoleProvider>
   );
 }
 

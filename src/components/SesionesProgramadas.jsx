@@ -1,14 +1,24 @@
 // SesionesProgramadas.js
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import { DatePicker, Space } from 'antd';
-import { FormControl, InputLabel, Select, MenuItem, Radio, RadioGroup, FormControlLabel } from '@mui/material';
-import SavedSessions from './SesionGuardada';
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import { DatePicker, Space } from "antd";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+} from "@mui/material";
+import SavedSessions from "./SesionGuardada";
+import { useContext } from "react";
+import { UserRoleContext } from "../context/UserRoleContext";
 
 const { RangePicker } = DatePicker;
 
@@ -41,16 +51,17 @@ CustomTabPanel.propTypes = {
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
   };
 }
 
 export default function SesionesProgramadas() {
   const [value, setValue] = useState(0);
-  const [sesionValue, setSesionValue] = useState('');
+  const [sesionValue, setSesionValue] = useState("");
   const [dateValue, setDateValue] = useState(null);
-  const [radioOption, setRadioOption] = useState('option1');
+  const [radioOption, setRadioOption] = useState("option1");
   const [savedSessions, setSavedSessions] = useState([]);
+  const { currentUser } = useContext(UserRoleContext);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -81,7 +92,7 @@ export default function SesionesProgramadas() {
   const handleSave = () => {
     // Validaciones
     if (!sesionValue || !dateValue) {
-      alert('Por favor, complete todos los campos antes de guardar la sesión.');
+      alert("Por favor, complete todos los campos antes de guardar la sesión.");
       return;
     }
 
@@ -93,15 +104,19 @@ export default function SesionesProgramadas() {
 
     setSavedSessions((prevSessions) => [...prevSessions, newSession]);
 
-    setSesionValue('');
+    setSesionValue("");
     setDateValue(null);
-    setRadioOption('option1');
+    setRadioOption("option1");
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs
+          value={value}
+          onChange={handleChange}
+          aria-label="basic tabs example"
+        >
           <Tab label="Programar Sesión" {...a11yProps(0)} />
           <Tab label="Sesiones Programadas" {...a11yProps(1)} />
           <Tab label="Sesión en Progreso" {...a11yProps(2)} />
@@ -115,17 +130,33 @@ export default function SesionesProgramadas() {
           value={radioOption}
           onChange={handleRadioChange}
         >
-          <FormControlLabel value="option1" control={<Radio />} label="Ordinaria" />
-          <FormControlLabel value="option2" control={<Radio />} label="Extraordinaria" />
+          <FormControlLabel
+            value="option1"
+            control={<Radio />}
+            label="Ordinaria"
+          />
+          <FormControlLabel
+            value="option2"
+            control={<Radio />}
+            label="Extraordinaria"
+          />
         </RadioGroup>
         <NumeroSesion
           value={sesionValue}
           onChange={handleNumeroSesionChange}
           radioOption={radioOption}
         />
-        <SelectDate value={dateValue} onChange={handleSelectDateChange} onSave={handleSave} />
+        <SelectDate
+          value={dateValue}
+          onChange={handleSelectDateChange}
+          onSave={handleSave}
+        />
         <SeleccionaFecha />
-        <Button variant="contained" onClick={() => handleSave(dateValue)} disabled={!sesionValue || !dateValue}>
+        <Button
+          variant="contained"
+          onClick={() => handleSave(dateValue)}
+          disabled={!sesionValue || !dateValue}
+        >
           Guardar
         </Button>
       </CustomTabPanel>
@@ -147,13 +178,15 @@ export function NumeroSesion(props) {
   const { value, onChange, radioOption } = props;
 
   const getMenuItemText = (index) => {
-    return radioOption === 'option1' ? `Sesión ${index}` : `Sesión ${index}`;
+    return radioOption === "option1" ? `Sesión ${index}` : `Sesión ${index}`;
   };
 
   return (
     <Box sx={{ minWidth: 120 }}>
       <FormControl fullWidth>
-        <InputLabel id="demo-simple-select-label">Qué sesión es esta?</InputLabel>
+        <InputLabel id="demo-simple-select-label">
+          Qué sesión es esta?
+        </InputLabel>
         <Select
           labelId="demo-simple-select-label"
           id="demo-simple-select"
@@ -161,19 +194,17 @@ export function NumeroSesion(props) {
           label="Sesion"
           onChange={onChange}
         >
-          {radioOption === 'option1' ? (
-            Array.from({ length: 4 }, (_, index) => (
-              <MenuItem key={index + 1} value={index + 1}>
-                {getMenuItemText(index + 1)}
-              </MenuItem>
-            ))
-          ) : (
-            Array.from({ length: 20 }, (_, index) => (
-              <MenuItem key={index + 1} value={index + 1}>
-                {getMenuItemText(index + 1)}
-              </MenuItem>
-            ))
-          )}
+          {radioOption === "option1"
+            ? Array.from({ length: 4 }, (_, index) => (
+                <MenuItem key={index + 1} value={index + 1}>
+                  {getMenuItemText(index + 1)}
+                </MenuItem>
+              ))
+            : Array.from({ length: 20 }, (_, index) => (
+                <MenuItem key={index + 1} value={index + 1}>
+                  {getMenuItemText(index + 1)}
+                </MenuItem>
+              ))}
         </Select>
       </FormControl>
     </Box>
@@ -185,7 +216,12 @@ export function SelectDate(props) {
 
   return (
     <Space direction="vertical">
-      <PickerWithType type="time" value={value} onChange={onChange} onSave={onSave} />
+      <PickerWithType
+        type="time"
+        value={value}
+        onChange={onChange}
+        onSave={onSave}
+      />
     </Space>
   );
 }
@@ -198,8 +234,8 @@ export function SeleccionaFecha() {
     if (!dates) {
       return false;
     }
-    const tooLate = dates[0] && current.diff(dates[0], 'days') >= 2;
-    const tooEarly = dates[1] && dates[1].diff(current, 'days') >= 2;
+    const tooLate = dates[0] && current.diff(dates[0], "days") >= 2;
+    const tooEarly = dates[1] && dates[1].diff(current, "days") >= 2;
     return !!tooEarly || !!tooLate;
   };
 
@@ -230,5 +266,12 @@ export function SeleccionaFecha() {
 export function PickerWithType(props) {
   const { type, onChange, value, onSave } = props;
 
-  return <DatePicker picker={type} value={value} onChange={onChange} onSave={onSave} />;
+  return (
+    <DatePicker
+      picker={type}
+      value={value}
+      onChange={onChange}
+      onSave={onSave}
+    />
+  );
 }
