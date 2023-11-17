@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu, Dropdown } from 'antd';
-import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { LogoutOutlined, QuestionCircleOutlined, UserOutlined } from '@ant-design/icons';
 import logo from '../assets/img/EscudoMichoacanHorizontal6.png';
 
 const Header = ({ userRole, signOut }) => {
@@ -48,6 +48,15 @@ const Header = ({ userRole, signOut }) => {
     </Menu>
   );
 
+  const faqStyle = {
+    marginRight: '10px', // Adjust margin as needed
+  };
+
+  const cuentaIconStyle = {
+    fontSize: '16px',
+    marginRight: '5px',
+  };
+
   const cuentaStyle = {
     color: 'white',
     textDecoration: 'none',
@@ -62,10 +71,13 @@ const Header = ({ userRole, signOut }) => {
       <p style={{ fontSize: '20px' }}>Sistema de Seguimiento a Órganos de Gobierno del Estado de Michoacán</p>
       <nav>
         <ul style={navigationStyle}>
-          <li style={listItemStyle}>FAQ</li>
+          <li style={{ ...listItemStyle, ...faqStyle }}>
+            <QuestionCircleOutlined style={{ fontSize: '20px', color: 'white' }} />
+          </li>
           <li style={listItemStyle}>
-            <Dropdown overlay={menu} placement="bottomRight" arrow>
+            <Dropdown trigger={["click"]} overlay={menu} placement="bottomRight" arrow>
               <a className="ant-dropdown-link" style={cuentaStyle} onClick={(e) => e.preventDefault()}>
+                <UserOutlined style={cuentaIconStyle} />
                 Cuenta
               </a>
             </Dropdown>
@@ -77,3 +89,4 @@ const Header = ({ userRole, signOut }) => {
 };
 
 export default Header;
+

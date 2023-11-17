@@ -193,6 +193,7 @@ export function SelectDate(props) {
 export function SeleccionaFecha() {
   const [dates, setDates] = useState(null);
   const [value, setValue] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const disabledDate = (current) => {
     if (!dates) {
@@ -212,18 +213,28 @@ export function SeleccionaFecha() {
   };
 
   return (
-    <RangePicker
-      value={dates || value}
-      disabledDate={disabledDate}
-      onCalendarChange={(val) => {
-        setDates(val);
-      }}
-      onChange={(val) => {
-        setValue(val);
-      }}
-      onOpenChange={onOpenChange}
-      changeOnBlur
-    />
+    <div>
+      <RangePicker
+        value={dates || value}
+        disabledDate={disabledDate}
+        onCalendarChange={(val) => {
+          setDates(val);
+        }}
+        onChange={(val) => {
+          setValue(val);
+          setSelectedDate(val && val.length > 0 ? val[0].format('YYYY-MM-DD') : null);
+        }}
+        onOpenChange={onOpenChange}
+        changeOnBlur
+      />
+      <div style={{ marginTop: "10px" }}>
+        {selectedDate && (
+          <p>
+            Fecha seleccionada: {selectedDate}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 

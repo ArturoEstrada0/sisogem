@@ -8,27 +8,25 @@ import './ForgotPassword.css';
 const ForgotPassword = ({ changeView }) => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [showEmptyFieldsAlert, setShowEmptyFieldsAlert] = useState(false);
 
   const handleForgotPassword = async (event) => {
     event.preventDefault();
     setMessage("");
 
     if (!email) {
-      setMessage("Por favor, introduce tu email.");
+      setMessage("");
+      setShowEmptyFieldsAlert(true); // Show the empty fields alert
       return;
     }
 
     try {
       await Auth.forgotPassword(email);
-      setMessage(
-        "Se ha enviado un enlace de recuperación de contraseña a tu email."
-      );
+      setMessage("Se ha enviado un enlace de recuperación de contraseña a tu email.");
       // Aquí puedes cambiar la vista para que el usuario ingrese el código y la nueva contraseña
       changeView("resetPassword");
     } catch (error) {
-      setMessage(
-        "Hubo un error al intentar enviar el enlace de recuperación. Por favor, intenta de nuevo."
-      );
+      setMessage("Hubo un error al intentar enviar el enlace de recuperación. Por favor, intenta de nuevo.");
       console.error("Error al enviar el enlace de recuperación:", error);
     }
   };
@@ -69,6 +67,11 @@ const ForgotPassword = ({ changeView }) => {
                 </button>
               </form>
               {message && <p className="message">{message}</p>}
+              {showEmptyFieldsAlert && (
+                <div className="alert alert-danger" role="alert">
+                  ¡Por favor, proporciona tu correo electronico!
+                </div>
+              )}
               <div>
                 <button
                   onClick={() => changeView("login")}
@@ -87,7 +90,6 @@ const ForgotPassword = ({ changeView }) => {
       </div>
     </div>
   );
-  
 };
 
 export default ForgotPassword;
