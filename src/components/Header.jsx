@@ -87,6 +87,5 @@ const Header = ({ userRole, signOut }) => {
     </header>
   );
 };
-
 export default Header;
 
