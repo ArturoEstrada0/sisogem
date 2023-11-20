@@ -1,18 +1,35 @@
-import React from 'react';
-import { List, Button, Card, Popconfirm } from 'antd';
+import React from "react";
+import { List, Button, Card, Popconfirm } from "antd";
 
-const SesionesProgramadas = ({ data, onIniciarSesion, onEditarSesion, onBorrarSesion }) => {
-  const renderItem = sesion => (
+const SesionesProgramadas = ({
+  data,
+  onIniciarSesion,
+  onEditarSesion,
+  onBorrarSesion,
+}) => {
+  const renderItem = (sesion) => (
     <List.Item>
       <Card>
         <p>Tipo de Sesión: {sesion.tipoSesion}</p>
         <p>Número de Sesión: {sesion.numeroSesion}</p>
         <p>Fecha: {sesion.fecha}</p>
         <p>Hora de Inicio: {sesion.horaInicio}</p>
-        <Button type="primary" onClick={() => onIniciarSesion(sesion)}>
+        {/* Asegúrate de que cada sesión tenga un documentoId */}
+        <Button
+          type="primary"
+          onClick={() => {
+            console.log("Iniciando sesión con Documento ID:", sesion.documentoId);
+
+            onIniciarSesion(sesion);
+          }}
+        >
           Celebrar Sesión
         </Button>
-        <Button style={{ marginLeft: 8 }} onClick={() => onEditarSesion(sesion)}>
+
+        <Button
+          style={{ marginLeft: 8 }}
+          onClick={() => onEditarSesion(sesion)}
+        >
           Editar
         </Button>
         <Popconfirm
@@ -35,7 +52,7 @@ const SesionesProgramadas = ({ data, onIniciarSesion, onEditarSesion, onBorrarSe
       <List
         dataSource={data}
         renderItem={renderItem}
-        locale={{ emptyText: 'No hay sesiones programadas' }}
+        locale={{ emptyText: "No hay sesiones programadas" }}
       />
     </div>
   );

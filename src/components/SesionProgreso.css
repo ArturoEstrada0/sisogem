@@ -1,0 +1,17 @@
+.sesion-progreso-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.sesion-lista {
+  width: 40%;
+}
+
+.documento-iframe {
+  width: 60%;
+}
+
+/* Estilos para los botones adicionales */
+.boton-accion {
+  margin: 10px 0;
+}
