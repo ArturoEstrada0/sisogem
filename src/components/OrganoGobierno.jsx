@@ -588,7 +588,7 @@ const OrganoGobierno = () => {
             <DatePicker />
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             name="oficioDesignacion"
             label="Oficio de Designación / Nombramiento / Acreditación"
             valuePropName="fileList"
@@ -606,7 +606,7 @@ const OrganoGobierno = () => {
             >
               <Button icon={<UploadOutlined />}>Subir archivo</Button>
             </Upload>
-          </Form.Item>
+          </Form.Item> */}
 
           <Form.Item>
             <Button

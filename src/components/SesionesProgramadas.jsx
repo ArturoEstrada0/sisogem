@@ -14,12 +14,11 @@ const SesionesProgramadas = ({
         <p>Número de Sesión: {sesion.numeroSesion}</p>
         <p>Fecha: {sesion.fecha}</p>
         <p>Hora de Inicio: {sesion.horaInicio}</p>
-        {/* Asegúrate de que cada sesión tenga un documentoId */}
+        
         <Button
           type="primary"
           onClick={() => {
             console.log("Iniciando sesión con Documento ID:", sesion.documentoId);
-
             onIniciarSesion(sesion);
           }}
         >
@@ -32,6 +31,7 @@ const SesionesProgramadas = ({
         >
           Editar
         </Button>
+
         <Popconfirm
           title="¿Estás seguro de borrar esta sesión?"
           onConfirm={() => onBorrarSesion(sesion)}

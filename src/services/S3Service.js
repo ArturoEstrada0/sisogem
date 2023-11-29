@@ -1,19 +1,23 @@
-import { s3 } from './AWSConfig';
-
+import { s3 } from "./AWSConfig";
 export const uploadFileToS3 = (file) => {
   const params = {
-    Bucket: 'sisogem',
+    Bucket: "sisogem",
     Key: file.name,
     Body: file,
     ContentType: file.type,
   };
 
-  return s3.upload(params).promise();
+  try {
+    return s3.upload(params).promise();
+  } catch (error) {
+    console.error("Error en uploadFileToS3:", error);
+    throw error;
+  }
 };
 
 export const downloadFileFromS3 = async (fileName) => {
   const params = {
-    Bucket: 'sisogem',
+    Bucket: "sisogem",
     Key: fileName,
   };
 

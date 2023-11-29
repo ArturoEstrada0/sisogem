@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Amplify, Auth } from "aws-amplify";
 import awsExports from "./aws-exports";
+import awsconfig from './aws-exports'; // Asegúrate de que este archivo existe
+
 import "./App.css";
 // Componentes de autenticación
 import Header from "./components/Header";
@@ -13,6 +15,7 @@ import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
 import { UserRoleProvider } from "./context/UserRoleContext";
 
+Amplify.configure(awsconfig);
 Amplify.configure(awsExports);
 
 function App() {

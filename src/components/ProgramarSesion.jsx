@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   DatePicker,
   TimePicker,
@@ -14,18 +14,12 @@ import {
 import SesionesProgramadas from "./SesionesProgramadas";
 import SesionProgreso from "./SesionProgreso";
 import moment from "moment";
-import { gapi } from "gapi-script";
+import AWS from "aws-sdk";
 
-const CLIENT_ID =
-  "916932934820-cf1uga91gnn9vodkocvhirsvr8n7bnv2.apps.googleusercontent.com";
-const API_KEY = "AIzaSyDZWTZfbWXYXP9yZ4RcDssIzGmHiZuQ46s";
-const SCOPES =
-  "https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.file";
-const DISCOVERY_DOCS = [
-  "https://docs.googleapis.com/$discovery/rest?version=v1",
-  "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
-];
+import { Upload, message } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
+import { uploadFileToS3 } from "../services/S3Service";
 const { Option } = Select;
 const { TabPane } = Tabs;
 
@@ -36,14 +30,50 @@ const ProgramarSesion = () => {
   const [numeroSesion, setNumeroSesion] = useState(1);
   const [sesionesProgramadas, setSesionesProgramadas] = useState([]);
   const [sesionesEnProgreso, setSesionesEnProgreso] = useState([]);
-  const [documentoId, setDocumentoId] = useState(null); // Almacenar el ID del documento de Google Drive
   const [sesionEditando, setSesionEditando] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [nuevasSesionesProgramadas, setNuevasSesionesProgramadas] = useState(0);
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
-  const [documentContent, setDocumentContent] = useState(null);
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  // Nuevo estado para almacenar la información de los archivos cargados
+  const [documentos, setDocumentos] = useState([]);
+
+  // AWSConfig.js
+
+  AWS.config.update({
+    accessKeyId: "AKIASAHHYXZDGGYMQIEG",
+    secretAccessKey: "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",
+    region: "us-east-1",
+  });
+
+  const s3 = new AWS.S3();
+
+  // Función para manejar el cambio en la carga de documentos
+  const handleDocumentoChange = async (info) => {
+    console.log("Entró a handleDocumentoChange"); // Agrega este log
+
+    if (info.file.status === "done") {
+      message.success(`${info.file.name} file uploaded successfully`);
+      setDocumentos([...documentos, info.file]);
+      console.log("Documentos después de setDocumentos:", documentos);
+
+      console.log("Documentos:", documentos); // Agrega este log para verificar el estado
+
+      try {
+        console.log("Subiendo archivo a S3...");
+        await uploadFileToS3(info.file.originFileObj);
+        console.log("Archivo subido exitosamente a S3");
+        message.success(`${info.file.name} file uploaded to S3 successfully`);
+      } catch (error) {
+        console.error("Error al subir archivo a S3:", error);
+        message.error(
+          `Error uploading ${info.file.name} to S3: ${error.message}`
+        );
+      }
+    } else if (info.file.status === "error") {
+      message.error(`${info.file.name} file upload failed.`);
+    }
+  };
 
   const handleTipoSesionChange = (value) => {
     setTipoSesion(value);
@@ -61,100 +91,6 @@ const ProgramarSesion = () => {
     setNumeroSesion(value);
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      uploadFileToDrive(file);
-    }
-  };
-
-  const uploadFileToDrive = async (file) => {
-    const reader = new FileReader();
-    reader.readAsArrayBuffer(file);
-    reader.onload = async (e) => {
-      try {
-        const arrayBuffer = reader.result;
-        const base64Data = arrayBufferToBase64(arrayBuffer);
-
-        const boundary = "-------314159265358979323846";
-        const delimiter = "\r\n--" + boundary + "\r\n";
-        const closeDelim = "\r\n--" + boundary + "--";
-
-        const metadata = {
-          name: file.name,
-          mimeType: "application/vnd.google-apps.document",
-        };
-
-        const multipartRequestBody =
-          delimiter +
-          "Content-Type: application/json\r\n\r\n" +
-          JSON.stringify(metadata) +
-          delimiter +
-          "Content-Type: " +
-          file.type +
-          "\r\n" +
-          "Content-Transfer-Encoding: base64\r\n\r\n" +
-          base64Data +
-          closeDelim;
-
-        const response = await gapi.client.request({
-          path: "/upload/drive/v3/files?uploadType=multipart",
-          method: "POST",
-          headers: {
-            "Content-Type": 'multipart/related; boundary="' + boundary + '"',
-          },
-          body: multipartRequestBody,
-        });
-
-        const documentId = response.result.id;
-        const documentUrl =
-          "https://docs.google.com/document/d/" + documentId + "/edit";
-        setDocumentContent(documentUrl);
-        setDocumentoId(response.result.id);
-
-
-      } catch (error) {
-        console.error("Error uploading file to Drive", error);
-      }
-    };
-    reader.onerror = (error) => {
-      console.error("Error reading file", error);
-    };
-  };
-
-  // Función auxiliar para convertir ArrayBuffer a Base64
-  function arrayBufferToBase64(buffer) {
-    let binary = "";
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-  }
-
-  useEffect(() => {
-    gapi.load("client:auth2", initializeGoogleApi);
-  }, []);
-
-  const initializeGoogleApi = () => {
-    gapi.client
-      .init({
-        apiKey: API_KEY,
-        clientId: CLIENT_ID,
-        discoveryDocs: DISCOVERY_DOCS,
-        scope: SCOPES,
-      })
-      .then(() => {
-        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSignInStatus);
-        updateSignInStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-      });
-  };
-
-  const updateSignInStatus = (isSignedIn) => {
-    setIsSignedIn(isSignedIn);
-  };
-
   const openNotification = (type, message, description) => {
     notification[type]({
       message,
@@ -169,18 +105,14 @@ const ProgramarSesion = () => {
         "Error al programar la sesión",
         "Por favor, selecciona fecha y hora de inicio."
       );
-      console.log("Programando sesión con Documento ID:", documentoId);
-
       return;
     }
 
     const nuevaSesion = {
       tipoSesion,
       numeroSesion,
-      fecha: fecha.format("YYYY-MM-DD"),  
+      fecha: fecha.format("YYYY-MM-DD"),
       horaInicio: horaInicio.format("HH:mm"),
-      documentoId, // Incluir el ID del documento en la sesión programada
-      
     };
 
     if (sesionEditando) {
@@ -196,8 +128,6 @@ const ProgramarSesion = () => {
       );
     } else {
       setSesionesProgramadas([...sesionesProgramadas, nuevaSesion]);
-      console.log("Programando sesión con Documento ID:", documentoId);
-
       openNotification(
         "success",
         "Sesión programada",
@@ -370,21 +300,26 @@ const ProgramarSesion = () => {
               >
                 <TimePicker format="HH:mm" onChange={handleHoraInicioChange} />
               </Form.Item>
-              <Form.Item label="Subir Documento para la Sesión">
-                {isSignedIn && (
-                  <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    accept=".doc,.docx"
-                  />
-                )}
+
+              {/* Nuevo campo para cargar documentos */}
+              <Form.Item label="Cargar Documentos" name="documentos">
+                <Upload
+                  onChange={handleDocumentoChange}
+                  beforeUpload={() => false}
+                  multiple
+                >
+                  <Button icon={<UploadOutlined />}>
+                    Click para cargar documentos
+                  </Button>
+                </Upload>
+              </Form.Item>
+
+              <Form.Item>
+                <Button type="primary" onClick={handleProgramarSesion}>
+                  {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
+                </Button>
               </Form.Item>
             </Form>
-            <Form.Item>
-              <Button type="primary" onClick={handleProgramarSesion}>
-                {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
-              </Button>
-            </Form.Item>
           </TabPane>
           <TabPane
             tab={

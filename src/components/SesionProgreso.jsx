@@ -1,30 +1,32 @@
-import React, { useState } from 'react';
-import { List, Button, Card } from 'antd';
-import DocumentoCompartido from './DocumentoCompartido';
+import React, { useState } from "react";
+import { List, Button, Card, notification } from "antd";
+import PDFTron from "./PDFTron";
+
+const showAlert = (type, message) => {
+  notification[type]({
+    message,
+  });
+};
 
 const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
   const [selectedDocumentoId, setSelectedDocumentoId] = useState(null);
   const [isSigning, setIsSigning] = useState(false);
 
-  // Función para iniciar el proceso de firma
   const iniciarFirmaActa = () => {
     if (!selectedDocumentoId) {
-      alert('Por favor, seleccione un documento para firmar.');
+      showAlert("error", "Por favor, seleccione un documento para firmar.");
       return;
     }
     setIsSigning(true);
   };
 
-  // Función para finalizar el proceso de firma
   const finalizarFirmaActa = () => {
     setIsSigning(false);
-    // Aquí puedes agregar la lógica para enviar la firma al documento.
-    // Puedes utilizar Google Docs API u otra biblioteca para insertar la firma en el documento.
-    // Por simplicidad, aquí mostramos una alerta como simulación.
-    alert('Acta firmada exitosamente.');
+    // Add logic here to send the signature to the document using appropriate APIs or libraries.
+    showAlert("success", "Acta firmada exitosamente.");
   };
 
-  const renderItem = sesion => (
+  const renderItem = (sesion) => (
     <List.Item onClick={() => setSelectedDocumentoId(sesion.documentoId)}>
       <Card>
         <p>Tipo de Sesión: {sesion.tipoSesion}</p>
@@ -39,26 +41,25 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
   );
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div style={{ width: '40%' }}>
+    <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div style={{ width: "40%" }}>
         <h2>Sesiones en Progreso</h2>
         <List
           dataSource={sesionesEnProgreso}
           renderItem={renderItem}
           locale={{ emptyText: "No hay sesiones en progreso" }}
         />
-        {/* Botones para iniciar y finalizar la firma del acta */}
-        <Button onClick={iniciarFirmaActa} style={{ margin: '10px 0' }}>Iniciar Firma</Button>
+        <Button onClick={iniciarFirmaActa} style={{ margin: "10px 0" }}>
+          Iniciar Firma
+        </Button>
         {isSigning && (
-          <Button onClick={finalizarFirmaActa} style={{ margin: '10px 0' }}>Finalizar Firma</Button>
+          <Button onClick={finalizarFirmaActa} style={{ margin: "10px 0" }}>
+            Finalizar Firma
+          </Button>
         )}
       </div>
-      <div style={{ width: '60%' }}>
-        {selectedDocumentoId ? (
-          <DocumentoCompartido documentoId={selectedDocumentoId} />
-        ) : (
-          <p>Seleccione una sesión para ver el documento.</p>
-        )}
+      <div style={{ width: "60%" }}>
+        <PDFTron />
       </div>
     </div>
   );
