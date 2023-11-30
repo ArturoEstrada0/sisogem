@@ -1,20 +1,24 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import WebViewer from "@pdftron/webviewer";
 import "./PDFTron.css";
 import { uploadFileToS3 } from "../services/S3Service";
+
 let instance = null;
 
-async function initWebViewer(viewerElement) {
+async function initWebViewer(viewerElement, initialDoc) {
   try {
+    console.log("Iniciando con el documento:", initialDoc);
+
     instance = await WebViewer(
       {
         path: "/lib",
-        initialDoc: "https://sisogem.s3.amazonaws.com/pruebaDesdePdf.pdf",
+        initialDoc,
         licenseKey:
           "1701035808221:7ca8949d03000000003741d9ae8751485cd810d85bc61209207d61be4c",
       },
       viewerElement
     );
+
     instance.UI.disableElements(["toolbarGroup-Shapes"]); // Quita la seccion de FORMAS
     instance.UI.disableElements(["toolbarGroup-Forms"]); // Quita la seccion Formularios
     instance.UI.disableElements([
@@ -75,12 +79,17 @@ async function initWebViewer(viewerElement) {
   }
 }
 
-const PDFTron = () => {
+const PDFTron = ({ documentos }) => {
   const viewer = useRef(null);
+  const [selectedDocumento, setSelectedDocumento] = useState(null);
 
   useEffect(() => {
-    if (viewer.current) {
-      initWebViewer(viewer.current);
+    console.log("Archivos cargados:", documentos);
+
+    if (viewer.current && documentos.length > 0) {
+      const initialDoc = documentos[0].url;
+      setSelectedDocumento(documentos[0]); // Establecer el primer documento como seleccionado
+      initWebViewer(viewer.current, initialDoc);
     }
 
     return () => {
@@ -89,11 +98,22 @@ const PDFTron = () => {
         instance.UI.unloadResources();
       }
     };
-  }, []);
+  }, [documentos]);
+
+  useEffect(() => {
+    console.log("Documento seleccionado:", selectedDocumento);
+    if (instance && instance.Core && selectedDocumento) {
+      console.log("Cargando nuevo documento:", selectedDocumento.url);
+      const { documentViewer } = instance.Core;
+      documentViewer.loadDocument(selectedDocumento.url);
+    }
+  }, [instance, selectedDocumento]);
+  
+  
 
   return (
     <div className="App">
-      <div className="header"></div>
+      <div className="header">React sample</div>
       <div className="webviewer-container" ref={viewer}></div>
     </div>
   );

@@ -16,17 +16,6 @@ const SesionesProgramadas = ({
         <p>Fecha: {sesion.fecha}</p>
         <p>Hora de Inicio: {sesion.horaInicio}</p>
 
-        {/* Nuevo botón para descargar documentos */}
-        <Button
-          onClick={() => {
-            console.log("Descargando documentos de la sesión:", sesion);
-            onDescargarDocumentos(sesion);
-          }}
-          style={{ marginBottom: 8 }}
-        >
-          Descargar Documentos
-        </Button>
-
         <Button type="primary" onClick={() => onIniciarSesion(sesion)}>
           Celebrar Sesión
         </Button>
@@ -48,6 +37,17 @@ const SesionesProgramadas = ({
             Borrar
           </Button>
         </Popconfirm>
+
+        {/* Nuevo botón para descargar documentos */}
+        <Button
+          onClick={() => {
+            console.log("Descargando documentos de la sesión:", sesion);
+            onDescargarDocumentos(sesion);
+          }}
+          style={{ marginBottom: 8 }}
+        >
+          Descargar Documentos
+        </Button>
       </Card>
     </List.Item>
   );
