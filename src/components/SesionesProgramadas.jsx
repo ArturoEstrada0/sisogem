@@ -27,9 +27,14 @@ const SesionesProgramadas = ({
           Descargar Documentos
         </Button>
 
-        <Button type="primary" onClick={() => onIniciarSesion(sesion)}>
-          Celebrar Sesión
-        </Button>
+        <Button
+  type="primary"
+  onClick={() => onIniciarSesion(sesion)}
+  style={{ backgroundColor: '#6A0F49', borderColor: '#6A0F49' }}
+>
+  Celebrar Sesión
+</Button>
+
 
         <Button
           style={{ marginLeft: 8 }}

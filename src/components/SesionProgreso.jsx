@@ -18,9 +18,14 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
         <p>Número de Sesión: {sesion.numeroSesion}</p>
         <p>Fecha: {sesion.fecha}</p>
         <p>Hora de Inicio: {sesion.horaInicio}</p>
-        <Button type="primary" onClick={() => onFinalizarSesion(sesion)}>
-          Finalizar Sesión
-        </Button>
+        <Button
+  type="primary"
+  onClick={() => onFinalizarSesion(sesion)}
+  style={{ backgroundColor: '#6A0F49', borderColor: '#6A0F49' }}
+>
+  Finalizar Sesión
+</Button>
+
       </Card>
     </List.Item>
   );

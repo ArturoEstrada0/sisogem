@@ -322,7 +322,7 @@ const ProgramarSesion = () => {
                 {nuevasSesionesProgramadas > 0 && (
                   <Badge
                     count={nuevasSesionesProgramadas}
-                    style={{ backgroundColor: "#52c41a" }}
+                    style={{ backgroundColor: "#ab1675" }}
                   />
                 )}
               </span>
@@ -393,7 +393,7 @@ const ProgramarSesion = () => {
                 {nuevasSesionesProgramadas > 0 && (
                   <Badge
                     count={nuevasSesionesProgramadas}
-                    style={{ backgroundColor: "#52c41a" }}
+                    style={{ backgroundColor: "#ab1675" }}
                   />
                 )}
               </span>
@@ -414,7 +414,7 @@ const ProgramarSesion = () => {
                 {nuevasSesionesEnProgreso > 0 && (
                   <Badge
                     count={nuevasSesionesEnProgreso}
-                    style={{ backgroundColor: "#52c41a" }}
+                    style={{ backgroundColor: "#ab1675" }}
                   />
                 )}
               </span>

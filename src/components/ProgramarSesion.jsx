@@ -385,7 +385,7 @@ const ProgramarSesion = () => {
                 {nuevasSesionesProgramadas > 0 && (
                   <Badge
                     count={nuevasSesionesProgramadas}
-                    style={{ backgroundColor: "#52c41a" }}
+                    style={{ backgroundColor: "#ab1675" }}
                   />
                 )}
               </span>
@@ -449,10 +449,11 @@ const ProgramarSesion = () => {
               </Form.Item>
 
               <Form.Item>
-                <Button type="primary" onClick={handleProgramarSesion}>
-                  {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
-                </Button>
-              </Form.Item>
+  <Button type="primary" onClick={handleProgramarSesion} style={{ backgroundColor: '#6A0F49', borderColor: '#6A0F49' }}>
+    {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
+  </Button>
+</Form.Item>
+
             </Form>
           </TabPane>
           <TabPane
@@ -462,7 +463,7 @@ const ProgramarSesion = () => {
                 {nuevasSesionesProgramadas > 0 && (
                   <Badge
                     count={nuevasSesionesProgramadas}
-                    style={{ backgroundColor: "#52c41a" }}
+                    style={{ backgroundColor: "#ab1675" }}
                   />
                 )}
               </span>
@@ -484,7 +485,7 @@ const ProgramarSesion = () => {
                 {nuevasSesionesEnProgreso > 0 && (
                   <Badge
                     count={nuevasSesionesEnProgreso}
-                    style={{ backgroundColor: "#52c41a" }}
+                    style={{ backgroundColor:"#ab1675" }}
                   />
                 )}
               </span>
