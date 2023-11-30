@@ -42,7 +42,7 @@ const menuItems = [
   { path: "/marco-normativo", text: "Marco Normativo", icon: <BookOutlined /> },
   {
     path: "/organos-de-gobierno",
-    text: "Órganos de Gobierno",
+    text: "Miembros de la junta",
     icon: <BankOutlined />,
   },
   {
