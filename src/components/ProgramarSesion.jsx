@@ -10,7 +10,9 @@ import {
   Form,
   notification,
   Badge,
+  Spin,
 } from "antd";
+
 import SesionesProgramadas from "./SesionesProgramadas";
 import SesionProgreso from "./SesionProgreso";
 import moment from "moment";
@@ -39,6 +41,7 @@ const ProgramarSesion = () => {
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
   const [documentosDescargados, setDocumentosDescargados] = useState([]);
   const [fileList, setFileList] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleFileUpload = async () => {
     try {
@@ -130,22 +133,28 @@ const ProgramarSesion = () => {
             const nombreArchivo = nombre || "documento";
 
             const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(
+                `Error al descargar el archivo: ${response.statusText}`
+              );
+            }
             const blob = await response.blob();
-            zip.file(nombreArchivo, blob);
+            const pdfBlob = new Blob([blob], { type: "application/pdf" }); // Especificar el tipo MIME para PDF
+            zip.file(nombreArchivo, pdfBlob, { binary: true });
 
             return {
               nombre: nombreArchivo,
-              blob: blob,
+              blob: pdfBlob,
             };
           })
         );
 
-        const contenidoZIP = await zip.generateAsync({ type: "blob" });
+        const contenidoZIP = await zip.generateAsync({
+          type: "blob",
+          compression: "STORE",
+        }); // Se desactiva la compresión
 
         // Guarda la información de los documentos en el estado local
-        setDocumentosDescargados(documentosDescargados);
-
-        // Actualiza el estado global con los documentos descargados
         setDocumentosDescargados(documentosDescargados);
 
         FileSaver.saveAs(
@@ -157,6 +166,7 @@ const ProgramarSesion = () => {
       }
     } catch (error) {
       console.error("Error al descargar documentos:", error.message);
+      // Aquí podrías mostrar un mensaje de error al usuario si es necesario
     }
   };
 
@@ -184,6 +194,9 @@ const ProgramarSesion = () => {
   };
 
   const handleProgramarSesion = async () => {
+    setLoading(true); // Inicia el estado de carga
+    console.log("Loading antes de la operación:", loading);
+
     try {
       if (!fecha || !horaInicio) {
         openNotification(
@@ -191,6 +204,7 @@ const ProgramarSesion = () => {
           "Error al programar la sesión",
           "Por favor, selecciona fecha y hora de inicio."
         );
+        setLoading(false); // Detiene la carga en caso de error temprano
         return;
       }
 
@@ -239,9 +253,11 @@ const ProgramarSesion = () => {
       setNumeroSesion(1);
       setFecha(null);
       setHoraInicio(null);
+      setLoading(false); // Detiene la carga una vez completado
+      console.log("Loading después de la operación:", loading);
     } catch (error) {
       console.error("Error al programar la sesión:", error);
-      // ... (manejo de errores, según sea necesario)
+      setLoading(false); // Detiene la carga en caso de error
     }
   };
 
@@ -250,7 +266,7 @@ const ProgramarSesion = () => {
     try {
       const AWS = require("aws-sdk");
       const docClient = new AWS.DynamoDB.DocumentClient();
-  
+
       const params = {
         TableName: "Sesiones",
         Item: {
@@ -265,13 +281,17 @@ const ProgramarSesion = () => {
           })),
         },
       };
-  
+
       console.log("Antes de llamar a DynamoDB:", params);
       await docClient.put(params).promise();
       console.log("Después de llamar a DynamoDB.");
     } catch (error) {
-      console.error("Error al guardar detalles de la sesión en DynamoDB:", error);
-      // Manejo de errores, según sea necesario
+      console.error(
+        "Error al guardar detalles de la sesión en DynamoDB:",
+        error
+      );
+      setLoading(false); // Detiene la carga en caso de error
+      throw error; // Es importante lanzar el error para que pueda ser capturado por el bloque try-catch en handleProgramarSesion
     }
   };
 
@@ -371,189 +391,196 @@ const ProgramarSesion = () => {
 
   return (
     <div>
-      <h2>Programar Sesión</h2>
-      <Card>
-        <Tabs
-          defaultActiveKey="programar"
-          type="card"
-          onChange={handleTabsChange}
-        >
-          <TabPane
-            tab={
-              <span>
-                Programar Sesión{" "}
-                {nuevasSesionesProgramadas > 0 && (
-                  <Badge
-                    count={nuevasSesionesProgramadas}
-                    style={{ backgroundColor: "#52c41a" }}
-                  />
-                )}
-              </span>
-            }
-            key="programar"
+      <Spin spinning={loading} size="large" className="custom-spin">
+        <h2>Programar Sesión</h2>
+        <Card>
+          <Tabs
+            defaultActiveKey="programar"
+            type="card"
+            onChange={handleTabsChange}
           >
-            <Form form={form} layout="vertical">
-              <Form.Item
-                label="Tipo de Sesión"
-                name="tipoSesion"
-                initialValue="ordinario"
-              >
-                <Select onChange={handleTipoSesionChange}>
-                  <Option value="ordinario">Ordinario</Option>
-                  <Option value="extraordinario">Extraordinario</Option>
-                </Select>
-              </Form.Item>
-              <Form.Item
-                label="Número de Sesión"
-                name="numeroSesion"
-                initialValue={1}
-              >
-                <Select onChange={handleNumeroSesionChange}>
-                  {renderNumeroSesionOptions()}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                label="Fecha"
-                name="fecha"
-                rules={[
-                  { required: true, message: "Por favor ingrese la fecha" },
-                ]}
-              >
-                <DatePicker onChange={handleFechaChange} />
-              </Form.Item>
-              <Form.Item
-                label="Hora de Inicio"
-                name="horaInicio"
-                rules={[
-                  {
-                    required: true,
-                    message: "Por favor ingrese la hora de inicio",
-                  },
-                ]}
-              >
-                <TimePicker format="HH:mm" onChange={handleHoraInicioChange} />
-              </Form.Item>
-
-              {/* Nuevo campo para cargar documentos */}
-              <Form.Item label="Cargar Documentos" name="documentos">
-                <Upload
-                  beforeUpload={() => false}
-                  accept=".pdf"
-                  multiple
-                  onChange={handleChange}
+            <TabPane
+              tab={
+                <span>
+                  Programar Sesión{" "}
+                  {nuevasSesionesProgramadas > 0 && (
+                    <Badge
+                      count={nuevasSesionesProgramadas}
+                      style={{ backgroundColor: "#52c41a" }}
+                    />
+                  )}
+                </span>
+              }
+              key="programar"
+            >
+              <Form form={form} layout="vertical">
+                <Form.Item
+                  label="Tipo de Sesión"
+                  name="tipoSesion"
+                  initialValue="ordinario"
                 >
-                  <Button icon={<UploadOutlined />}>
-                    Click para cargar documentos
+                  <Select onChange={handleTipoSesionChange}>
+                    <Option value="ordinario">Ordinario</Option>
+                    <Option value="extraordinario">Extraordinario</Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  label="Número de Sesión"
+                  name="numeroSesion"
+                  initialValue={1}
+                >
+                  <Select onChange={handleNumeroSesionChange}>
+                    {renderNumeroSesionOptions()}
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  label="Fecha"
+                  name="fecha"
+                  rules={[
+                    { required: true, message: "Por favor ingrese la fecha" },
+                  ]}
+                >
+                  <DatePicker onChange={handleFechaChange} />
+                </Form.Item>
+                <Form.Item
+                  label="Hora de Inicio"
+                  name="horaInicio"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Por favor ingrese la hora de inicio",
+                    },
+                  ]}
+                >
+                  <TimePicker
+                    format="HH:mm"
+                    onChange={handleHoraInicioChange}
+                  />
+                </Form.Item>
+
+                {/* Nuevo campo para cargar documentos */}
+                <Form.Item label="Cargar Documentos" name="documentos">
+                  <Upload
+                    beforeUpload={() => false}
+                    accept=".pdf"
+                    multiple
+                    onChange={handleChange}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Click para cargar documentos
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
+                <Form.Item>
+                  <Button type="primary" onClick={handleProgramarSesion}>
+                    {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
                   </Button>
-                </Upload>
-              </Form.Item>
+                </Form.Item>
+              </Form>
+            </TabPane>
+            <TabPane
+              tab={
+                <span>
+                  Sesiones Programadas{" "}
+                  {nuevasSesionesProgramadas > 0 && (
+                    <Badge
+                      count={nuevasSesionesProgramadas}
+                      style={{ backgroundColor: "#52c41a" }}
+                    />
+                  )}
+                </span>
+              }
+              key="programadas"
+            >
+              <SesionesProgramadas
+                data={sesionesProgramadas}
+                onIniciarSesion={handleIniciarSesion}
+                onEditarSesion={handleEditarSesion}
+                onBorrarSesion={handleBorrarSesion}
+                onDescargarDocumentos={handleDescargarDocumentos}
+              />
+            </TabPane>
+            <TabPane
+              tab={
+                <span>
+                  Sesiones en Progreso{" "}
+                  {nuevasSesionesEnProgreso > 0 && (
+                    <Badge
+                      count={nuevasSesionesEnProgreso}
+                      style={{ backgroundColor: "#52c41a" }}
+                    />
+                  )}
+                </span>
+              }
+              key="progreso"
+            >
+              <SesionProgreso
+                sesionesEnProgreso={sesionesEnProgreso}
+                onFinalizarSesion={handleFinalizarSesion}
+              />
+            </TabPane>
+          </Tabs>
+        </Card>
 
-              <Form.Item>
-                <Button type="primary" onClick={handleProgramarSesion}>
-                  {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
-                </Button>
-              </Form.Item>
-            </Form>
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                Sesiones Programadas{" "}
-                {nuevasSesionesProgramadas > 0 && (
-                  <Badge
-                    count={nuevasSesionesProgramadas}
-                    style={{ backgroundColor: "#52c41a" }}
-                  />
-                )}
-              </span>
-            }
-            key="programadas"
-          >
-            <SesionesProgramadas
-              data={sesionesProgramadas}
-              onIniciarSesion={handleIniciarSesion}
-              onEditarSesion={handleEditarSesion}
-              onBorrarSesion={handleBorrarSesion}
-              onDescargarDocumentos={handleDescargarDocumentos}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                Sesiones en Progreso{" "}
-                {nuevasSesionesEnProgreso > 0 && (
-                  <Badge
-                    count={nuevasSesionesEnProgreso}
-                    style={{ backgroundColor: "#52c41a" }}
-                  />
-                )}
-              </span>
-            }
-            key="progreso"
-          >
-            <SesionProgreso
-              sesionesEnProgreso={sesionesEnProgreso}
-              onFinalizarSesion={handleFinalizarSesion}
-            />
-          </TabPane>
-        </Tabs>
-      </Card>
-
-      <Modal
-        title="Editar Sesión"
-        visible={modalVisible}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
-      >
-        <Form form={form}>
-          <Form.Item
-            label="Tipo de Sesión"
-            name="tipoSesion"
-            rules={[
-              {
-                required: true,
-                message: "Por favor seleccione el tipo de sesión",
-              },
-            ]}
-          >
-            <Select>
-              <Option value="ordinario">Ordinario</Option>
-              <Option value="extraordinario">Extraordinario</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item
-            label="Número de Sesión"
-            name="numeroSesion"
-            rules={[
-              {
-                required: true,
-                message: "Por favor seleccione el número de sesión",
-              },
-            ]}
-          >
-            <Select>{renderNumeroSesionOptions()}</Select>
-          </Form.Item>
-          <Form.Item
-            label="Fecha"
-            name="fecha"
-            rules={[{ required: true, message: "Por favor ingrese la fecha" }]}
-          >
-            <DatePicker />
-          </Form.Item>
-          <Form.Item
-            label="Hora de Inicio"
-            name="horaInicio"
-            rules={[
-              {
-                required: true,
-                message: "Por favor ingrese la hora de inicio",
-              },
-            ]}
-          >
-            <TimePicker format="HH:mm" />
-          </Form.Item>
-        </Form>
-      </Modal>
+        <Modal
+          title="Editar Sesión"
+          visible={modalVisible}
+          onOk={handleModalOk}
+          onCancel={handleModalCancel}
+        >
+          <Form form={form}>
+            <Form.Item
+              label="Tipo de Sesión"
+              name="tipoSesion"
+              rules={[
+                {
+                  required: true,
+                  message: "Por favor seleccione el tipo de sesión",
+                },
+              ]}
+            >
+              <Select>
+                <Option value="ordinario">Ordinario</Option>
+                <Option value="extraordinario">Extraordinario</Option>
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="Número de Sesión"
+              name="numeroSesion"
+              rules={[
+                {
+                  required: true,
+                  message: "Por favor seleccione el número de sesión",
+                },
+              ]}
+            >
+              <Select>{renderNumeroSesionOptions()}</Select>
+            </Form.Item>
+            <Form.Item
+              label="Fecha"
+              name="fecha"
+              rules={[
+                { required: true, message: "Por favor ingrese la fecha" },
+              ]}
+            >
+              <DatePicker />
+            </Form.Item>
+            <Form.Item
+              label="Hora de Inicio"
+              name="horaInicio"
+              rules={[
+                {
+                  required: true,
+                  message: "Por favor ingrese la hora de inicio",
+                },
+              ]}
+            >
+              <TimePicker format="HH:mm" />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Spin>
     </div>
   );
 };

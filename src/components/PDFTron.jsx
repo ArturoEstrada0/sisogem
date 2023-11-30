@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from "react";
 import WebViewer from "@pdftron/webviewer";
 import "./PDFTron.css";
 import { uploadFileToS3 } from "../services/S3Service";
-import Nube from "./nube.png";
 let instance = null;
 
 async function initWebViewer(viewerElement) {
@@ -94,7 +93,7 @@ const PDFTron = () => {
 
   return (
     <div className="App">
-      <div className="header">React sample</div>
+      <div className="header"></div>
       <div className="webviewer-container" ref={viewer}></div>
     </div>
   );

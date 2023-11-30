@@ -32,6 +32,15 @@ body {
   transform: scale(1.2); /* Escala el icono a un 120% cuando está visible */
 }
   
+.custom-spin .ant-spin-dot i {
+  background-color: #701e45;
+}
+
+
+.custom-spin2 .ant-spin-dot i {
+  background-color: #fff;
+}
+
   @font-face {
     font-family: 'Gibson';
     src: url('./assets/fonts/Gibson/Gibson.woff2') format('woff2'); /* Ajusta la ruta a tu archivo local */
