@@ -10,21 +10,6 @@ const showAlert = (type, message) => {
 
 const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
   const [selectedDocumentoId, setSelectedDocumentoId] = useState(null);
-  const [isSigning, setIsSigning] = useState(false);
-
-  const iniciarFirmaActa = () => {
-    if (!selectedDocumentoId) {
-      showAlert("error", "Por favor, seleccione un documento para firmar.");
-      return;
-    }
-    setIsSigning(true);
-  };
-
-  const finalizarFirmaActa = () => {
-    setIsSigning(false);
-    // Add logic here to send the signature to the document using appropriate APIs or libraries.
-    showAlert("success", "Acta firmada exitosamente.");
-  };
 
   const renderItem = (sesion) => (
     <List.Item onClick={() => setSelectedDocumentoId(sesion.documentoId)}>
@@ -40,6 +25,12 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
     </List.Item>
   );
 
+  // Obtén la información del documento seleccionado
+  const selectedSesion = sesionesEnProgreso.find(
+    (sesion) => sesion.documentoId === selectedDocumentoId
+  );
+  const documentos = selectedSesion?.documentos || [];
+
   return (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
       <div style={{ width: "40%" }}>
@@ -49,17 +40,10 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
           renderItem={renderItem}
           locale={{ emptyText: "No hay sesiones en progreso" }}
         />
-        <Button onClick={iniciarFirmaActa} style={{ margin: "10px 0" }}>
-          Iniciar Firma
-        </Button>
-        {isSigning && (
-          <Button onClick={finalizarFirmaActa} style={{ margin: "10px 0" }}>
-            Finalizar Firma
-          </Button>
-        )}
       </div>
       <div style={{ width: "60%" }}>
-        <PDFTron />
+        {/* Renderiza PDFTron con la información del documento seleccionado */}
+        <PDFTron documentos={documentos} />
       </div>
     </div>
   );

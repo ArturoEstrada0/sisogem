@@ -14,12 +14,14 @@ import {
 import SesionesProgramadas from "./SesionesProgramadas";
 import SesionProgreso from "./SesionProgreso";
 import moment from "moment";
-import AWS from "aws-sdk";
+import { uploadFileToS3 } from "../services/S3Service";
+import JSZip from "jszip";
+import FileSaver from "file-saver";
+import { v4 as uuidv4 } from "uuid";
 
 import { Upload, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
-import { uploadFileToS3 } from "../services/S3Service";
 const { Option } = Select;
 const { TabPane } = Tabs;
 
@@ -35,43 +37,126 @@ const ProgramarSesion = () => {
   const [form] = Form.useForm();
   const [nuevasSesionesProgramadas, setNuevasSesionesProgramadas] = useState(0);
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
-  // Nuevo estado para almacenar la información de los archivos cargados
-  const [documentos, setDocumentos] = useState([]);
+  const [documentosDescargados, setDocumentosDescargados] = useState([]);
+  const [fileList, setFileList] = useState([]);
 
-  // AWSConfig.js
-
-  AWS.config.update({
-    accessKeyId: "AKIASAHHYXZDGGYMQIEG",
-    secretAccessKey: "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",
-    region: "us-east-1",
-  });
-
-  const s3 = new AWS.S3();
-
-  // Función para manejar el cambio en la carga de documentos
-  const handleDocumentoChange = async (info) => {
-    console.log("Entró a handleDocumentoChange"); // Agrega este log
-
-    if (info.file.status === "done") {
-      message.success(`${info.file.name} file uploaded successfully`);
-      setDocumentos([...documentos, info.file]);
-      console.log("Documentos después de setDocumentos:", documentos);
-
-      console.log("Documentos:", documentos); // Agrega este log para verificar el estado
-
-      try {
-        console.log("Subiendo archivo a S3...");
-        await uploadFileToS3(info.file.originFileObj);
-        console.log("Archivo subido exitosamente a S3");
-        message.success(`${info.file.name} file uploaded to S3 successfully`);
-      } catch (error) {
-        console.error("Error al subir archivo a S3:", error);
-        message.error(
-          `Error uploading ${info.file.name} to S3: ${error.message}`
-        );
+  const handleFileUpload = async () => {
+    try {
+      if (fileList.length === 0) {
+        return;
       }
-    } else if (info.file.status === "error") {
-      message.error(`${info.file.name} file upload failed.`);
+
+      const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
+
+      const uploadedFiles = await Promise.all(
+        fileList.map(async (file) => {
+          const response = await uploadFileToS3(
+            file.originFileObj,
+            `${folderName}/${file.name}`
+          );
+
+          const fileUrl = response.Location;
+
+          // Añade la URL al detalle del archivo
+          const fileDetail = {
+            nombre: file.name,
+            url: fileUrl,
+          };
+
+          // Genera un nuevo idSesion para cada archivo
+          const idSesion = uuidv4();
+
+          // Guarda la información del archivo en DynamoDB
+          await saveFileDetailsToDynamoDB(fileDetail, idSesion);
+
+          return fileDetail;
+        })
+      );
+
+      setFileList([]);
+
+      // Llamada a la función para guardar los detalles de la sesión en DynamoDB
+    } catch (error) {
+      console.error("Error al cargar archivos:", error);
+      message.error("Error al cargar archivos");
+    }
+  };
+
+  // Nueva función para guardar detalles del archivo en DynamoDB
+  const saveFileDetailsToDynamoDB = async (fileDetails, idSesion) => {
+    try {
+      // Usa la SDK de AWS para interactuar con DynamoDB y guardar los detalles del archivo
+      // Puedes configurar esto según tu entorno y necesidades específicas
+      // Aquí un ejemplo de cómo podría verse:
+      const AWS = require("aws-sdk");
+      const docClient = new AWS.DynamoDB.DocumentClient();
+
+      const params = {
+        TableName: "Sesiones",
+        Item: {
+          // Asegúrate de que estas claves coincidan con las claves de tu tabla en DynamoDB
+          idSesion: idSesion, // Agregamos la clave idSesion
+          nombre: fileDetails.nombre,
+          url: fileDetails.url,
+          // Otros atributos que quieras almacenar en DynamoDB
+        },
+      };
+
+      console.log("Antes de llamar a DynamoDB:", params);
+      await docClient.put(params).promise();
+      console.log("Después de llamar a DynamoDB.");
+    } catch (error) {
+      console.error(
+        "Error al guardar detalles del archivo en DynamoDB:",
+        error
+      );
+      // Manejo de errores, según sea necesario
+    }
+  };
+
+  // Nueva función para manejar el cambio en la lista de archivos
+  const handleChange = (info) => {
+    setFileList(info.fileList);
+  };
+
+  const handleDescargarDocumentos = async (sesion) => {
+    try {
+      const zip = new JSZip();
+
+      if (Array.isArray(sesion?.documentos)) {
+        const documentosDescargados = await Promise.all(
+          sesion.documentos.map(async (documento) => {
+            const { url, nombre } = documento;
+            const nombreArchivo = nombre || "documento";
+
+            const response = await fetch(url);
+            const blob = await response.blob();
+            zip.file(nombreArchivo, blob);
+
+            return {
+              nombre: nombreArchivo,
+              blob: blob,
+            };
+          })
+        );
+
+        const contenidoZIP = await zip.generateAsync({ type: "blob" });
+
+        // Guarda la información de los documentos en el estado local
+        setDocumentosDescargados(documentosDescargados);
+
+        // Actualiza el estado global con los documentos descargados
+        setDocumentosDescargados(documentosDescargados);
+
+        FileSaver.saveAs(
+          contenidoZIP,
+          `documentos_${sesion.fecha}_${sesion.horaInicio}.zip`
+        );
+      } else {
+        console.error("La lista de documentos no es un array.");
+      }
+    } catch (error) {
+      console.error("Error al descargar documentos:", error.message);
     }
   };
 
@@ -98,48 +183,96 @@ const ProgramarSesion = () => {
     });
   };
 
-  const handleProgramarSesion = () => {
-    if (!fecha || !horaInicio) {
-      openNotification(
-        "error",
-        "Error al programar la sesión",
-        "Por favor, selecciona fecha y hora de inicio."
-      );
-      return;
+  const handleProgramarSesion = async () => {
+    try {
+      if (!fecha || !horaInicio) {
+        openNotification(
+          "error",
+          "Error al programar la sesión",
+          "Por favor, selecciona fecha y hora de inicio."
+        );
+        return;
+      }
+
+      const idSesion = uuidv4();
+
+      const nuevaSesion = {
+        tipoSesion,
+        numeroSesion,
+        fecha: fecha.format("YYYY-MM-DD"),
+        horaInicio: horaInicio.format("HH:mm"),
+        documentos: fileList.map((file) => ({
+          nombre: file.name,
+          url: file.url, // Asegúrate de que file.url contenga la URL correcta
+        })),
+        idSesion,
+      };
+
+      // Almacena los detalles de la sesión en DynamoDB
+      await saveSessionDetailsToDynamoDB(nuevaSesion);
+
+      // Llama a handleFileUpload después de guardar los detalles de la sesión
+      await handleFileUpload();
+
+      if (sesionEditando) {
+        const sesionesActualizadas = sesionesProgramadas.map((sesion) =>
+          sesion === sesionEditando ? nuevaSesion : sesion
+        );
+        setSesionesProgramadas(sesionesActualizadas);
+        setSesionEditando(null);
+        openNotification(
+          "success",
+          "Sesión editada",
+          "La sesión se ha editado correctamente."
+        );
+      } else {
+        setSesionesProgramadas([...sesionesProgramadas, nuevaSesion]);
+        openNotification(
+          "success",
+          "Sesión programada",
+          "La sesión se ha programado correctamente."
+        );
+        setNuevasSesionesProgramadas(nuevasSesionesProgramadas + 1);
+      }
+
+      setTipoSesion("ordinario");
+      setNumeroSesion(1);
+      setFecha(null);
+      setHoraInicio(null);
+    } catch (error) {
+      console.error("Error al programar la sesión:", error);
+      // ... (manejo de errores, según sea necesario)
     }
+  };
 
-    const nuevaSesion = {
-      tipoSesion,
-      numeroSesion,
-      fecha: fecha.format("YYYY-MM-DD"),
-      horaInicio: horaInicio.format("HH:mm"),
-    };
-
-    if (sesionEditando) {
-      const sesionesActualizadas = sesionesProgramadas.map((sesion) =>
-        sesion === sesionEditando ? nuevaSesion : sesion
-      );
-      setSesionesProgramadas(sesionesActualizadas);
-      setSesionEditando(null);
-      openNotification(
-        "success",
-        "Sesión editada",
-        "La sesión se ha editado correctamente."
-      );
-    } else {
-      setSesionesProgramadas([...sesionesProgramadas, nuevaSesion]);
-      openNotification(
-        "success",
-        "Sesión programada",
-        "La sesión se ha programado correctamente."
-      );
-      setNuevasSesionesProgramadas(nuevasSesionesProgramadas + 1);
+  // Nueva función para guardar detalles de la sesión en DynamoDB
+  const saveSessionDetailsToDynamoDB = async (sessionDetails) => {
+    try {
+      const AWS = require("aws-sdk");
+      const docClient = new AWS.DynamoDB.DocumentClient();
+  
+      const params = {
+        TableName: "Sesiones",
+        Item: {
+          idSesion: sessionDetails.idSesion,
+          tipoSesion: sessionDetails.tipoSesion,
+          numeroSesion: sessionDetails.numeroSesion,
+          fecha: sessionDetails.fecha,
+          horaInicio: sessionDetails.horaInicio,
+          documentos: sessionDetails.documentos.map((file) => ({
+            nombre: file.nombre,
+            url: file.url,
+          })),
+        },
+      };
+  
+      console.log("Antes de llamar a DynamoDB:", params);
+      await docClient.put(params).promise();
+      console.log("Después de llamar a DynamoDB.");
+    } catch (error) {
+      console.error("Error al guardar detalles de la sesión en DynamoDB:", error);
+      // Manejo de errores, según sea necesario
     }
-
-    setTipoSesion("ordinario");
-    setNumeroSesion(1);
-    setFecha(null);
-    setHoraInicio(null);
   };
 
   const handleIniciarSesion = (sesion) => {
@@ -304,9 +437,10 @@ const ProgramarSesion = () => {
               {/* Nuevo campo para cargar documentos */}
               <Form.Item label="Cargar Documentos" name="documentos">
                 <Upload
-                  onChange={handleDocumentoChange}
                   beforeUpload={() => false}
+                  accept=".pdf"
                   multiple
+                  onChange={handleChange}
                 >
                   <Button icon={<UploadOutlined />}>
                     Click para cargar documentos
@@ -340,6 +474,7 @@ const ProgramarSesion = () => {
               onIniciarSesion={handleIniciarSesion}
               onEditarSesion={handleEditarSesion}
               onBorrarSesion={handleBorrarSesion}
+              onDescargarDocumentos={handleDescargarDocumentos}
             />
           </TabPane>
           <TabPane

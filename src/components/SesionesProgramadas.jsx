@@ -6,6 +6,7 @@ const SesionesProgramadas = ({
   onIniciarSesion,
   onEditarSesion,
   onBorrarSesion,
+  onDescargarDocumentos,
 }) => {
   const renderItem = (sesion) => (
     <List.Item>
@@ -14,14 +15,19 @@ const SesionesProgramadas = ({
         <p>Número de Sesión: {sesion.numeroSesion}</p>
         <p>Fecha: {sesion.fecha}</p>
         <p>Hora de Inicio: {sesion.horaInicio}</p>
-        
+
+        {/* Nuevo botón para descargar documentos */}
         <Button
-          type="primary"
           onClick={() => {
-            console.log("Iniciando sesión con Documento ID:", sesion.documentoId);
-            onIniciarSesion(sesion);
+            console.log("Descargando documentos de la sesión:", sesion);
+            onDescargarDocumentos(sesion);
           }}
+          style={{ marginBottom: 8 }}
         >
+          Descargar Documentos
+        </Button>
+
+        <Button type="primary" onClick={() => onIniciarSesion(sesion)}>
           Celebrar Sesión
         </Button>
 
