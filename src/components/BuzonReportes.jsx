@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   Typography,
   Input,
@@ -8,257 +8,267 @@ import {
   Table,
   Tabs,
   Popconfirm,
-} from 'antd'
+} from "antd";
 import {
   SendOutlined,
   MailOutlined,
   QuestionCircleOutlined,
-} from '@ant-design/icons'
-import axios from 'axios'
-import './BuzonReportes.css'
+} from "@ant-design/icons";
+import axios from "axios";
+import "./BuzonReportes.css";
 
-const { TextArea } = Input
-const { Option } = Select
-const { TabPane } = Tabs
+const { TextArea } = Input;
+const { Option } = Select;
+const { TabPane } = Tabs;
 
 const categories = [
-  'Malfuncionamiento de la página',
-  'Marco normativo',
-  'Organos del gobierno',
-  'Sesiones programadas',
-  'Sesion en progreso',
-  'Archivo',
-  'Formatos',
-  'Indicadores',
-  'Repositorio',
-  'Login',
-]
+  "Malfuncionamiento de la página",
+  "Marco normativo",
+  "Organos del gobierno",
+  "Sesiones programadas",
+  "Sesion en progreso",
+  "Archivo",
+  "Formatos",
+  "Indicadores",
+  "Repositorio",
+  "Login",
+];
 
 const styles = {
   container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: '70%',
-    margin: '0 auto',
-    padding: '20px',
-    borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    background: '#cccccc40',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    width: "70%",
+    margin: "0 auto",
+    padding: "20px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+    background: "#cccccc40",
   },
   titleContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '16px',
+    display: "flex",
+    alignItems: "center",
+    marginBottom: "16px",
   },
   mailIcon: {
-    marginRight: '8px',
-    marginTop: '-10px',
-    fontSize: '40px',
-    color: '#6A0F49',
+    marginRight: "8px",
+    marginTop: "-10px",
+    fontSize: "40px",
+    color: "#6A0F49",
   },
   input: {
-    width: '100%',
-    marginBottom: '16px',
-    border: '1px solid #cccccc40',
+    width: "100%",
+    marginBottom: "16px",
+    border: "1px solid #cccccc40",
   },
   select: {
-    width: '100%',
-    marginBottom: '16px',
-    border: '1px solid #cccccc40',
+    width: "100%",
+    marginBottom: "16px",
+    border: "1px solid #cccccc40",
   },
   submitButton: {
-    width: '30%',
-    background: '#6A0F49',
-    border: 'none',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    color: 'white',
-    marginTop: '16px',
+    width: "30%",
+    background: "#6A0F49",
+    border: "none",
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "white",
+    marginTop: "16px",
   },
   infoText: {
-    textAlign: 'center',
-    marginTop: '30px',
-    fontSize: '16px',
-    color: '#6A0F49',
+    textAlign: "center",
+    marginTop: "30px",
+    fontSize: "16px",
+    color: "#6A0F49",
   },
-}
+};
 
 function BuzonReportes() {
   const [email, setEmail] = useState({
-    subject: '',
-    text: '',
-    html: '',
-  })
+    subject: "",
+    text: "",
+    html: "",
+  });
 
-  const [data, setData] = useState([])
+  const [data, setData] = useState([]);
 
   useEffect(() => {
     axios
-      .get('http://localhost:3002/reportes')
+      .get("http://localhost:3002/reportes")
       .then((response) => {
         const dataKeys = response.data.map((item) => ({
           ...item,
           key: item._id,
-        }))
-        setData(dataKeys)
+        }));
+        setData(dataKeys);
       })
       .catch((err) => {
-        console.log(err)
-      })
-  }, [])
+        console.log(err);
+      });
+  }, []);
 
-  const [title, setTitle] = useState('')
-  const [report, setReport] = useState('')
-  const [category, setCategory] = useState('')
-  const [isTitleFocused, setIsTitleFocused] = useState(false)
-  const [isReportFocused, setIsReportFocused] = useState(false)
-  const [isCategoryFocused, setIsCategoryFocused] = useState(false)
+  const [title, setTitle] = useState("");
+  const [report, setReport] = useState("");
+  const [category, setCategory] = useState("");
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
+  const [isReportFocused, setIsReportFocused] = useState(false);
+  const [isCategoryFocused, setIsCategoryFocused] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const columns = [
     {
-      title: 'Título',
-      dataIndex: 'subject',
-      key: 'subject',
+      title: "Título",
+      dataIndex: "subject",
+      key: "subject",
     },
     {
-      title: 'Categoría',
-      dataIndex: 'text',
-      key: 'text',
+      title: "Categoría",
+      dataIndex: "text",
+      key: "text",
     },
     {
-      title: 'Fecha',
-      dataIndex: 'sentAt',
-      key: 'sentAt',
+      title: "Fecha",
+      dataIndex: "sentAt",
+      key: "sentAt",
       render: (text) =>
-        new Date(text).toLocaleDateString('es-ES', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric',
+        new Date(text).toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
           hour12: true,
         }),
     },
     {
-      title: 'Action',
-      dataIndex: '',
-      key: 'x',
+      title: "Action",
+      dataIndex: "",
+      key: "x",
       render: (text, record) => (
         <Popconfirm
-          title='Eliminar Reporte'
-          description='¿Estás seguro de eliminar este reporte?'
+          title="Eliminar Reporte"
+          description="¿Estás seguro de eliminar este reporte?"
           onConfirm={() => {
             axios
               .delete(`http://localhost:3002/reportes/${record._id}`)
               .then(() => {
-                message.success('Reporte eliminado con éxito')
-                const newData = data.filter((item) => item.key !== record.key)
-                setData(newData)
+                message.success("Reporte eliminado con éxito");
+                const newData = data.filter((item) => item.key !== record.key);
+                setData(newData);
               })
               .catch((error) => {
-                message.error('Error al eliminar el reporte')
-              })
+                message.error("Error al eliminar el reporte");
+              });
           }}
           icon={
             <QuestionCircleOutlined
               style={{
-                color: 'red',
+                color: "red",
               }}
             />
-          }>
-          <Button danger type='text'>
+          }
+        >
+          <Button danger type="text">
             Eliminar
           </Button>
         </Popconfirm>
       ),
     },
-  ]
+  ];
 
   const handleTitleChange = (e) => {
-    setTitle(e.target.value)
-    setEmail({ ...email, [e.target.name]: e.target.value })
-  }
+    setTitle(e.target.value);
+    setEmail({ ...email, [e.target.name]: e.target.value });
+  };
   const handleReportChange = (e) => {
-    setReport(e.target.value)
-    setEmail({ ...email, [e.target.name]: e.target.value })
-  }
+    setReport(e.target.value);
+    setEmail({ ...email, [e.target.name]: e.target.value });
+  };
   const handleCategoryChange = (value) => {
-    setCategory(value)
-    setEmail({ ...email, text: value })
-  }
+    setCategory(value);
+    setEmail({ ...email, text: value });
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
+
+    setLoading(true); // Iniciar el indicador de carga
 
     if (!title || !report || !category) {
       message.error(
-        'Por favor, completa todos los campos antes de enviar el reporte.',
-      )
+        "Por favor, completa todos los campos antes de enviar el reporte."
+      );
+      setLoading(false); // Detener el indicador de carga si hay un error
     } else {
       axios
-        .post('http://localhost:3002/email', email)
+        .post("http://localhost:3002/email", email)
         .then(() => {
-          message.success('Reporte enviado con éxito.')
-          setTitle('')
-          setReport('')
-          setCategory('')
+          message.success("Reporte enviado con éxito.");
+          setTitle("");
+          setReport("");
+          setCategory("");
         })
         .catch(() => {
           message.error(
-            'Ha ocurrido un error al enviar el reporte. Por favor, intenta de nuevo.',
-          )
+            "Ha ocurrido un error al enviar el reporte. Por favor, intenta de nuevo."
+          );
         })
+        .finally(() => {
+          setLoading(false); // Detener el indicador de carga después de completar la solicitud
+        });
     }
-  }
+  };
 
   return (
     <>
-      <Tabs tabPosition={'left'}>
-        <TabPane tab='Nuevo Reporte' key='1'>
+      <Tabs tabPosition={"left"}>
+        <TabPane tab="Nuevo Reporte" key="1">
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              alignItems: 'center',
-              marginTop: '30px',
-            }}>
+              display: "flex",
+              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "center",
+              marginTop: "30px",
+            }}
+          >
             <div style={styles.container}>
               <div style={styles.titleContainer}>
                 <MailOutlined style={styles.mailIcon} />
-                <Typography.Title level={2} style={{ color: '#6A0F49' }}>
+                <Typography.Title level={2} style={{ color: "#6A0F49" }}>
                   Crear un reporte
                 </Typography.Title>
               </div>
               <Input
-                placeholder='Título del Reporte'
+                placeholder="Título del Reporte"
                 value={title}
                 onChange={handleTitleChange}
-                name='subject'
-                type='text'
+                name="subject"
+                type="text"
                 onFocus={() => setIsTitleFocused(true)}
                 onBlur={() => setIsTitleFocused(false)}
                 style={{
                   ...styles.input,
                   border: isTitleFocused
-                    ? '2px solid #F1CDD3'
-                    : '2px solid #d9d9d9',
+                    ? "2px solid #F1CDD3"
+                    : "2px solid #d9d9d9",
                 }}
               />
               <Select
-                placeholder='Selecciona la categoría de tu reporte'
+                placeholder="Selecciona la categoría de tu reporte"
                 value={category || undefined}
                 onChange={handleCategoryChange}
-                name='text'
+                name="text"
                 onFocus={() => setIsCategoryFocused(true)}
                 onBlur={() => setIsCategoryFocused(false)}
                 style={{
                   ...styles.select,
                   border: isCategoryFocused
-                    ? '2px solid #F1CDD3'
-                    : '2px solid #d9d9d9',
-                }}>
+                    ? "2px solid #F1CDD3"
+                    : "2px solid #d9d9d9",
+                }}
+              >
                 {categories.map((item) => (
                   <Option key={item} value={item}>
                     {item}
@@ -267,37 +277,40 @@ function BuzonReportes() {
               </Select>
               <TextArea
                 rows={6}
-                placeholder='Ingresa tu reporte'
+                placeholder="Ingresa tu reporte"
                 value={report}
                 onChange={handleReportChange}
-                name='html'
+                name="html"
                 onFocus={() => setIsReportFocused(true)}
                 onBlur={() => setIsReportFocused(false)}
                 style={{
                   ...styles.input,
                   border: isReportFocused
-                    ? '2px solid #F1CDD3'
-                    : '2px solid #d9d9d9',
+                    ? "2px solid #F1CDD3"
+                    : "2px solid #d9d9d9",
                 }}
               />
               <Button
                 icon={<SendOutlined />}
                 onClick={handleSubmit}
-                style={styles.submitButton}>
+                loading={loading} // Agregar el indicador de carga al botón
+                style={styles.submitButton}
+              >
                 Enviar Reporte
               </Button>
             </div>
             <div
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '70%',
-                margin: '0 auto',
-                padding: '20px',
-              }}>
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                width: "70%",
+                margin: "0 auto",
+                padding: "20px",
+              }}
+            >
               <h1 style={styles.infoText}>
-                <p style={{ textAlign: 'justify' }}>
+                <p style={{ textAlign: "justify" }}>
                   Queremos que sepas que tus reportes son completamente
                   anónimos. Tu privacidad es nuestra prioridad y hemos
                   implementado medidas para garantizar que tu identidad esté
@@ -312,7 +325,7 @@ function BuzonReportes() {
             </div>
           </div>
         </TabPane>
-        <TabPane tab='Historial de Reportes' key='2'>
+        <TabPane tab="Historial de Reportes" key="2">
           <Table
             columns={columns}
             expandable={{
@@ -320,7 +333,8 @@ function BuzonReportes() {
                 <p
                   style={{
                     margin: 0,
-                  }}>
+                  }}
+                >
                   {record.html}
                 </p>
               ),
@@ -331,7 +345,7 @@ function BuzonReportes() {
         </TabPane>
       </Tabs>
     </>
-  )
+  );
 }
 
-export default BuzonReportes
+export default BuzonReportes;

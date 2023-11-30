@@ -16,7 +16,7 @@ const SesionesProgramadas = ({
         <p>Fecha: {sesion.fecha}</p>
         <p>Hora de Inicio: {sesion.horaInicio}</p>
 
-        <Button type="primary" onClick={() => onIniciarSesion(sesion)}>
+        <Button type="primary" onClick={() => onIniciarSesion(sesion)} style={{backgroundColor: "#6A0F49", borderBlockColor: "#6A0F49"}}>
           Celebrar Sesión
         </Button>
 

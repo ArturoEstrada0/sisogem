@@ -406,7 +406,7 @@ const ProgramarSesion = () => {
                   {nuevasSesionesProgramadas > 0 && (
                     <Badge
                       count={nuevasSesionesProgramadas}
-                      style={{ backgroundColor: "#52c41a" }}
+                      style={{ backgroundColor: "#ab1675" }}
                     />
                   )}
                 </span>

@@ -1,6 +1,10 @@
+
 // ConfirmSignUp.jsx
 import React, { useState } from "react";
-import "./Login.css";
+import Fondo from "../assets/img/tara3.jpg";
+import Escudo from "../assets/img/image.png";
+import Icono from "../assets/img/logo_mich.png";
+import "./SingUp.css";
 
 const ConfirmSignUp = ({ confirmSignUpData, changeView, email }) => {
   const [error, setError] = useState("");
@@ -23,9 +27,22 @@ const ConfirmSignUp = ({ confirmSignUpData, changeView, email }) => {
   };
 
   return (
-    <div className="container-login">
+    <div className="container-sign">
       <div className="card card-body shadow-lg">
-        <h3>Confirmar Registro</h3>
+        <h3 className="login-title"
+                  style={{
+                    textAlign: "center",
+                    marginBottom: "20px",
+                    marginTop: "20px",
+                    color: "#701e45",
+                    borderBottom: "1px solid #ccc",
+                    paddingBottom: "10px",
+                    width: "70%",
+                    margin: "0 auto",
+                  }}>
+                    Confirmar Registro
+                    </h3>
+        <img src={Icono} alt="Icono" className="profile" />
         <form onSubmit={handleConfirmSignUp}>
           <input
             type="text"
@@ -47,6 +64,10 @@ const ConfirmSignUp = ({ confirmSignUpData, changeView, email }) => {
           </button>
         </div>
       </div>
+      <div className="col-md-8">
+            <img src={Fondo} alt="Fondo" className="img-fondo" />
+            <img src={Escudo} alt="Fondo" className="img-escudo" />
+          </div>
     </div>
   );
 };
