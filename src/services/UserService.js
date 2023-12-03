@@ -15,6 +15,11 @@ export class UserService {
         const {data} = await axios.get(`${API_URL}/listUser/${organimo}`)
         return data;
     }
+
+    static async saveUser (userData) {
+        const { data } = await axios.post(`${API_URL}user/create-user`, userData)
+        return data;
+    }
     
 
 }

@@ -55,6 +55,7 @@ function App() {
   async function setSignUpData(signUpData) {
     try {
       const { email, password } = signUpData;
+      // TODO: HACER PETICION A LA API PARA VALIDAR QUE EL USUARIO YA FUE DADO DE ALTA
       await Auth.signUp({ username: email, password });
       setEmail(email); // Guarda el email en el estado para usarlo después en la confirmación
       setView("confirmSignUp");
