@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = 'https://api-sisogem.onrender.com/api'
+const API_URL = 'http://localhost:3001/api/'
 
 export class UserService {
     static async getUserInfoByEmail (userEmail) {
@@ -17,7 +17,7 @@ export class UserService {
     }
 
     static async saveUser (userData) {
-        const { data } = await axios.post(`${API_URL}user/create-user`, userData)
+        const { data } = await axios.post(`${API_URL}/user/create-user`, userData)
         return data;
     }
     

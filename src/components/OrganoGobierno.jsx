@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Select,
@@ -31,16 +31,15 @@ import { RolService } from "../services/RolService";
 import { OrganismoService } from "../services/OrganismoService";
 import { async } from "q";
 import { UserService } from "../services/UserService";
-import { UserService } from "../services/UserService";
 import { OrganismoContext } from "../context/OrganismoContext";
 
 const { Option } = Select;
 const { confirm } = Modal;
 
 const buildRepresentacionDe = (organismos) => {
-  const orgNamesArray = organismos.map(org => org.name);
+  const orgNamesArray = organismos.map((org) => org.name);
   return orgNamesArray.join(", ");
-}
+};
 
 const OrganoGobierno = () => {
   const [cargoCompletoFilter, setCargoCompletoFilter] = useState(null);
@@ -52,36 +51,36 @@ const OrganoGobierno = () => {
   const [form] = Form.useForm();
   const [formVisible, setFormVisible] = useState(false);
   const { currentUser } = useContext(UserRoleContext);
-  const { organismo, setOrganismo } = useContext(OrganismoContext)
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
 
   useEffect(() => {
-    
     const fetchData = async () => {
       const response = await UserService.getUserByOrganismo(organismo);
       setIntegrantes([
         ...integrantes,
-        ...response.map(userFromApi => ({
+        ...response.map((userFromApi) => ({
           tipoIntegrante: userFromApi.rol.rol,
           nombreCompleto: userFromApi.name,
-          representacionDe: buildRepresentacionDe(userFromApi.organismo) ,
-          cargoCompleto: userFromApi.full_charge ,
+          representacionDe: buildRepresentacionDe(userFromApi.organismo),
+          cargoCompleto: userFromApi.full_charge,
           email: userFromApi.email,
           fechaInicioDesignacion: null,
-        }))
-      ])
-    }
-    if (organismo === '') {
+        })),
+      ]);
+    };
+    if (organismo === "") {
+      console.log("aqui ", organismo);
+
       if (currentUser) setOrganismo(currentUser.organismo[0].code);
       else return;
-    }
-    else fetchData();
-
+    } else fetchData();
   }, [organismo, currentUser]);
 
   const [roles, setRoles] = useState([]);
   const [organismos, setOrganismos] = useState([]);
+  const userOrganismo = currentUser?.organismo[0];
 
-  const [datosFormulario, setDatosFormulario] = useState({})
+  const [datosFormulario, setDatosFormulario] = useState({});
 
   useEffect(() => {
     const rolesData = async () => {
@@ -91,14 +90,19 @@ const OrganoGobierno = () => {
     rolesData();
   }, []);
 
-  //ORGANISMOS
   useEffect(() => {
-    const organismosData = async () => {
+    const fetchData = async () => {
       const response = await OrganismoService.getAllOrganismos();
       setOrganismos(response);
+      console.log("Organismos cargados:", response);
     };
-    organismosData();
+    fetchData();
   }, []);
+  
+  // Asegúrate de que organismos esté cargado antes de buscar
+  const userOrganismoActual = organismos.length > 0 ? organismos.find(org => org._id === organismo) : null;
+  console.log("Organismo actual en Select:", userOrganismoActual);
+  
 
   const onFinish = async (values) => {
     if (editingIndex === -1) {
@@ -127,8 +131,8 @@ const OrganoGobierno = () => {
       rol: values.tipoIntegrante,
       full_charge: values.cargoCompleto,
       email: values.email,
-      date: values.fechaInicioDesignacion['$d'].getTime()
-    }
+      date: values.fechaInicioDesignacion["$d"].getTime(),
+    };
     const pass = await UserService.saveUser(newUser);
   };
 
@@ -555,30 +559,14 @@ const OrganoGobierno = () => {
           >
             <Select>
               {roles.length > 0 ? (
-                roles.map((rol) => <Option value={rol._id} key={rol._id}>{rol.rol}</Option>)
+                roles.map((rol) => (
+                  <Option value={rol._id} key={rol._id}>
+                    {rol.rol}
+                  </Option>
+                ))
               ) : (
                 <Option value="null">Cargando datos...</Option>
               )}
-              {/* <Option value="Comisario">Comisario</Option>
-              <Option value="Comisario Suplente">Comisario Suplente</Option>
-              <Option value="Integrante Propietario">
-                Integrante Propietario
-              </Option>
-              <Option value="Integrante Suplente">Integrante Suplente</Option>
-              <Option value="Presidente">Presidente</Option>
-              <Option value="PresidenteSuplente">Presidente Suplente</Option>
-              <Option value="Secretario Técnico Homólogo">
-                Secretario Técnico / Homólogo
-              </Option>
-              <Option value="Secretario Técnico Suplente">
-                Secreatario Técnico Suplente
-              </Option>
-              <Option value="Titular OPD">Titular De La OPD</Option>
-              <Option value="Vicepresidente">Vicepresidente</Option>
-              <Option value="Vicepresidente Suplente">
-                Vicepresidente Suplente
-              </Option>
-              <Option value="Otro">Otro</Option> */}
             </Select>
           </Form.Item>
 
@@ -604,32 +592,18 @@ const OrganoGobierno = () => {
                 message: "Por favor, selecciona la representación",
               },
             ]}
+            initialValue={organismo} // Establecer el valor inicial
           >
-            {/* {roles.length > 0 ? (
-                roles.map((rol) => <Option value={rol._id}>{rol.rol}</Option>)
-              ) : (
-                <Option value="null">Cargando datos...</Option>
-              )} */}
-            <Select>
-              {organismos.length > 0 ? (
-                organismos.map((organismo) => (
-                  <Option value={organismo._id} key={organismo._id}>{organismo.organism}</Option>
-                ))
-              ) : (
-                <Option value="null">Cargando Datos...</Option>
-              )}
-              {/* <Option value="Secretaría de Turismo">
-                Secretaría de Turismo
-              </Option>
-              <Option value="Centro de Convenciones de Morelia">
-                Centro de Convenciones de Morelia
-              </Option>
-              <Option value="Secretaría de Desarrollo Económico">
-                Secretaría de Desarrollo Económico
-              </Option>
-              <Option value="Secretaría de Educación">
-                Secretaría de Educación
-              </Option> */}
+            <Select
+              value={organismo} // Asegúrate de que el valor esté vinculado al estado del organismo
+              onChange={(newValue) => setOrganismo(newValue)} // Actualiza el estado del organismo
+              disabled // Opcional, si quieres que esté deshabilitado
+            >
+              {organismos.map((org) => (
+                <Select.Option key={org._id} value={org._id}>
+                  {org.organismos}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
@@ -670,26 +644,6 @@ const OrganoGobierno = () => {
           >
             <DatePicker />
           </Form.Item>
-
-          {/* <Form.Item
-            name="oficioDesignacion"
-            label="Oficio de Designación / Nombramiento / Acreditación"
-            valuePropName="fileList"
-            getValueFromEvent={(e) => e.fileList}
-            rules={[
-              {
-                required: true,
-                message: "Por favor, sube el oficio de designación",
-              },
-            ]}
-          >
-            <Upload
-              beforeUpload={beforeUpload}
-              accept=".pdf,.doc,.docx,.xls,.xlsx"
-            >
-              <Button icon={<UploadOutlined />}>Subir archivo</Button>
-            </Upload>
-          </Form.Item> */}
 
           <Form.Item>
             <Button

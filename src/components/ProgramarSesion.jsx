@@ -45,77 +45,56 @@ const ProgramarSesion = () => {
 
   const handleFileUpload = async () => {
     try {
-      if (fileList.length === 0) {
-        return;
-      }
-
+      const idSesion = uuidv4();
       const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
-
-      const uploadedFiles = await Promise.all(
-        fileList.map(async (file) => {
-          const response = await uploadFileToS3(
-            file.originFileObj,
-            `${folderName}/${file.name}`
-          );
-
-          const fileUrl = response.Location;
-
-          // Añade la URL al detalle del archivo
-          const fileDetail = {
-            nombre: file.name,
-            url: fileUrl,
-          };
-
-          // Genera un nuevo idSesion para cada archivo
-          const idSesion = uuidv4();
-
-          // Guarda la información del archivo en DynamoDB
-          await saveFileDetailsToDynamoDB(fileDetail, idSesion);
-
-          return fileDetail;
-        })
-      );
-
+      const fileDetailsArray = fileList.map(file => ({
+        nombre: file.name,
+        url: `tu-bucket-url/${folderName}/${file.name}`
+      }));
+  
+      const sessionData = {
+        idSesion,
+        tipoSesion,
+        numeroSesion,
+        fecha: fecha ? fecha.format("YYYY-MM-DD") : null,
+        horaInicio: horaInicio ? horaInicio.format("HH:mm") : null,
+        folderUrl: `tu-bucket-url/${folderName}`,
+        archivos: fileDetailsArray,
+        // Incluye cualquier otro dato relevante de la sesión aquí
+      };
+  
+      // Sube los archivos a S3
+      for (let file of fileList) {
+        await uploadFileToS3(file.originFileObj, `${folderName}/${file.name}`);
+      }
       setFileList([]);
-
-      // Llamada a la función para guardar los detalles de la sesión en DynamoDB
+  
+      // Llamada a la función para guardar los detalles de la sesión y los archivos en DynamoDB
+      await saveSessionToDynamoDB(sessionData);
     } catch (error) {
       console.error("Error al cargar archivos:", error);
       message.error("Error al cargar archivos");
     }
   };
-
-  // Nueva función para guardar detalles del archivo en DynamoDB
-  const saveFileDetailsToDynamoDB = async (fileDetails, idSesion) => {
+  
+  
+  const saveSessionToDynamoDB = async (sessionData) => {
     try {
-      // Usa la SDK de AWS para interactuar con DynamoDB y guardar los detalles del archivo
-      // Puedes configurar esto según tu entorno y necesidades específicas
-      // Aquí un ejemplo de cómo podría verse:
       const AWS = require("aws-sdk");
       const docClient = new AWS.DynamoDB.DocumentClient();
-
+  
       const params = {
         TableName: "Sesiones",
-        Item: {
-          // Asegúrate de que estas claves coincidan con las claves de tu tabla en DynamoDB
-          idSesion: idSesion, // Agregamos la clave idSesion
-          nombre: fileDetails.nombre,
-          url: fileDetails.url,
-          // Otros atributos que quieras almacenar en DynamoDB
-        },
+        Item: sessionData,
       };
-
-      console.log("Antes de llamar a DynamoDB:", params);
+  
       await docClient.put(params).promise();
-      console.log("Después de llamar a DynamoDB.");
     } catch (error) {
-      console.error(
-        "Error al guardar detalles del archivo en DynamoDB:",
-        error
-      );
-      // Manejo de errores, según sea necesario
+      console.error("Error al guardar sesión en DynamoDB:", error);
+      throw error;
     }
   };
+  
 
   // Nueva función para manejar el cambio en la lista de archivos
   const handleChange = (info) => {
