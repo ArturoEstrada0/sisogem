@@ -1,0 +1,61 @@
+.PDFViewer {
+    text-align: center;
+  }
+  
+  .pdf-container {
+    width: 100%; /* Ancho deseado del contenedor */
+    height: 50%; /* Alto deseado del contenedor */
+    margin: auto; /* Centrar el contenedor */
+    border: 1px solid #ccc; /* Borde para visualización */
+    overflow: auto; /* Permite desplazamiento si el contenido es más grande */
+    align-items: center; /* Centra el contenido verticalmente */
+    justify-content: center; /* Centra el contenido horizontalmente */
+  }
+  
+  
+  /* Estilos para la barra de herramientas en la parte superior */
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+  }
+  
+  /* Estilos para los controles de paginación */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+  }
+  
+  /* Estilos para el renderizador de PDF */
+  .pdf-renderer {
+    display: flex;
+    justify-content: center;
+    position: relative; /* Necesario para que z-index funcione */
+    z-index: 1; /* Un z-index más bajo para asegurar que los elementos flotantes aparezcan encima */
+  }
+  
+  /* Estilos para el área de la firma */
+  .sigCanvas {
+    border: 1px solid #CCCCCC;
+    margin: 0 10px;
+  }
+  
+  /* Estilos para el componente SignaturePreview */
+  .signature-preview {
+    position: relative; /* Necesario para aplicar z-index */
+    z-index: 1000; /* Un z-index alto para asegurar que la firma aparezca sobre el PDF */
+  }
+  
+  /* Estilos para los puntos de agarre de react-rnd */
+  .rnd-resizer {
+    border: 1px solid #e0919e;
+    box-sizing: border-box;
+  }
+  
+  /* Asegúrate de que la clase .rnd-resizer se aplique en el componente SignaturePreview */
+  

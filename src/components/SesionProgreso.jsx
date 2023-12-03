@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { List, Button, Card, notification } from "antd";
 import PDFTron from "./PDFTron";
+import PDFViewer from "./PDFViewer";
 
 const showAlert = (type, message) => {
   notification[type]({
@@ -43,7 +44,7 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
       </div>
       <div style={{ width: "60%" }}>
         {/* Renderiza PDFTron con la información del documento seleccionado */}
-        <PDFTron documentos={documentos} />
+        <PDFViewer />
       </div>
     </div>
   );

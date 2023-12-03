@@ -21,19 +21,16 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useContext } from "react";
 import { UserRoleContext } from "../context/UserRoleContext";
-// import { useUserRole } from "../context/UserRoleContext"; // Asegúrate de que la ruta sea correcta
+import { OrganismoContext } from "../context/OrganismoContext";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
 const Entidad = () => {
-  // const { userRole: userRoleFromContext } = useUserRole();
-  // console.log("userRole desde prop:", userRole);
-  // console.log("userRole desde contexto:", userRoleFromContext);
-  const { currentUser } = useContext(UserRoleContext);
 
-  const [organismo, setOrganismo] = useState("");
+  const { currentUser } = useContext(UserRoleContext);
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
   const [openDialog, setOpenDialog] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -46,7 +43,6 @@ const Entidad = () => {
       setOpenDialog(false);
     }
   };
-  const arr = ["jhin", "leona", "lucian"];
   return (
     <Grid
       container
@@ -70,9 +66,9 @@ const Entidad = () => {
             onChange={(event) => setOrganismo(event.target.value)}
             label="Seleccione un organismo"
           >
-            {currentUser?.organismo.map((organismo, index) => (
-              <MenuItem value={organismo} key={index}>
-                {currentUser?.entidad[index]}
+            {currentUser?.organismo.map((organismo) => (
+              <MenuItem value={organismo.code} key={organismo._id}>
+                {organismo.name}
               </MenuItem>
             ))}
 

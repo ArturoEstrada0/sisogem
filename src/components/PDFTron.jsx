@@ -15,26 +15,7 @@ async function initWebViewer(viewerElement) {
       },
       viewerElement
     );
-    instance.UI.disableElements(["toolbarGroup-Shapes"]); // Quita la seccion de FORMAS
-    instance.UI.disableElements(["toolbarGroup-Forms"]); // Quita la seccion Formularios
-    instance.UI.disableElements([
-      "rotateClockwiseButton",
-      "rotateCounterClockwiseButton",
-    ]); // Quita Rotación del documento
-    instance.UI.disableElements(["toolbarGroup-Annotate"]); // Quita la seccion de Anotaciones
-    instance.UI.disableElements(["toolbarGroup-Edit"]); // Quita la seccion de Editar
-    instance.UI.disableElements(["toolbarGroup-FillAndSign"]); // Quita la seccion de Editar
-    instance.UI.disableElements([
-      "pageManipulationOverlayButton",
-      "thumbDelete",
-      "thumbRotateClockwise",
-    ]); // Quita la seccion de Editar
-    instance.UI.disableElements([
-      "crossStampToolButton",
-      "checkStampToolButton",
-      "dotStampToolButton",
-      "dateFreeTextToolButton",
-    ]); // Quita botones de Cross, Tick, Dot y Calendar
+
 
     const { documentViewer, annotationManager, Annotations } = instance.Core;
 

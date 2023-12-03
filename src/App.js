@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Amplify, Auth } from "aws-amplify";
 import awsExports from "./aws-exports";
-import awsconfig from './aws-exports'; // Asegúrate de que este archivo existe
+import awsconfig from "./aws-exports"; // Asegúrate de que este archivo existe
 
 import "./App.css";
 // Componentes de autenticación
@@ -14,6 +14,7 @@ import ConfirmSignUp from "./components/ConfirmSignUp";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
 import { UserRoleProvider } from "./context/UserRoleContext";
+import { OrganismoProvider } from "./context/OrganismoContext";
 
 Amplify.configure(awsconfig);
 Amplify.configure(awsExports);
@@ -113,42 +114,44 @@ function App() {
 
   return (
     <UserRoleProvider>
-      <Router key={user ? user.username : "login"}>
-        <div>
-          {view === "dashboard" && user && (
-            <>
-              <Header user={user} signOut={handleSignOut} userRole={role} />
-              <Dashboard userRole={role} />
-            </>
-          )}
-          {view === "login" && !user && (
-            <Login setUser={setUser} setRole={setRole} changeView={setView} />
-          )}
-          {view === "signup" && (
-            <SignUp setSignUpData={setSignUpData} changeView={setView} />
-          )}
-          {view === "confirmSignUp" && (
-            <ConfirmSignUp
-              confirmSignUpData={confirmSignUpData}
-              email={email}
-              changeView={setView}
-            />
-          )}
-          {view === "forgotPassword" && (
-            <ForgotPassword
-              onResetPassword={handleForgotPassword}
-              changeView={setView}
-            />
-          )}
-          {view === "resetPassword" && (
-            <ResetPassword
-              onResetPasswordSubmit={handleResetPasswordSubmit}
-              changeView={setView}
-            />
-          )}
-          {/* Aquí puedes agregar la lógica de la vista 'resetPassword' si es necesario */}
-        </div>
-      </Router>
+      <OrganismoProvider>
+        <Router key={user ? user.username : "login"}>
+          <div>
+            {view === "dashboard" && user && (
+              <>
+                <Header user={user} signOut={handleSignOut} userRole={role} />
+                <Dashboard userRole={role} />
+              </>
+            )}
+            {view === "login" && !user && (
+              <Login setUser={setUser} setRole={setRole} changeView={setView} />
+            )}
+            {view === "signup" && (
+              <SignUp setSignUpData={setSignUpData} changeView={setView} />
+            )}
+            {view === "confirmSignUp" && (
+              <ConfirmSignUp
+                confirmSignUpData={confirmSignUpData}
+                email={email}
+                changeView={setView}
+              />
+            )}
+            {view === "forgotPassword" && (
+              <ForgotPassword
+                onResetPassword={handleForgotPassword}
+                changeView={setView}
+              />
+            )}
+            {view === "resetPassword" && (
+              <ResetPassword
+                onResetPasswordSubmit={handleResetPasswordSubmit}
+                changeView={setView}
+              />
+            )}
+            {/* Aquí puedes agregar la lógica de la vista 'resetPassword' si es necesario */}
+          </div>
+        </Router>{" "}
+      </OrganismoProvider>
     </UserRoleProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Select,
@@ -27,14 +27,20 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { useContext } from "react";
 import { UserRoleContext } from "../context/UserRoleContext";
+import { UserService } from "../services/UserService";
+import { OrganismoContext } from "../context/OrganismoContext";
 
 const { Option } = Select;
 const { confirm } = Modal;
 
+const buildRepresentacionDe = (organismos) => {
+  const orgNamesArray = organismos.map(org => org.name);
+  return orgNamesArray.join(", ");
+}
+
 const OrganoGobierno = () => {
   const [cargoCompletoFilter, setCargoCompletoFilter] = useState(null);
   const [fechaInicioFilter, setFechaInicioFilter] = useState(null);
-
   const [integrantes, setIntegrantes] = useState([]);
   const [showAnimation, setShowAnimation] = useState(false);
   const [circleAnimation, setCircleAnimation] = useState(null);
@@ -42,6 +48,31 @@ const OrganoGobierno = () => {
   const [form] = Form.useForm();
   const [formVisible, setFormVisible] = useState(false);
   const { currentUser } = useContext(UserRoleContext);
+  const { organismo, setOrganismo } = useContext(OrganismoContext)
+
+  useEffect(() => {
+    
+    const fetchData = async () => {
+      const response = await UserService.getUserByOrganismo(organismo);
+      setIntegrantes([
+        ...integrantes,
+        ...response.map(userFromApi => ({
+          tipoIntegrante: userFromApi.rol.rol,
+          nombreCompleto: userFromApi.name,
+          representacionDe: buildRepresentacionDe(userFromApi.organismo) ,
+          cargoCompleto: userFromApi.full_charge ,
+          email: userFromApi.email,
+          fechaInicioDesignacion: null,
+        }))
+      ])
+    }
+    if (organismo === '') {
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    }
+    else fetchData();
+
+  }, [organismo, currentUser]);
 
   const onFinish = (values) => {
     if (editingIndex === -1) {
@@ -427,7 +458,7 @@ const OrganoGobierno = () => {
 
   return (
     <div className="container">
-      {currentUser?.roles === "Secretario Técnico" && (
+      {currentUser?.rol.rol === "Comisario" && (
         <Tooltip title="Agregar Integrante">
           <Button
             type="primary"

@@ -7,6 +7,14 @@ export class UserService {
         const { data } = await axios.post(`${API_URL}/user/email`, {
             email: userEmail
         })
-        return data.pop();
+        console.log(data)
+        return data;
     }
+
+    static async getUserByOrganismo (organimo) {
+        const {data} = await axios.get(`${API_URL}/listUser/${organimo}`)
+        return data;
+    }
+    
+
 }
