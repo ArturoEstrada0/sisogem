@@ -195,7 +195,6 @@ const ProgramarSesion = () => {
 
   const handleProgramarSesion = async () => {
     setLoading(true); // Inicia el estado de carga
-    console.log("Loading antes de la operación:", loading);
 
     try {
       if (!fecha || !horaInicio) {
