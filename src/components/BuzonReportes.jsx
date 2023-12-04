@@ -146,39 +146,6 @@ function BuzonReportes() {
           hour12: true,
         }),
     },
-    {
-      title: 'Action',
-      dataIndex: '',
-      key: 'x',
-      render: (text, record) => (
-        <Popconfirm
-          title='Eliminar Reporte'
-          description='¿Estás seguro de eliminar este reporte?'
-          onConfirm={() => {
-            axios
-              .delete(`http://localhost:3002/reportes/${record._id}`)
-              .then(() => {
-                message.success('Reporte eliminado con éxito')
-                const newData = data.filter((item) => item.key !== record.key)
-                setData(newData)
-              })
-              .catch((error) => {
-                message.error('Error al eliminar el reporte')
-              })
-          }}
-          icon={
-            <QuestionCircleOutlined
-              style={{
-                color: 'red',
-              }}
-            />
-          }>
-          <Button danger type='text'>
-            Eliminar
-          </Button>
-        </Popconfirm>
-      ),
-    },
   ]
 
   const handleTitleChange = (e) => {
