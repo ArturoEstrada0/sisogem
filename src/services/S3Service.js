@@ -1,12 +1,11 @@
 import { s3 } from "./AWSConfig";
-export const uploadFileToS3 = (file, fileName) => {
+export const uploadFileToS3 = (file, organismo, fileName) => {
   const params = {
-    Bucket: "sisogem",
+    Bucket: organismo,
     Key: fileName,
     Body: file,
     ContentType: file.type,
     ACL: "public-read", // Establecer el ACL como público
-
   };
 
   try {

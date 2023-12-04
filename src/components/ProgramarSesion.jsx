@@ -64,7 +64,6 @@ const ProgramarSesion = () => {
     fetchSesionesProgramadas();
   }, []);
 
-  
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -95,14 +94,11 @@ const ProgramarSesion = () => {
   }, [sesionesProgramadas]);
 
   useEffect(() => {
-
     if (organismo === "") {
-
       if (currentUser) setOrganismo(currentUser.organismo[0].code);
       else return;
-    } 
+    }
   }, [currentUser]);
-
 
   const handleFileUpload = async () => {
     try {
@@ -114,7 +110,7 @@ const ProgramarSesion = () => {
       const fileDetailsArray = [];
       for (let file of fileList) {
         const response = await uploadFileToS3(
-          file.originFileObj,
+          file.originFileObj, organismo,
           `${folderName}/${file.name}`
         );
         fileDetailsArray.push({ nombre: file.name, url: response.Location });
@@ -127,7 +123,7 @@ const ProgramarSesion = () => {
         numeroSesion,
         fecha: fecha ? fecha.format("YYYY-MM-DD") : null,
         horaInicio: horaInicio ? horaInicio.format("HH:mm") : null,
-        folderUrl: `https://sisogem.s3.amazonaws.com/${folderName}`,
+        folderUrl: `https://${organismo}.s3.amazonaws.com/${folderName}`,
         archivos: fileDetailsArray,
         estatus: "Programado", // Puede ser "Programado", "Activo" o "Finalizado"
         organismo: organismo,
@@ -163,47 +159,44 @@ const ProgramarSesion = () => {
     const usersByOrganismoCount = Math.floor(usersList.length / 2) + 1;
     if (sesion.contador.length >= usersByOrganismoCount) {
       const params = {
-        TableName: 'Sesiones',
+        TableName: "Sesiones",
         Key: {
-          idSesion: sesion.idSesion
+          idSesion: sesion.idSesion,
         },
-        UpdateExpression: 'set estatus=:newStatus',
+        UpdateExpression: "set estatus=:newStatus",
         ExpressionAttributeValues: {
-          ':newStatus': 'Activo'
+          ":newStatus": "Activo",
         },
-        ReturnValues: 'ALL_NEW'
-      }
+        ReturnValues: "ALL_NEW",
+      };
       docClient.update(params, (err, data) => {
-        console.log({err, data})
-      })
+        console.log({ err, data });
+      });
     }
     await fetchSesionesProgramadas();
-  }
-  
+  };
+
   const paseListaDeUsuario = async (sesion) => {
     const params = {
-      TableName: 'Sesiones',
+      TableName: "Sesiones",
       Key: {
-        idSesion: sesion.idSesion
+        idSesion: sesion.idSesion,
       },
-      UpdateExpression: 'set contador=list_append(contador, :newUser)',
+      UpdateExpression: "set contador=list_append(contador, :newUser)",
       ExpressionAttributeValues: {
-        ':newUser': [ currentUser.email ]
+        ":newUser": [currentUser.email],
       },
-      ReturnValues: 'ALL_NEW'
-    }
+      ReturnValues: "ALL_NEW",
+    };
     docClient.update(params, async (err, data) => {
       if (err) {
-        console.log('Error al actualizar'); 
+        console.log("Error al actualizar");
         return;
       }
-      await fetchSesionesProgramadas()
-      await validarCantidadUsuarios(data.Attributes)
-    })
-  
-  }
-
-  
+      await fetchSesionesProgramadas();
+      await validarCantidadUsuarios(data.Attributes);
+    });
+  };
 
   // Nueva función para manejar el cambio en la lista de archivos
   const handleChange = (info) => {
@@ -220,7 +213,7 @@ const ProgramarSesion = () => {
       const s3 = new AWS.S3();
 
       const params = {
-        Bucket: "sisogem", // Nombre de tu bucket en S3
+        Bucket: organismo, // Nombre de tu bucket en S3
         Prefix: folderName + "/", // Prefijo para listar archivos en la carpeta específica
       };
 
@@ -229,7 +222,7 @@ const ProgramarSesion = () => {
 
       for (let file of files) {
         const objectParams = {
-          Bucket: "sisogem",
+          Bucket: organismo,
           Key: file.Key,
         };
 
@@ -369,27 +362,29 @@ const ProgramarSesion = () => {
   const handleIniciarSesion = async (sesion) => {
     try {
       setLoading(true);
-  
+
       // Actualizar el estado de la sesión en DynamoDB
       const updateParams = {
-        TableName: 'Sesiones',
+        TableName: "Sesiones",
         Key: {
-          idSesion: sesion.idSesion
+          idSesion: sesion.idSesion,
         },
-        UpdateExpression: 'set estatus = :newStatus',
+        UpdateExpression: "set estatus = :newStatus",
         ExpressionAttributeValues: {
-          ':newStatus': 'En Progreso'
+          ":newStatus": "En Progreso",
         },
-        ReturnValues: 'ALL_NEW'
+        ReturnValues: "ALL_NEW",
       };
-  
+
       await docClient.update(updateParams).promise();
-  
+
       // Actualizar el estado local
-      const sesionActualizada = { ...sesion, estatus: 'En Progreso' };
-      setSesionesProgramadas(prev => prev.filter(s => s.idSesion !== sesion.idSesion));
-      setSesionesEnProgreso(prev => [...prev, sesionActualizada]);
-  
+      const sesionActualizada = { ...sesion, estatus: "En Progreso" };
+      setSesionesProgramadas((prev) =>
+        prev.filter((s) => s.idSesion !== sesion.idSesion)
+      );
+      setSesionesEnProgreso((prev) => [...prev, sesionActualizada]);
+
       openNotification(
         "success",
         "Sesión iniciada",
@@ -407,8 +402,6 @@ const ProgramarSesion = () => {
       setLoading(false);
     }
   };
-  
-  
 
   const handleEditarSesion = (sesion) => {
     setSesionEditando(sesion);
@@ -499,23 +492,31 @@ const ProgramarSesion = () => {
       TableName: "Sesiones",
       // Aquí puedes agregar filtros si son necesarios
     };
-  
+
     try {
       const data = await docClient.scan(params).promise();
       const sesiones = data.Items;
-  
-      // Clasificar las sesiones según su estatus
-      const sesionesProgramadas = sesiones.filter(sesion => sesion.estatus === "Programado" || sesion.estatus === "Activo");
-      const sesionesEnProgreso = sesiones.filter(sesion => sesion.estatus === "En Progreso");
-  
-      setSesionesProgramadas(sesionesProgramadas);
+
+      // Filtrar sesiones según su estatus y organismo
+      const sesionesFiltradas = sesiones.filter(
+        (sesion) =>
+          (sesion.estatus === "Programado" || sesion.estatus === "Activo") &&
+          sesion.organismo === organismo, // Asegúrate de que 'organismo' sea el código del organismo del usuario actual
+        console.log("el organismo", organismo)
+      );
+
+      const sesionesEnProgreso = sesiones.filter(
+        (sesion) =>
+          sesion.estatus === "En Progreso" && sesion.organismo === organismo
+      );
+
+      setSesionesProgramadas(sesionesFiltradas);
       setSesionesEnProgreso(sesionesEnProgreso);
     } catch (error) {
       console.error("Error al recuperar sesiones:", error);
       // Manejo de errores
     }
   };
-  
 
   return (
     <div>
