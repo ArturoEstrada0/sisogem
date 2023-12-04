@@ -505,7 +505,7 @@ const ProgramarSesion = () => {
       const sesiones = data.Items;
   
       // Clasificar las sesiones según su estatus
-      const sesionesProgramadas = sesiones.filter(sesion => sesion.estatus === "Programada" || sesion.estatus === "Activo");
+      const sesionesProgramadas = sesiones.filter(sesion => sesion.estatus === "Programado" || sesion.estatus === "Activo");
       const sesionesEnProgreso = sesiones.filter(sesion => sesion.estatus === "En Progreso");
   
       setSesionesProgramadas(sesionesProgramadas);

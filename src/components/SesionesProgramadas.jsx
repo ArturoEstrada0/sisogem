@@ -1,5 +1,6 @@
 import React from "react";
 import { List, Button, Card, Popconfirm } from "antd";
+import moment from "moment"; // Asegúrate de tener 'moment' instalado
 
 const SesionesProgramadas = ({
   data,
@@ -10,6 +11,12 @@ const SesionesProgramadas = ({
   onDescargarDocumentos,
   paseListaDeUsuario
 }) => {
+  const esSesionActivable = (sesion) => {
+    const ahora = moment();
+    const fechaHoraSesion = moment(`${sesion.fecha}T${sesion.horaInicio}`);
+    return sesion.estatus === "Activo" && ahora.isSameOrAfter(fechaHoraSesion);
+  };
+
   const renderItem = (sesion) => (
     <List.Item>
       <Card>
@@ -23,6 +30,7 @@ const SesionesProgramadas = ({
           type="primary"
           onClick={() => onIniciarSesion(sesion)}
           style={{ backgroundColor: "#6A0F49", borderBlockColor: "#6A0F49" }}
+          disabled={!esSesionActivable(sesion)}
         >
           Celebrar Sesión
         </Button>
