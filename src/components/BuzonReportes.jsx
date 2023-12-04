@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import {
   Typography,
   Input,
@@ -16,6 +16,7 @@ import {
 } from '@ant-design/icons'
 import axios from 'axios'
 import './BuzonReportes.css'
+import { OrganismoContext } from '../context/OrganismoContext'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -85,17 +86,22 @@ const styles = {
 }
 
 function BuzonReportes() {
+  const { organismo } = useContext(OrganismoContext)
+
   const [email, setEmail] = useState({
     subject: '',
     text: '',
     html: '',
+    organismo: organismo,
   })
+
+  console.log(email)
 
   const [data, setData] = useState([])
 
   useEffect(() => {
     axios
-      .get('http://localhost:3001/reportes')
+      .get('http://localhost:3002/reportes')
       .then((response) => {
         const dataKeys = response.data.map((item) => ({
           ...item,
@@ -150,7 +156,7 @@ function BuzonReportes() {
           description='¿Estás seguro de eliminar este reporte?'
           onConfirm={() => {
             axios
-              .delete(`http://localhost:3001/reportes/${record._id}`)
+              .delete(`http://localhost:3002/reportes/${record._id}`)
               .then(() => {
                 message.success('Reporte eliminado con éxito')
                 const newData = data.filter((item) => item.key !== record.key)
@@ -197,7 +203,7 @@ function BuzonReportes() {
       )
     } else {
       axios
-        .post('http://localhost:3001/email', email)
+        .post('http://localhost:3002/email', email)
         .then(() => {
           message.success('Reporte enviado con éxito.')
           setTitle('')
