@@ -18,12 +18,17 @@ import SesionesProgramadas from "./SesionesProgramadas";
 import SesionProgreso from "./SesionProgreso";
 import moment from "moment";
 import { uploadFileToS3 } from "../services/S3Service";
+import { OrganismoContext } from "../context/OrganismoContext";
+import { UserRoleContext } from "../context/UserRoleContext";
 import JSZip from "jszip";
 import FileSaver from "file-saver";
 import { v4 as uuidv4 } from "uuid";
 
 import { Upload, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import { useContext } from "react";
+import { async } from "q";
+import { UserService } from "../services/UserService";
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -42,18 +47,24 @@ const ProgramarSesion = () => {
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
+  //importamos el contexto de organimos
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
+  const { currentUser } = useContext(UserRoleContext);
 
   AWS.config.update({
     accessKeyId: "AKIASAHHYXZDGGYMQIEG",
     secretAccessKey: "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",
     region: "us-east-1",
   });
+  // const AWS = require("aws-sdk");
+  const docClient = new AWS.DynamoDB.DocumentClient();
 
   // Dentro de tu componente ProgramarSesion
   useEffect(() => {
     fetchSesionesProgramadas();
   }, []);
 
+  /*
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -81,7 +92,16 @@ const ProgramarSesion = () => {
     }, 30000); // Revisa cada minuto
 
     return () => clearInterval(interval);
-  }, [sesionesProgramadas]);
+  }, [sesionesProgramadas]);*/
+
+  useEffect(() => {
+
+    if (organismo === "") {
+
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    } 
+  }, [currentUser]);
 
 
   const handleFileUpload = async () => {
@@ -109,6 +129,9 @@ const ProgramarSesion = () => {
         horaInicio: horaInicio ? horaInicio.format("HH:mm") : null,
         folderUrl: `https://sisogem.s3.amazonaws.com/${folderName}`,
         archivos: fileDetailsArray,
+        estatus: "Programado", // Puede ser "Programado", "Activo" o "Finalizado"
+        organismo: organismo,
+        contador: [currentUser.email],
         // otros datos relevantes...
       };
 
@@ -123,9 +146,6 @@ const ProgramarSesion = () => {
 
   const saveSessionToDynamoDB = async (sessionData) => {
     try {
-      const AWS = require("aws-sdk");
-      const docClient = new AWS.DynamoDB.DocumentClient();
-
       const params = {
         TableName: "Sesiones",
         Item: sessionData,
@@ -137,6 +157,53 @@ const ProgramarSesion = () => {
       throw error;
     }
   };
+
+  const validarCantidadUsuarios = async (sesion) => {
+    const usersList = await UserService.getUserByOrganismo(organismo);
+    const usersByOrganismoCount = Math.floor(usersList.length / 2) + 1;
+    if (sesion.contador.length >= usersByOrganismoCount) {
+      const params = {
+        TableName: 'Sesiones',
+        Key: {
+          idSesion: sesion.idSesion
+        },
+        UpdateExpression: 'set estatus=:newStatus',
+        ExpressionAttributeValues: {
+          ':newStatus': 'Activo'
+        },
+        ReturnValues: 'ALL_NEW'
+      }
+      docClient.update(params, (err, data) => {
+        console.log({err, data})
+      })
+    }
+    await fetchSesionesProgramadas();
+  }
+  
+  const paseListaDeUsuario = async (sesion) => {
+    const params = {
+      TableName: 'Sesiones',
+      Key: {
+        idSesion: sesion.idSesion
+      },
+      UpdateExpression: 'set contador=list_append(contador, :newUser)',
+      ExpressionAttributeValues: {
+        ':newUser': [ currentUser.email ]
+      },
+      ReturnValues: 'ALL_NEW'
+    }
+    docClient.update(params, async (err, data) => {
+      if (err) {
+        console.log('Error al actualizar'); 
+        return;
+      }
+      await fetchSesionesProgramadas()
+      await validarCantidadUsuarios(data.Attributes)
+    })
+  
+  }
+
+  
 
   // Nueva función para manejar el cambio en la lista de archivos
   const handleChange = (info) => {
@@ -519,6 +586,8 @@ const ProgramarSesion = () => {
                 onEditarSesion={handleEditarSesion}
                 onBorrarSesion={handleBorrarSesion}
                 onDescargarDocumentos={handleDescargarDocumentos}
+                paseListaDeUsuario={paseListaDeUsuario}
+                currentUser={currentUser}
               />
             </TabPane>
             <TabPane

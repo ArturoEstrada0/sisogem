@@ -3,10 +3,12 @@ import { List, Button, Card, Popconfirm } from "antd";
 
 const SesionesProgramadas = ({
   data,
+  currentUser,
   onIniciarSesion,
   onEditarSesion,
   onBorrarSesion,
   onDescargarDocumentos,
+  paseListaDeUsuario
 }) => {
   const renderItem = (sesion) => (
     <List.Item>
@@ -15,8 +17,13 @@ const SesionesProgramadas = ({
         <p>Número de Sesión: {sesion.numeroSesion}</p>
         <p>Fecha: {sesion.fecha}</p>
         <p>Hora de Inicio: {sesion.horaInicio}</p>
+        <p>Estatus: {sesion.estatus} </p>
 
-        <Button type="primary" onClick={() => onIniciarSesion(sesion)} style={{backgroundColor: "#6A0F49", borderBlockColor: "#6A0F49"}}>
+        <Button
+          type="primary"
+          onClick={() => onIniciarSesion(sesion)}
+          style={{ backgroundColor: "#6A0F49", borderBlockColor: "#6A0F49" }}
+        >
           Celebrar Sesión
         </Button>
 
@@ -25,6 +32,10 @@ const SesionesProgramadas = ({
           onClick={() => onEditarSesion(sesion)}
         >
           Editar
+        </Button>
+
+        <Button style={{ marginLeft: 8 }} onClick={() => paseListaDeUsuario(sesion)} disabled={sesion.contador.includes(currentUser.email)}>
+          CONFIRMAR ASISTENCIA
         </Button>
 
         <Popconfirm

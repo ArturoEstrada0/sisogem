@@ -69,7 +69,6 @@ const OrganoGobierno = () => {
       ]);
     };
     if (organismo === "") {
-      console.log("aqui ", organismo);
 
       if (currentUser) setOrganismo(currentUser.organismo[0].code);
       else return;
