@@ -408,6 +408,7 @@ const ProgramarSesion = () => {
     }
   };
   
+  
 
   const handleEditarSesion = (sesion) => {
     setSesionEditando(sesion);
@@ -503,18 +504,15 @@ const ProgramarSesion = () => {
       const data = await docClient.scan(params).promise();
       const sesiones = data.Items;
   
-      // Filtrar sesiones según su estatus
-      const sesionesProgramadas = sesiones.filter(sesion => 
-        sesion.estatus === "Programado" || sesion.estatus === "Activa"
-      );
-      const sesionesEnProgreso = sesiones.filter(sesion => 
-        sesion.estatus === "En Progreso"
-      );
+      // Clasificar las sesiones según su estatus
+      const sesionesProgramadas = sesiones.filter(sesion => sesion.estatus === "Programada" || sesion.estatus === "Activo");
+      const sesionesEnProgreso = sesiones.filter(sesion => sesion.estatus === "En Progreso");
   
       setSesionesProgramadas(sesionesProgramadas);
       setSesionesEnProgreso(sesionesEnProgreso);
     } catch (error) {
       console.error("Error al recuperar sesiones:", error);
+      // Manejo de errores
     }
   };
   
