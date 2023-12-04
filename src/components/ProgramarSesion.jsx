@@ -64,7 +64,7 @@ const ProgramarSesion = () => {
     fetchSesionesProgramadas();
   }, []);
 
-  /*
+  
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -89,10 +89,10 @@ const ProgramarSesion = () => {
           ...nuevasSesionesEnProgreso,
         ]);
       }
-    }, 30000); // Revisa cada minuto
+    }, 60000); // Revisa cada minuto
 
     return () => clearInterval(interval);
-  }, [sesionesProgramadas]);*/
+  }, [sesionesProgramadas]);
 
   useEffect(() => {
 
@@ -366,16 +366,48 @@ const ProgramarSesion = () => {
     }
   };
 
-  const handleIniciarSesion = (sesion) => {
-    setSesionesProgramadas(sesionesProgramadas.filter((s) => s !== sesion));
-    setSesionesEnProgreso([...sesionesEnProgreso, sesion]);
-    openNotification(
-      "success",
-      "Sesión iniciada",
-      "La sesión se ha iniciado correctamente."
-    );
-    setNuevasSesionesEnProgreso(nuevasSesionesEnProgreso + 1);
+  const handleIniciarSesion = async (sesion) => {
+    try {
+      setLoading(true);
+  
+      // Actualizar el estado de la sesión en DynamoDB
+      const updateParams = {
+        TableName: 'Sesiones',
+        Key: {
+          idSesion: sesion.idSesion
+        },
+        UpdateExpression: 'set estatus = :newStatus',
+        ExpressionAttributeValues: {
+          ':newStatus': 'En Progreso'
+        },
+        ReturnValues: 'ALL_NEW'
+      };
+  
+      await docClient.update(updateParams).promise();
+  
+      // Actualizar el estado local
+      const sesionActualizada = { ...sesion, estatus: 'En Progreso' };
+      setSesionesProgramadas(prev => prev.filter(s => s.idSesion !== sesion.idSesion));
+      setSesionesEnProgreso(prev => [...prev, sesionActualizada]);
+  
+      openNotification(
+        "success",
+        "Sesión iniciada",
+        "La sesión se ha iniciado correctamente y está en progreso."
+      );
+      setNuevasSesionesEnProgreso(nuevasSesionesEnProgreso + 1);
+    } catch (error) {
+      console.error("Error al iniciar la sesión:", error);
+      openNotification(
+        "error",
+        "Error al iniciar la sesión",
+        "Hubo un problema al iniciar la sesión."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+  
 
   const handleEditarSesion = (sesion) => {
     setSesionEditando(sesion);
@@ -466,15 +498,26 @@ const ProgramarSesion = () => {
       TableName: "Sesiones",
       // Aquí puedes agregar filtros si son necesarios
     };
-
+  
     try {
       const data = await docClient.scan(params).promise();
-      setSesionesProgramadas(data.Items);
+      const sesiones = data.Items;
+  
+      // Filtrar sesiones según su estatus
+      const sesionesProgramadas = sesiones.filter(sesion => 
+        sesion.estatus === "Programado" || sesion.estatus === "Activa"
+      );
+      const sesionesEnProgreso = sesiones.filter(sesion => 
+        sesion.estatus === "En Progreso"
+      );
+  
+      setSesionesProgramadas(sesionesProgramadas);
+      setSesionesEnProgreso(sesionesEnProgreso);
     } catch (error) {
       console.error("Error al recuperar sesiones:", error);
-      // Manejo de errores
     }
   };
+  
 
   return (
     <div>
