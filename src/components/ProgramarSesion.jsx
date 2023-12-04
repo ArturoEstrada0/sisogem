@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   DatePicker,
   TimePicker,
@@ -12,6 +12,7 @@ import {
   Badge,
   Spin,
 } from "antd";
+import AWS from "aws-sdk";
 
 import SesionesProgramadas from "./SesionesProgramadas";
 import SesionProgreso from "./SesionProgreso";
@@ -39,62 +40,103 @@ const ProgramarSesion = () => {
   const [form] = Form.useForm();
   const [nuevasSesionesProgramadas, setNuevasSesionesProgramadas] = useState(0);
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
-  const [documentosDescargados, setDocumentosDescargados] = useState([]);
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  AWS.config.update({
+    accessKeyId: "AKIASAHHYXZDGGYMQIEG",
+    secretAccessKey: "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",
+    region: "us-east-1",
+  });
+
+  // Dentro de tu componente ProgramarSesion
+  useEffect(() => {
+    fetchSesionesProgramadas();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const nuevasSesionesEnProgreso = sesionesProgramadas.filter((sesion) => {
+        const sesionDateTime = new Date(`${sesion.fecha}T${sesion.horaInicio}`);
+        return sesionDateTime <= now;
+      });
+
+      if (nuevasSesionesEnProgreso.length > 0) {
+        const actualizadasSesionesProgramadas = sesionesProgramadas.filter(
+          (sesion) => {
+            const sesionDateTime = new Date(
+              `${sesion.fecha}T${sesion.horaInicio}`
+            );
+            return sesionDateTime > now;
+          }
+        );
+
+        setSesionesProgramadas(actualizadasSesionesProgramadas);
+        setSesionesEnProgreso((prevSesiones) => [
+          ...prevSesiones,
+          ...nuevasSesionesEnProgreso,
+        ]);
+      }
+    }, 30000); // Revisa cada minuto
+
+    return () => clearInterval(interval);
+  }, [sesionesProgramadas]);
+
+
   const handleFileUpload = async () => {
     try {
+      // Generar un ID único para la sesión
       const idSesion = uuidv4();
       const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
-      const fileDetailsArray = fileList.map(file => ({
-        nombre: file.name,
-        url: `tu-bucket-url/${folderName}/${file.name}`
-      }));
-  
+
+      // Subir archivos a S3 y recolectar detalles
+      const fileDetailsArray = [];
+      for (let file of fileList) {
+        const response = await uploadFileToS3(
+          file.originFileObj,
+          `${folderName}/${file.name}`
+        );
+        fileDetailsArray.push({ nombre: file.name, url: response.Location });
+      }
+
+      // Construir objeto con todos los detalles de la sesión
       const sessionData = {
         idSesion,
         tipoSesion,
         numeroSesion,
         fecha: fecha ? fecha.format("YYYY-MM-DD") : null,
         horaInicio: horaInicio ? horaInicio.format("HH:mm") : null,
-        folderUrl: `tu-bucket-url/${folderName}`,
+        folderUrl: `https://sisogem.s3.amazonaws.com/${folderName}`,
         archivos: fileDetailsArray,
-        // Incluye cualquier otro dato relevante de la sesión aquí
+        // otros datos relevantes...
       };
-  
-      // Sube los archivos a S3
-      for (let file of fileList) {
-        await uploadFileToS3(file.originFileObj, `${folderName}/${file.name}`);
-      }
-      setFileList([]);
-  
-      // Llamada a la función para guardar los detalles de la sesión y los archivos en DynamoDB
+
+      // Guardar en DynamoDB
       await saveSessionToDynamoDB(sessionData);
+      setFileList([]);
     } catch (error) {
       console.error("Error al cargar archivos:", error);
       message.error("Error al cargar archivos");
     }
   };
-  
-  
+
   const saveSessionToDynamoDB = async (sessionData) => {
     try {
       const AWS = require("aws-sdk");
       const docClient = new AWS.DynamoDB.DocumentClient();
-  
+
       const params = {
         TableName: "Sesiones",
         Item: sessionData,
       };
-  
+
       await docClient.put(params).promise();
     } catch (error) {
       console.error("Error al guardar sesión en DynamoDB:", error);
       throw error;
     }
   };
-  
 
   // Nueva función para manejar el cambio en la lista de archivos
   const handleChange = (info) => {
@@ -104,48 +146,35 @@ const ProgramarSesion = () => {
   const handleDescargarDocumentos = async (sesion) => {
     try {
       const zip = new JSZip();
+      const folderUrl = sesion.folderUrl;
+      const folderName = folderUrl.split("/").pop(); // Extrae el nombre de la carpeta
 
-      if (Array.isArray(sesion?.documentos)) {
-        const documentosDescargados = await Promise.all(
-          sesion.documentos.map(async (documento) => {
-            const { url, nombre } = documento;
-            const nombreArchivo = nombre || "documento";
+      // Configura el cliente S3
+      const s3 = new AWS.S3();
 
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(
-                `Error al descargar el archivo: ${response.statusText}`
-              );
-            }
-            const blob = await response.blob();
-            const pdfBlob = new Blob([blob], { type: "application/pdf" }); // Especificar el tipo MIME para PDF
-            zip.file(nombreArchivo, pdfBlob, { binary: true });
+      const params = {
+        Bucket: "sisogem", // Nombre de tu bucket en S3
+        Prefix: folderName + "/", // Prefijo para listar archivos en la carpeta específica
+      };
 
-            return {
-              nombre: nombreArchivo,
-              blob: pdfBlob,
-            };
-          })
-        );
+      const data = await s3.listObjectsV2(params).promise();
+      const files = data.Contents;
 
-        const contenidoZIP = await zip.generateAsync({
-          type: "blob",
-          compression: "STORE",
-        }); // Se desactiva la compresión
+      for (let file of files) {
+        const objectParams = {
+          Bucket: "sisogem",
+          Key: file.Key,
+        };
 
-        // Guarda la información de los documentos en el estado local
-        setDocumentosDescargados(documentosDescargados);
-
-        FileSaver.saveAs(
-          contenidoZIP,
-          `documentos_${sesion.fecha}_${sesion.horaInicio}.zip`
-        );
-      } else {
-        console.error("La lista de documentos no es un array.");
+        const fileData = await s3.getObject(objectParams).promise();
+        zip.file(file.Key.split("/").pop(), fileData.Body, { binary: true });
       }
+
+      const contenidoZIP = await zip.generateAsync({ type: "blob" });
+      FileSaver.saveAs(contenidoZIP, `documentos_${folderName}.zip`);
     } catch (error) {
-      console.error("Error al descargar documentos:", error.message);
-      // Aquí podrías mostrar un mensaje de error al usuario si es necesario
+      console.error("Error al descargar documentos:", error);
+      // Manejo de errores
     }
   };
 
@@ -199,9 +228,6 @@ const ProgramarSesion = () => {
         })),
         idSesion,
       };
-
-      // Almacena los detalles de la sesión en DynamoDB
-      await saveSessionDetailsToDynamoDB(nuevaSesion);
 
       // Llama a handleFileUpload después de guardar los detalles de la sesión
       await handleFileUpload();
@@ -364,6 +390,22 @@ const ProgramarSesion = () => {
       setNuevasSesionesProgramadas(0);
     } else if (key === "progreso") {
       setNuevasSesionesEnProgreso(0);
+    }
+  };
+
+  const fetchSesionesProgramadas = async () => {
+    const docClient = new AWS.DynamoDB.DocumentClient();
+    const params = {
+      TableName: "Sesiones",
+      // Aquí puedes agregar filtros si son necesarios
+    };
+
+    try {
+      const data = await docClient.scan(params).promise();
+      setSesionesProgramadas(data.Items);
+    } catch (error) {
+      console.error("Error al recuperar sesiones:", error);
+      // Manejo de errores
     }
   };
 

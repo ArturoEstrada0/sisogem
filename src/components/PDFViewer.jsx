@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button, Modal, Input, Space } from "antd";
 import {
@@ -11,6 +11,7 @@ import {
   FilePdfOutlined,
   FileImageOutlined,
 } from "@ant-design/icons";
+import AWS from "aws-sdk";
 
 import SignatureCanvas from "react-signature-canvas";
 import { PDFDocument } from "pdf-lib";
@@ -122,7 +123,7 @@ function SignaturePreview({ signatureImage, onResizeStop, onDragStop }) {
   );
 }
 
-function PDFViewer() {
+function PDFViewer({ url }) {
   const [pdfFile, setPdfFile] = useState(null);
   const [signatureImage, setSignatureImage] = useState(null);
   const [pageNumber, setPageNumber] = useState(1); // Página actual
@@ -134,6 +135,63 @@ function PDFViewer() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCanvas, setShowCanvas] = useState(true);
   const [signaturePosition, setSignaturePosition] = useState(null);
+  // Agrega un nuevo estado para el PDF firmado
+  const [signedPdfFile, setSignedPdfFile] = useState(null);
+
+  AWS.config.update({
+    accessKeyId: "AKIASAHHYXZDGGYMQIEG",
+    secretAccessKey: "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",
+    region: "us-east-1",
+  });
+
+  useEffect(() => {
+    if (url) {
+      fetchPdf(url);
+    }
+  }, [url]);
+
+  useEffect(() => {
+    if (signedPdfFile) {
+      const pdfUrl = URL.createObjectURL(signedPdfFile);
+      window.open(pdfUrl, "_blank");
+    }
+  }, [signedPdfFile]); // Se activará cada vez que signedPdfFile cambie
+  
+
+  // Función para cargar PDF desde una URL
+  const fetchPdf = async (pdfUrl) => {
+    try {
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      setPdfFile(blob);
+    } catch (error) {
+      console.error("Error al cargar el PDF:", error);
+    }
+  };
+
+  const uploadSignedPdfToS3 = async () => {
+    if (!signedPdfFile) {
+      console.error("No hay un PDF firmado para subir.");
+      return;
+    }
+
+    const s3 = new AWS.S3();
+    const params = {
+      Bucket: "sisogem", // Reemplaza con el nombre de tu bucket
+      Key: "sesion_20231203_161843/APPBEJAS.pdf", // Reemplaza con la ruta del archivo en S3
+      Body: signedPdfFile,
+      ContentType: "application/pdf",
+      ACL: "public-read", // Establecer el ACL como público
+
+    };
+
+    try {
+      await s3.putObject(params).promise();
+      console.log("PDF firmado subido con éxito.");
+    } catch (error) {
+      console.error("Error al subir el PDF a S3:", error);
+    }
+  };
 
   const onPdfClick = (event) => {
     if (!signatureImage || !pdfFile) return;
@@ -156,8 +214,18 @@ function PDFViewer() {
       const response = await fetch(signatureImage);
       const blob = await response.blob();
 
-      // Crear un nuevo documento PDF con la firma aplicada
-      const existingPdfBytes = await pdfFile.arrayBuffer();
+      let existingPdfBytes;
+
+      if (typeof pdfFile === "string" || pdfFile instanceof String) {
+        // Si pdfFile es una URL, obtén el Blob desde la URL
+        const response = await fetch(pdfFile);
+        const pdfBlob = await response.blob();
+        existingPdfBytes = await pdfBlob.arrayBuffer();
+      } else {
+        // Si pdfFile es un Blob o File
+        existingPdfBytes = await pdfFile.arrayBuffer();
+      }
+
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
       const signatureImg = await pdfDoc.embedPng(await blob.arrayBuffer());
 
@@ -165,41 +233,30 @@ function PDFViewer() {
       const page = pdfDoc.getPage(pageNumber - 1);
       const { width: pdfWidth, height: pdfHeight } = page.getSize();
 
-      // Ajustar las coordenadas según el tamaño de la firma y el centro de la imagen
-      const adjustedX = signaturePosition.x - signatureSize.width / 2;
+      // Ajustar las coordenadas y el tamaño de la firma
+      const x = signaturePosition.x;
+      const y = pdfHeight - signaturePosition.y - signatureSize.height;
 
-      // Ajustar la coordenada Y para centrar la firma correctamente
-      const adjustedY = signaturePosition.y - signatureSize.height / 2;
-
-      // Asegurar que las coordenadas estén dentro de los límites del PDF
-      const x = Math.max(
-        0,
-        Math.min(adjustedX, pdfWidth - signatureSize.width)
-      );
-      const y = Math.max(
-        0,
-        Math.min(adjustedY, pdfHeight - signatureSize.height)
-      );
-
-      // Invertir la coordenada Y para que sea relativa al borde superior de la página
-      const invertedY = pdfHeight - y - signatureSize.height;
+      console.log("Coordenadas de la firma:", signaturePosition);
+      console.log("Tamaño de la firma:", signatureSize);
 
       page.drawImage(signatureImg, {
         x,
-        y: invertedY,
+        y,
         width: signatureSize.width,
         height: signatureSize.height,
       });
 
-      // Guardar el PDF y abrirlo en una nueva ventana
+      // Guardar el PDF y establecerlo en el estado
       const pdfBytes = await pdfDoc.save();
-      const newPdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
-      const newPdfUrl = URL.createObjectURL(newPdfBlob);
-      window.open(newPdfUrl, "_blank");
+      console.log("PDF firmado generado.");
+      setSignedPdfFile(new Blob([pdfBytes], { type: "application/pdf" }));
     } catch (error) {
       console.error("Error al aplicar la firma al PDF:", error);
     }
   };
+
+
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -365,7 +422,15 @@ function PDFViewer() {
   return (
     <div>
       {/* Botones y controles de acción en una sola línea */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", marginBottom: "10px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          marginBottom: "10px",
+        }}
+      >
         <Button
           icon={<FilePdfOutlined />}
           type="primary"
@@ -380,7 +445,7 @@ function PDFViewer() {
           hidden
           ref={fileInputRef}
         />
-  
+
         {pdfFile && (
           <>
             <Button
@@ -390,7 +455,7 @@ function PDFViewer() {
             >
               Abrir Firma
             </Button>
-  
+
             <Space>
               <Input
                 type="text"
@@ -403,7 +468,7 @@ function PDFViewer() {
                 Buscar
               </Button>
             </Space>
-  
+
             <Button
               disabled={pageNumber <= 1}
               onClick={previousPage}
@@ -418,12 +483,18 @@ function PDFViewer() {
             >
               Siguiente
             </Button>
-  
-            <Button onClick={applySignatureToPdf}>Aplicar Firma en el PDF</Button>
+
+            <Button onClick={applySignatureToPdf}>
+              Aplicar Firma en el PDF
+            </Button>
+
+            <Button onClick={uploadSignedPdfToS3}>
+              Guardar PDF Firmado en S3
+            </Button>
           </>
         )}
       </div>
-  
+
       {/* Modal para la firma */}
       {pdfFile && (
         <Modal
@@ -449,20 +520,18 @@ function PDFViewer() {
             </div>
           ) : (
             <div>
-              <input
-                type="file"
-                onChange={onImageChange}
-                accept="image/*"
-              />
+              <input type="file" onChange={onImageChange} accept="image/*" />
             </div>
           )}
-  
+
           <Button onClick={toggleCanvas}>
-            {showCanvas ? "Cambiar a Subir Imagen" : "Cambiar a Firma en Canvas"}
+            {showCanvas
+              ? "Cambiar a Subir Imagen"
+              : "Cambiar a Firma en Canvas"}
           </Button>
         </Modal>
       )}
-  
+
       {/* Renderizado del PDF */}
       <div
         ref={pdfWrapperRef}
@@ -470,7 +539,11 @@ function PDFViewer() {
         style={{ cursor: "handwriting" }}
       >
         <div className="pdf-container">
-          <Document file={pdfFile} onLoadSuccess={onDocumentLoadSuccess}>
+          <Document
+            file={url}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={<div>Cargando PDF...</div>}
+          >
             <Page
               key={`page_${pageNumber}`}
               pageNumber={pageNumber}
@@ -479,7 +552,7 @@ function PDFViewer() {
             />
           </Document>
         </div>
-  
+
         {/* Vista previa de la firma (fuera del modal y sobre el PDF) */}
         {signatureImage && (
           <SignaturePreview
@@ -497,7 +570,7 @@ function PDFViewer() {
           />
         )}
       </div>
-  
+
       {/* Resultados de la búsqueda y controles adicionales */}
       {matches.length > 0 && pdfFile && (
         <div>
@@ -511,7 +584,6 @@ function PDFViewer() {
       )}
     </div>
   );
-  
 }
 
 export default PDFViewer;

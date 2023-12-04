@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { List, Button, Card, notification } from "antd";
-import PDFTron from "./PDFTron";
 import PDFViewer from "./PDFViewer";
 
 const showAlert = (type, message) => {
@@ -10,10 +9,10 @@ const showAlert = (type, message) => {
 };
 
 const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
-  const [selectedDocumentoId, setSelectedDocumentoId] = useState(null);
+  const [selectedSesionId, setSelectedSesionId] = useState(null);
 
   const renderItem = (sesion) => (
-    <List.Item onClick={() => setSelectedDocumentoId(sesion.documentoId)}>
+    <List.Item onClick={() => setSelectedSesionId(sesion.idSesion)}>
       <Card>
         <p>Tipo de Sesión: {sesion.tipoSesion}</p>
         <p>Número de Sesión: {sesion.numeroSesion}</p>
@@ -26,11 +25,11 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
     </List.Item>
   );
 
-  // Obtén la información del documento seleccionado
   const selectedSesion = sesionesEnProgreso.find(
-    (sesion) => sesion.documentoId === selectedDocumentoId
+    (sesion) => sesion.idSesion === selectedSesionId
   );
   const documentos = selectedSesion?.documentos || [];
+  const firstDocumentoUrl = documentos.length > 0 ? documentos[0] : null;
 
   return (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -43,8 +42,7 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
         />
       </div>
       <div style={{ width: "60%" }}>
-        {/* Renderiza PDFTron con la información del documento seleccionado */}
-        <PDFViewer />
+        <PDFViewer url="https://sisogem.s3.amazonaws.com/sesion_20231203_161843/APPBEJAS.pdf" />
       </div>
     </div>
   );
