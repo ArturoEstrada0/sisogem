@@ -41,7 +41,6 @@ const ProgramarSesion = () => {
   const [sesionesProgramadas, setSesionesProgramadas] = useState([]);
   const [sesionesEnProgreso, setSesionesEnProgreso] = useState([]);
   const [sesionEditando, setSesionEditando] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [nuevasSesionesProgramadas, setNuevasSesionesProgramadas] = useState(0);
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
@@ -50,6 +49,16 @@ const ProgramarSesion = () => {
   //importamos el contexto de organimos
   const { organismo, setOrganismo } = useContext(OrganismoContext);
   const { currentUser } = useContext(UserRoleContext);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [documentoActual, setDocumentoActual] = useState("Acta de Sesión");
+
+  const [documentosRequeridos, setDocumentosRequeridos] = useState({
+    "Acta de Sesión": null,
+    Convocatoria: null,
+    "Orden del Día": null,
+    "Estados Financieros": null,
+  });
+  const [documentosAdicionales, setDocumentosAdicionales] = useState([]);
 
   AWS.config.update({
     accessKeyId: "AKIASAHHYXZDGGYMQIEG",
@@ -110,7 +119,8 @@ const ProgramarSesion = () => {
       const fileDetailsArray = [];
       for (let file of fileList) {
         const response = await uploadFileToS3(
-          file.originFileObj, organismo,
+          file.originFileObj,
+          organismo,
           `${folderName}/${file.name}`
         );
         fileDetailsArray.push({ nombre: file.name, url: response.Location });
@@ -518,6 +528,40 @@ const ProgramarSesion = () => {
     }
   };
 
+  const handleUpload = (file, docName) => {
+    // Actualizar el estado con el archivo subido para el documento actual
+    setDocumentosRequeridos(prev => ({ ...prev, [docName]: file }));
+  
+    // Determinar el próximo documento requerido o cambiar al modo de documentos adicionales
+    const documentosRequeridosKeys = Object.keys(documentosRequeridos);
+    const currentIndex = documentosRequeridosKeys.indexOf(docName);
+    if (currentIndex < documentosRequeridosKeys.length - 1) {
+      // Establecer el próximo documento requerido
+      setDocumentoActual(documentosRequeridosKeys[currentIndex + 1]);
+    } else {
+      // Todos los documentos requeridos han sido subidos, verificar y permitir subir documentos adicionales
+      verificarDocumentosRequeridos();
+    }
+  
+    return false; // Evita la carga automática del archivo
+  };
+  
+  const verificarDocumentosRequeridos = () => {
+    const todosSubidos = Object.values(documentosRequeridos).every(doc => doc != null);
+    if (todosSubidos) {
+      // Cambiar a permitir documentos adicionales
+      // Aquí puedes cambiar el estado para mostrar la interfaz de carga de documentos adicionales
+      // Por ejemplo: setIsCargandoDocumentosAdicionales(true);
+    } else {
+      // Si alguno de los documentos requeridos no se ha subido, puedes mostrar un mensaje de error
+      notification.error({
+        message: "Documentos Incompletos",
+        description: "Por favor, asegúrese de subir todos los documentos requeridos."
+      });
+    }
+  };
+  
+
   return (
     <div>
       <Spin spinning={loading} size="large" className="custom-spin">
@@ -529,20 +573,19 @@ const ProgramarSesion = () => {
             onChange={handleTabsChange}
           >
             <TabPane
-  tab={
-    <span style={{ color: '#6A0F49' }}>
-      Programar Sesión{" "}
-      {nuevasSesionesProgramadas > 0 && (
-        <Badge
-          count={nuevasSesionesProgramadas}
-          style={{ backgroundColor: "#ab1675" }}
-        />
-      )}
-    </span>
-  }
-  key="programar"
->
-
+              tab={
+                <span style={{ color: "#6A0F49" }}>
+                  Programar Sesión{" "}
+                  {nuevasSesionesProgramadas > 0 && (
+                    <Badge
+                      count={nuevasSesionesProgramadas}
+                      style={{ backgroundColor: "#ab1675" }}
+                    />
+                  )}
+                </span>
+              }
+              key="programar"
+            >
               <Form form={form} layout="vertical">
                 <Form.Item
                   label="Tipo de Sesión"
@@ -603,31 +646,30 @@ const ProgramarSesion = () => {
                 </Form.Item>
 
                 <Form.Item>
-                <Button
-  type="primary"
-  onClick={handleProgramarSesion}
-  style={{ backgroundColor: '#6A0F49', color: 'white' }}
->
-  {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
-</Button>
+                  <Button
+                    type="primary"
+                    onClick={handleProgramarSesion}
+                    style={{ backgroundColor: "#6A0F49", color: "white" }}
+                  >
+                    {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
+                  </Button>
                 </Form.Item>
               </Form>
             </TabPane>
             <TabPane
-  tab={
-    <span style={{ color: '#6A0F49' }}>
-      Sesiones Programadas{" "}
-      {nuevasSesionesProgramadas > 0 && (
-        <Badge
-          count={nuevasSesionesProgramadas}
-          style={{ backgroundColor: "#ab1675" }}
-        />
-      )}
-    </span>
-  }
-  key="programadas"
->
-            
+              tab={
+                <span style={{ color: "#6A0F49" }}>
+                  Sesiones Programadas{" "}
+                  {nuevasSesionesProgramadas > 0 && (
+                    <Badge
+                      count={nuevasSesionesProgramadas}
+                      style={{ backgroundColor: "#ab1675" }}
+                    />
+                  )}
+                </span>
+              }
+              key="programadas"
+            >
               <SesionesProgramadas
                 data={sesionesProgramadas}
                 onIniciarSesion={handleIniciarSesion}
@@ -639,19 +681,19 @@ const ProgramarSesion = () => {
               />
             </TabPane>
             <TabPane
-  tab={
-    <span style={{ color: '#6A0F49' }}>
-      Sesiones en Progreso{" "}
-      {nuevasSesionesEnProgreso > 0 && (
-        <Badge
-          count={nuevasSesionesEnProgreso}
-          style={{ backgroundColor: "#ab1675" }}
-        />
-      )}
-    </span>
-  }
-  key="progreso"
->
+              tab={
+                <span style={{ color: "#6A0F49" }}>
+                  Sesiones en Progreso{" "}
+                  {nuevasSesionesEnProgreso > 0 && (
+                    <Badge
+                      count={nuevasSesionesEnProgreso}
+                      style={{ backgroundColor: "#ab1675" }}
+                    />
+                  )}
+                </span>
+              }
+              key="progreso"
+            >
               <SesionProgreso
                 sesionesEnProgreso={sesionesEnProgreso}
                 onFinalizarSesion={handleFinalizarSesion}
@@ -716,6 +758,24 @@ const ProgramarSesion = () => {
               <TimePicker format="HH:mm" />
             </Form.Item>
           </Form>
+        </Modal>
+
+        <Modal
+          title="Subir Documentos"
+          visible={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+        >
+          <h3>Subir {documentoActual}</h3>
+          <Upload
+            beforeUpload={(file) => handleUpload(file, documentoActual)}
+            showUploadList={false}
+          >
+            <Button>
+              <UploadOutlined /> Click para cargar {documentoActual}
+            </Button>
+          </Upload>
+          {/* Agrega aquí la lógica para mostrar los documentos adicionales y subirlos */}
         </Modal>
       </Spin>
     </div>
