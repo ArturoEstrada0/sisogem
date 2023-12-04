@@ -487,19 +487,20 @@ const ProgramarSesion = () => {
             onChange={handleTabsChange}
           >
             <TabPane
-              tab={
-                <span>
-                  Programar Sesión{" "}
-                  {nuevasSesionesProgramadas > 0 && (
-                    <Badge
-                      count={nuevasSesionesProgramadas}
-                      style={{ backgroundColor: "#ab1675" }}
-                    />
-                  )}
-                </span>
-              }
-              key="programar"
-            >
+  tab={
+    <span style={{ color: '#6A0F49' }}>
+      Programar Sesión{" "}
+      {nuevasSesionesProgramadas > 0 && (
+        <Badge
+          count={nuevasSesionesProgramadas}
+          style={{ backgroundColor: "#ab1675" }}
+        />
+      )}
+    </span>
+  }
+  key="programar"
+>
+
               <Form form={form} layout="vertical">
                 <Form.Item
                   label="Tipo de Sesión"
@@ -560,26 +561,31 @@ const ProgramarSesion = () => {
                 </Form.Item>
 
                 <Form.Item>
-                  <Button type="primary" onClick={handleProgramarSesion}>
-                    {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
-                  </Button>
+                <Button
+  type="primary"
+  onClick={handleProgramarSesion}
+  style={{ backgroundColor: '#6A0F49', color: 'white' }}
+>
+  {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
+</Button>
                 </Form.Item>
               </Form>
             </TabPane>
             <TabPane
-              tab={
-                <span>
-                  Sesiones Programadas{" "}
-                  {nuevasSesionesProgramadas > 0 && (
-                    <Badge
-                      count={nuevasSesionesProgramadas}
-                      style={{ backgroundColor: "#52c41a" }}
-                    />
-                  )}
-                </span>
-              }
-              key="programadas"
-            >
+  tab={
+    <span style={{ color: '#6A0F49' }}>
+      Sesiones Programadas{" "}
+      {nuevasSesionesProgramadas > 0 && (
+        <Badge
+          count={nuevasSesionesProgramadas}
+          style={{ backgroundColor: "#ab1675" }}
+        />
+      )}
+    </span>
+  }
+  key="programadas"
+>
+            
               <SesionesProgramadas
                 data={sesionesProgramadas}
                 onIniciarSesion={handleIniciarSesion}
@@ -591,19 +597,19 @@ const ProgramarSesion = () => {
               />
             </TabPane>
             <TabPane
-              tab={
-                <span>
-                  Sesiones en Progreso{" "}
-                  {nuevasSesionesEnProgreso > 0 && (
-                    <Badge
-                      count={nuevasSesionesEnProgreso}
-                      style={{ backgroundColor: "#52c41a" }}
-                    />
-                  )}
-                </span>
-              }
-              key="progreso"
-            >
+  tab={
+    <span style={{ color: '#6A0F49' }}>
+      Sesiones en Progreso{" "}
+      {nuevasSesionesEnProgreso > 0 && (
+        <Badge
+          count={nuevasSesionesEnProgreso}
+          style={{ backgroundColor: "#ab1675" }}
+        />
+      )}
+    </span>
+  }
+  key="progreso"
+>
               <SesionProgreso
                 sesionesEnProgreso={sesionesEnProgreso}
                 onFinalizarSesion={handleFinalizarSesion}

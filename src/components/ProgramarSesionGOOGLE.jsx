@@ -409,18 +409,18 @@ const ProgramarSesion = () => {
           </TabPane>
           <TabPane
             tab={
-              <span>
-                Sesiones en Progreso{" "}
-                {nuevasSesionesEnProgreso > 0 && (
-                  <Badge
-                    count={nuevasSesionesEnProgreso}
-                    style={{ backgroundColor: "#52c41a" }}
-                  />
-                )}
-              </span>
-            }
-            key="progreso"
-          >
+              <span style={{ color: '#6A0F49' }}>
+      Sesiones en Progreso{" "}
+      {nuevasSesionesEnProgreso > 0 && (
+        <Badge
+          count={nuevasSesionesEnProgreso}
+          style={{ backgroundColor: "#ab1675" }}
+        />
+      )}
+    </span>
+  }
+  key="progreso"
+>
             <SesionProgreso
               sesionesEnProgreso={sesionesEnProgreso}
               onFinalizarSesion={handleFinalizarSesion}

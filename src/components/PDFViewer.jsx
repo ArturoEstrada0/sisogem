@@ -432,12 +432,14 @@ function PDFViewer({ url }) {
         }}
       >
         <Button
-          icon={<FilePdfOutlined />}
-          type="primary"
-          onClick={handleFileButtonClick}
-        >
-          Abrir PDF
-        </Button>
+  icon={<FilePdfOutlined />}
+  type="primary"
+  onClick={handleFileButtonClick}
+  style={{ backgroundColor: '#6A0F49', borderColor: '#6A0F49' }}
+>
+  Abrir PDF
+</Button>
+
         <input
           type="file"
           onChange={onFileChange}
@@ -449,12 +451,14 @@ function PDFViewer({ url }) {
         {pdfFile && (
           <>
             <Button
-              type="primary"
-              onClick={showModal}
-              icon={<FileImageOutlined />}
-            >
-              Abrir Firma
-            </Button>
+  type="primary"
+  onClick={showModal}
+  icon={<FileImageOutlined />}
+  style={{ backgroundColor: '#6A0F49', borderColor: '#6A0F49' }}
+>
+  Abrir Firma
+</Button>
+
 
             <Space>
               <Input
