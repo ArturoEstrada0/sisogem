@@ -1,22 +1,32 @@
 import { Auth } from "aws-amplify";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import "./Login.css";
-import Fondo from "../assets/img/morelia.jpg";
 import Icono from "../assets/img/logo_mich.png";
 import Escudo from "../assets/img/image.png";
-import { useState } from "react";
-import { UserService } from "../services/UserService";
-import { useContext } from "react";
-import { UserRoleContext } from '../context/UserRoleContext';
+import { useState, useEffect } from "react";
+import Fondo1 from "../assets/img/morelia.jpg";
+import Fondo2 from "../assets/img/acue4.jpg";
+import Fondo3 from "../assets/img/tara3.jpg";
+import Fondo4 from "../assets/img/sanD.jpg"; // Agrega más imágenes según sea necesario
 
-const Login = ({ setUser, setRole, changeView }) => {
+const Login = ({ setUser, changeView }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showEmptyFieldsAlert, setShowEmptyFieldsAlert] = useState(false);
   const [showAuthErrorAlert, setShowAuthErrorAlert] = useState(false);
   const [authErrorMessage, setAuthErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { setCurrentUser } = useContext(UserRoleContext);
+  const [currentBackground, setCurrentBackground] = useState(0);
+
+  const backgrounds = [Fondo1, Fondo2, Fondo3, Fondo4]; // Agrega más imágenes según sea necesario
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBackground((prev) => (prev + 1) % backgrounds.length);
+    }, 5000); // Cambia la imagen cada 5 segundos (ajusta según sea necesario)
+
+    return () => clearInterval(timer);
+  }, [backgrounds.length]);
 
   const signIn = async (event) => {
     event.preventDefault();
@@ -28,11 +38,6 @@ const Login = ({ setUser, setRole, changeView }) => {
 
     try {
       const user = await Auth.signIn(email, password);
-      const { email: emailCognito } = user.attributes;
-      const response = await UserService.getUserInfoByEmail(emailCognito);
-      console.log(response);
-      setRole(response.roles);
-      setCurrentUser(response);
       setUser(user);
     } catch (error) {
       console.error("Error signing in", error);
@@ -108,8 +113,22 @@ const Login = ({ setUser, setRole, changeView }) => {
                     value={password}
                     onChange={handleInputChange}
                   />
-                  <span className="password-icon" onClick={toggleShowPassword}>
-                    {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  <span
+                    className="password-icon"
+                    onClick={toggleShowPassword}
+                    style={{
+                      position: "absolute",
+                      right: "30px",
+                      top: "62%",
+                      transform: "translateY(-50%)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {showPassword ? (
+                      <EyeInvisibleOutlined />
+                    ) : (
+                      <EyeOutlined />
+                    )}
                   </span>
                 </div>
                 <button type="submit" className="btn-form">
@@ -133,6 +152,8 @@ const Login = ({ setUser, setRole, changeView }) => {
                 >
                   Olvidé mi contraseña
                 </button>
+              </div>
+              <div>
                 <button
                   onClick={() => changeView("signup")}
                   className="btn-switch"
@@ -144,7 +165,16 @@ const Login = ({ setUser, setRole, changeView }) => {
           </div>
         </div>
         <div className="col-md-8">
-          <img src={Fondo} alt="Fondo" className="img-fondo" />
+          {backgrounds.map((img, index) => (
+            <img
+              key={index}
+              src={img}
+              alt={`Fondo ${index + 1}`}
+              className={`img-fondo ${
+                index === currentBackground ? "img-fondo-active" : ""
+              }`}
+            />
+          ))}
           <img src={Escudo} alt="Fondo" className="img-escudo" />
         </div>
       </div>
