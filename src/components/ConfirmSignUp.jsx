@@ -1,7 +1,8 @@
-
-// ConfirmSignUp.jsx
-import React, { useState } from "react";
-import Fondo from "../assets/img/tara3.jpg";
+import React, { useState, useEffect } from "react";
+import Fondo1 from "../assets/img/tara3.jpg";
+import Fondo2 from "../assets/img/sanD.jpg";
+import Fondo3 from "../assets/img/acue4.jpg";
+import Fondo4 from "../assets/img/morelia.jpg";
 import Escudo from "../assets/img/image.png";
 import Icono from "../assets/img/logo_mich.png";
 import "./SingUp.css";
@@ -9,6 +10,17 @@ import "./SingUp.css";
 const ConfirmSignUp = ({ confirmSignUpData, changeView, email }) => {
   const [error, setError] = useState("");
   const [code, setCode] = useState(""); // Agrega un estado para el código
+  const [currentBackground, setCurrentBackground] = useState(0);
+ 
+  const backgrounds = [Fondo1, Fondo2, Fondo3, Fondo4]; // Agrega más imágenes según sea necesario
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBackground((prev) => (prev + 1) % backgrounds.length);
+    }, 5000); // Cambia la imagen cada 5 segundos (ajusta según sea necesario)
+
+    return () => clearInterval(timer);
+  }, [backgrounds.length]);
 
   const handleConfirmSignUp = async (event) => {
     event.preventDefault();
@@ -65,9 +77,18 @@ const ConfirmSignUp = ({ confirmSignUpData, changeView, email }) => {
         </div>
       </div>
       <div className="col-md-8">
-            <img src={Fondo} alt="Fondo" className="img-fondo" />
-            <img src={Escudo} alt="Fondo" className="img-escudo" />
-          </div>
+        {backgrounds.map((img, index) => (
+          <img
+            key={index}
+            src={img}
+            alt={`Fondo ${index + 1}`}
+            className={`img-fondo ${
+              index === currentBackground ? "img-fondo-active" : ""
+            }`}
+          />
+        ))}
+        <img src={Escudo} alt="Fondo" className="img-escudo" />
+      </div>
     </div>
   );
 };
