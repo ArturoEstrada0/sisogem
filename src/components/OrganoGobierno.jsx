@@ -52,6 +52,7 @@ const OrganoGobierno = () => {
   const [formVisible, setFormVisible] = useState(false);
   const { currentUser } = useContext(UserRoleContext);
   const { organismo, setOrganismo } = useContext(OrganismoContext);
+  const userOrganismo = currentUser?.organismo[0];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,6 +70,7 @@ const OrganoGobierno = () => {
       ]);
     };
     if (organismo === "") {
+      console.log("aqui ", organismo);
 
       if (currentUser) setOrganismo(currentUser.organismo[0].code);
       else return;
@@ -77,7 +79,6 @@ const OrganoGobierno = () => {
 
   const [roles, setRoles] = useState([]);
   const [organismos, setOrganismos] = useState([]);
-  const userOrganismo = currentUser?.organismo[0];
 
   const [datosFormulario, setDatosFormulario] = useState({});
 
@@ -89,19 +90,14 @@ const OrganoGobierno = () => {
     rolesData();
   }, []);
 
+  //ORGANISMOS
   useEffect(() => {
-    const fetchData = async () => {
+    const organismosData = async () => {
       const response = await OrganismoService.getAllOrganismos();
       setOrganismos(response);
-      console.log("Organismos cargados:", response);
     };
-    fetchData();
+    organismosData();
   }, []);
-  
-  // Asegúrate de que organismos esté cargado antes de buscar
-  const userOrganismoActual = organismos.length > 0 ? organismos.find(org => org._id === organismo) : null;
-  console.log("Organismo actual en Select:", userOrganismoActual);
-  
 
   const onFinish = async (values) => {
     if (editingIndex === -1) {
@@ -591,18 +587,15 @@ const OrganoGobierno = () => {
                 message: "Por favor, selecciona la representación",
               },
             ]}
-            initialValue={organismo} // Establecer el valor inicial
+            initialValue={userOrganismo?._id} // Establecer el valor inicial
           >
-            <Select
-              value={organismo} // Asegúrate de que el valor esté vinculado al estado del organismo
-              onChange={(newValue) => setOrganismo(newValue)} // Actualiza el estado del organismo
-              disabled // Opcional, si quieres que esté deshabilitado
-            >
-              {organismos.map((org) => (
-                <Select.Option key={org._id} value={org._id}>
-                  {org.organismos}
+            <Select disabled>
+              {" "}
+              {userOrganismo && (
+                <Select.Option value={userOrganismo._id}>
+                  {userOrganismo.organism}
                 </Select.Option>
-              ))}
+              )}
             </Select>
           </Form.Item>
 
@@ -643,6 +636,26 @@ const OrganoGobierno = () => {
           >
             <DatePicker />
           </Form.Item>
+
+          {/* <Form.Item
+            name="oficioDesignacion"
+            label="Oficio de Designación / Nombramiento / Acreditación"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => e.fileList}
+            rules={[
+              {
+                required: true,
+                message: "Por favor, sube el oficio de designación",
+              },
+            ]}
+          >
+            <Upload
+              beforeUpload={beforeUpload}
+              accept=".pdf,.doc,.docx,.xls,.xlsx"
+            >
+              <Button icon={<UploadOutlined />}>Subir archivo</Button>
+            </Upload>
+          </Form.Item> */}
 
           <Form.Item>
             <Button

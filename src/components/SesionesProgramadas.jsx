@@ -27,18 +27,18 @@ const SesionesProgramadas = ({
           Celebrar Sesión
         </Button>
 
-        <Button
+        {/* <Button
           style={{ marginLeft: 8 }}
           onClick={() => onEditarSesion(sesion)}
         >
           Editar
-        </Button>
+        </Button> */}
 
         <Button style={{ marginLeft: 8 }} onClick={() => paseListaDeUsuario(sesion)} disabled={sesion.contador.includes(currentUser.email)}>
           CONFIRMAR ASISTENCIA
         </Button>
 
-        <Popconfirm
+        {/* <Popconfirm
           title="¿Estás seguro de borrar esta sesión?"
           onConfirm={() => onBorrarSesion(sesion)}
           okText="Sí"
@@ -47,7 +47,7 @@ const SesionesProgramadas = ({
           <Button style={{ marginLeft: 8 }} type="danger">
             Borrar
           </Button>
-        </Popconfirm>
+        </Popconfirm> */}
 
         {/* Nuevo botón para descargar documentos */}
         <Button
