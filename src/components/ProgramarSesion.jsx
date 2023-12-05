@@ -51,6 +51,9 @@ const ProgramarSesion = () => {
   const { currentUser } = useContext(UserRoleContext);
 
   const [actaDeSesion, setActaDeSesion] = useState(null);
+  const [estadosFinancieros, setEstadosFinancieros] = useState(null);
+  const [ordenDelDia, setOrdenDelDia] = useState(null);
+  const [convocatoria, setConvocatoria] = useState(null);
 
   AWS.config.update({
     accessKeyId: "AKIASAHHYXZDGGYMQIEG",
@@ -106,9 +109,10 @@ const ProgramarSesion = () => {
       // Generar un ID único para la sesión
       const idSesion = uuidv4();
       const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
-
+  
+      let actaDeSesionUrl, estadosFinancierosUrl, ordenDelDiaUrl, convocatoriaUrl;
+  
       // Subir el Acta de Sesión a S3 si está presente y obtener su URL
-      let actaDeSesionUrl;
       if (actaDeSesion) {
         const response = await uploadFileToS3(
           actaDeSesion,
@@ -117,7 +121,37 @@ const ProgramarSesion = () => {
         );
         actaDeSesionUrl = response.Location;
       }
-
+  
+      // Subir Estados Financieros si está presente y obtener su URL
+      if (estadosFinancieros) {
+        const response = await uploadFileToS3(
+          estadosFinancieros,
+          organismo,
+          `${folderName}/${estadosFinancieros.name}`
+        );
+        estadosFinancierosUrl = response.Location;
+      }
+  
+      // Subir Orden del Día si está presente y obtener su URL
+      if (ordenDelDia) {
+        const response = await uploadFileToS3(
+          ordenDelDia,
+          organismo,
+          `${folderName}/${ordenDelDia.name}`
+        );
+        ordenDelDiaUrl = response.Location;
+      }
+  
+      // Subir Convocatoria si está presente y obtener su URL
+      if (convocatoria) {
+        const response = await uploadFileToS3(
+          convocatoria,
+          organismo,
+          `${folderName}/${convocatoria.name}`
+        );
+        convocatoriaUrl = response.Location;
+      }
+  
       // Subir los demás archivos a S3 y recolectar detalles
       const fileDetailsArray = await Promise.all(
         fileList.map(async (file) => {
@@ -129,7 +163,7 @@ const ProgramarSesion = () => {
           return { nombre: file.name, url: response.Location };
         })
       );
-
+  
       // Construir objeto con todos los detalles de la sesión
       const sessionData = {
         idSesion,
@@ -139,22 +173,29 @@ const ProgramarSesion = () => {
         horaInicio: horaInicio ? horaInicio.format("HH:mm") : null,
         folderUrl: `https://${organismo}.s3.amazonaws.com/${folderName}`,
         archivos: fileDetailsArray,
-        actaDeSesionUrl, // Incluir la URL del Acta de Sesión
-        estatus: "Programado", // Puede ser "Programado", "Activo" o "Finalizado"
+        actaDeSesionUrl,
+        estadosFinancierosUrl,
+        ordenDelDiaUrl,
+        convocatoriaUrl,
+        estatus: "Programado",
         organismo: organismo,
         contador: [currentUser.email],
         // otros datos relevantes...
       };
-
+  
       // Guardar en DynamoDB
       await saveSessionToDynamoDB(sessionData);
       setFileList([]);
-      setActaDeSesion(null); // Limpiar el estado del Acta de Sesión
+      setActaDeSesion(null);
+      setEstadosFinancieros(null);
+      setOrdenDelDia(null);
+      setConvocatoria(null); // Limpiar los estados de los archivos
     } catch (error) {
       console.error("Error al cargar archivos:", error);
       message.error("Error al cargar archivos");
     }
   };
+  
 
   const saveSessionToDynamoDB = async (sessionData) => {
     try {
@@ -423,7 +464,7 @@ const ProgramarSesion = () => {
       },
       ReturnValues: "ALL_NEW",
     };
-  
+
     try {
       await docClient.update(updateParams).promise();
       openNotification(
@@ -442,7 +483,6 @@ const ProgramarSesion = () => {
       );
     }
   };
-  
 
   const renderNumeroSesionOptions = () => {
     const maxSesiones = tipoSesion === "Ordinario" ? 4 : 24;
@@ -496,18 +536,17 @@ const ProgramarSesion = () => {
       TableName: "Sesiones",
       // Aquí puedes agregar filtros si son necesarios
     };
-  
+
     try {
       const data = await docClient.scan(params).promise();
       const sesiones = data.Items;
-  
+
       // Filtrar sesiones según su estatus y organismo
       const sesionesFiltradas = sesiones.filter(
         (sesion) =>
-          sesion.estatus !== "Finalizada" &&
-          sesion.organismo === organismo
+          sesion.estatus !== "Finalizada" && sesion.organismo === organismo
       );
-  
+
       // Aquí se pueden separar las sesiones programadas y en progreso
       const sesionesProgramadasFiltradas = sesionesFiltradas.filter(
         (sesion) => sesion.estatus === "Programado"
@@ -515,14 +554,13 @@ const ProgramarSesion = () => {
       const sesionesEnProgresoFiltradas = sesionesFiltradas.filter(
         (sesion) => sesion.estatus === "En Progreso"
       );
-  
+
       setSesionesProgramadas(sesionesProgramadasFiltradas);
       setSesionesEnProgreso(sesionesEnProgresoFiltradas);
     } catch (error) {
       console.error("Error al recuperar sesiones:", error);
     }
   };
-  
 
   return (
     <div>
@@ -609,6 +647,54 @@ const ProgramarSesion = () => {
                   </Upload>
                 </Form.Item>
 
+                <Form.Item
+                  label="Cargar Estados Financieros"
+                  name="estadosFinancieros"
+                >
+                  <Upload
+                    beforeUpload={(file) => {
+                      setEstadosFinancieros(file);
+                      return false;
+                    }}
+                    accept=".pdf"
+                    maxCount={1}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Cargar Estados Financieros
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
+                <Form.Item label="Cargar Orden del Día" name="ordenDelDia">
+                  <Upload
+                    beforeUpload={(file) => {
+                      setOrdenDelDia(file);
+                      return false;
+                    }}
+                    accept=".pdf"
+                    maxCount={1}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Cargar Orden del Día
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
+                <Form.Item label="Cargar Convocatoria" name="convocatoria">
+                  <Upload
+                    beforeUpload={(file) => {
+                      setConvocatoria(file);
+                      return false;
+                    }}
+                    accept=".pdf"
+                    maxCount={1}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Cargar Convocatoria
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
                 {/* Nuevo campo para cargar documentos */}
                 <Form.Item label="Cargar Documentos" name="documentos">
                   <Upload
@@ -673,7 +759,7 @@ const ProgramarSesion = () => {
               key="progreso"
             >
               <SesionProgreso
-                 organismo={organismo}
+                organismo={organismo}
                 sesionesEnProgreso={sesionesEnProgreso}
                 onFinalizarSesion={handleFinalizarSesion}
               />
