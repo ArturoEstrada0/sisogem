@@ -69,6 +69,60 @@ const ProgramarSesion = () => {
   }, []);
 
   useEffect(() => {
+    const actualizarNumeroSesion = async () => {
+      const maxSesionesOrdinarias = 4;
+      const maxSesionesExtraordinarias = 24;
+
+      const docClient = new AWS.DynamoDB.DocumentClient();
+      const params = {
+        TableName: "Sesiones",
+        FilterExpression: "tipoSesion = :ts and organismo = :org",
+        ExpressionAttributeValues: {
+          ":ts": tipoSesion,
+          ":org": organismo,
+        },
+      };
+
+      try {
+        const data = await docClient.scan(params).promise();
+        const numeroMaximoSesion = data.Items.reduce(
+          (max, sesion) => Math.max(max, sesion.numeroSesion || 0),
+          0
+        );
+
+        const limiteSesiones =
+          tipoSesion === "Ordinario"
+            ? maxSesionesOrdinarias
+            : maxSesionesExtraordinarias;
+
+        if (numeroMaximoSesion >= limiteSesiones) {
+          if (tipoSesion === "Ordinario") {
+            openNotification(
+              "warning",
+              "Límite Alcanzado",
+              "Has alcanzado el límite de sesiones ordinarias. Considera programar una sesión extraordinaria."
+            );
+          } else {
+            openNotification(
+              "error",
+              "Límite Alcanzado",
+              "Se ha alcanzado el límite de sesiones extraordinarias. Por favor, contacta al administrador."
+            );
+          }
+          setLoading(false);
+          return;
+        }
+
+        setNumeroSesion(numeroMaximoSesion + 1);
+      } catch (error) {
+        console.error("Error al obtener el número máximo de sesión:", error);
+      }
+    };
+
+    actualizarNumeroSesion();
+  }, [tipoSesion, organismo]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
       const nuevasSesionesEnProgreso = sesionesProgramadas.filter((sesion) => {
@@ -345,7 +399,7 @@ const ProgramarSesion = () => {
   };
 
   const handleProgramarSesion = async () => {
-    setLoading(true); // Inicia el estado de carga
+    setLoading(true);
 
     try {
       if (!fecha || !horaInicio) {
@@ -370,6 +424,20 @@ const ProgramarSesion = () => {
           "error",
           "Número de Sesión Repetido",
           "Ya existe una sesión con este número. Por favor, elige otro número."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Validación de documentos para sesiones ordinarias
+      if (
+        tipoSesion === "Ordinario" &&
+        (!actaDeSesion || !estadosFinancieros || !ordenDelDia || !convocatoria)
+      ) {
+        openNotification(
+          "error",
+          "Documentos Faltantes",
+          "Todos los documentos son obligatorios para las sesiones ordinarias."
         );
         setLoading(false);
         return;
@@ -653,11 +721,12 @@ const ProgramarSesion = () => {
                     <Option value="Extraordinario">Extraordinario</Option>
                   </Select>
                 </Form.Item>
+
                 <Form.Item label="Número de Sesión" name="numeroSesion">
-                  <Select disabled={true} value={numeroSesion}>
-                    <Option
-                      value={numeroSesion}
-                    >{`Sesión ${numeroSesion}`}</Option>
+                  <Select disabled value={numeroSesion || 1}>
+                    <Option value={numeroSesion || 1}>{`Sesión ${
+                      numeroSesion || 1
+                    }`}</Option>
                   </Select>
                 </Form.Item>
 

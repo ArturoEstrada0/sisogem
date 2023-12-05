@@ -63,16 +63,15 @@ const Repositorio = () => {
   // Código para descargar archivos de una sesión
   const descargarArchivosSesion = async (sesion) => {
     const zip = new JSZip();
-
-    // Agregar documentos si están disponibles
-    const documentos = [
+  
+    // Agregar documentos obligatorios
+    const documentosObligatorios = [
       { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
-      { url: sesion.estadosFinancierosUrl, nombre: "Estados_Financieros.pdf" },
-      { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
-      { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
+      // Agrega aquí otros documentos obligatorios si los hay...
     ];
-
-    for (const doc of documentos) {
+  
+    // Agregar documentos obligatorios al ZIP
+    for (const doc of documentosObligatorios) {
       if (doc.url) {
         try {
           const response = await fetch(doc.url);
@@ -83,7 +82,18 @@ const Repositorio = () => {
         }
       }
     }
-
+  
+    // Agregar documentos adicionales al ZIP
+    for (const archivo of sesion.archivos || []) {
+      try {
+        const response = await fetch(archivo.url);
+        const blob = await response.blob();
+        zip.file(archivo.nombre, blob);
+      } catch (error) {
+        console.error(`Error al descargar archivo adicional ${archivo.nombre}:`, error);
+      }
+    }
+  
     // Generar y descargar el ZIP
     try {
       const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -92,6 +102,7 @@ const Repositorio = () => {
       console.error("Error al generar el archivo ZIP:", error);
     }
   };
+  
 
   const descargarTodoElAno = async () => {
     if (!selectedYear) {
@@ -100,8 +111,6 @@ const Repositorio = () => {
     }
   
     const zip = new JSZip();
-
-    
   
     // Utiliza Promise.all para manejar la asincronía
     await Promise.all(
@@ -110,21 +119,35 @@ const Repositorio = () => {
         const sesionFolderName = `Sesion_${sesion.tipoSesion}_${sesion.numeroSesion}`;
         const sesionFolder = zip.folder(sesionFolderName);
   
-        try {
-          const responseActa = await fetch(sesion.actaDeSesionUrl);
-          const blobActa = await responseActa.blob();
-          sesionFolder.file(`Acta_de_Sesion.pdf`, blobActa);
-        } catch (error) {
-          console.error(`Error al cargar Acta de Sesión para la sesión ${sesionFolderName}:`, error);
+        // Agregar documentos obligatorios
+        const documentosObligatorios = [
+          { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
+          { url: sesion.estadosFinancierosUrl, nombre: "Estados_Financieros.pdf" },
+          { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
+          { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
+          // Agrega aquí otros documentos obligatorios si los hay...
+        ];
+  
+        for (const doc of documentosObligatorios) {
+          if (doc.url) {
+            try {
+              const response = await fetch(doc.url);
+              const blob = await response.blob();
+              sesionFolder.file(doc.nombre, blob);
+            } catch (error) {
+              console.error(`Error al cargar ${doc.nombre} para la sesión ${sesionFolderName}:`, error);
+            }
+          }
         }
   
-        for (const archivo of sesion.archivos) {
+        // Agregar documentos adicionales
+        for (const archivo of sesion.archivos || []) {
           try {
             const response = await fetch(archivo.url);
             const blob = await response.blob();
-            sesionFolder.file(`${archivo.nombre}`, blob);
+            sesionFolder.file(archivo.nombre, blob);
           } catch (error) {
-            console.error(`Error al cargar archivo ${archivo.nombre} para la sesión ${sesionFolderName}:`, error);
+            console.error(`Error al cargar archivo adicional ${archivo.nombre} para la sesión ${sesionFolderName}:`, error);
           }
         }
       })
@@ -137,6 +160,7 @@ const Repositorio = () => {
       console.error("Error al generar o descargar el archivo ZIP:", error);
     }
   };
+  
   
   
   
