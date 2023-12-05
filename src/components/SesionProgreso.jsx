@@ -58,16 +58,15 @@ const SesionProgreso = ({organismo, sesionesEnProgreso, onFinalizarSesion }) => 
   
 
   return (
-    <div style={{ display: "flex", justifyContent: "space-between" }}>
-      <div style={{ width: "40%" }}>
-        <h2>Sesiones en Progreso</h2>
+    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "25px" }}>
+      <div style={{ width: "0%" }}>
         <List
           dataSource={sesionesEnProgreso}
           renderItem={renderItem}
           locale={{ emptyText: "No hay sesiones en progreso" }}
         />
       </div>
-      <div style={{ width: "60%" }}>
+      <div style={{ width: "83%", marginTop: "0px" }}> {/* Ajuste de marginTop */}
         {documentKey ? (
           <PDFViewer url={documentKey} organismo={organismo} documentKey={lastTwoSegments} />
         ) : (
