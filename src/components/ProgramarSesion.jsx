@@ -89,7 +89,7 @@ const ProgramarSesion = () => {
           ...nuevasSesionesEnProgreso,
         ]);
       }
-    }, 10000); // Revisa cada minuto
+    }, 1000); // Revisa cada minuto
 
     return () => clearInterval(interval);
   }, [sesionesProgramadas]);

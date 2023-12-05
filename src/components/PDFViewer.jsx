@@ -439,9 +439,9 @@ function PDFViewer({ url, organismo, documentKey }) {
   type="primary"
   onClick={handleFileButtonClick}
   style={{ backgroundColor: '#6A0F49', borderColor: '#6A0F49' }}
->
-  Abrir PDF
-</Button>
+    >
+      Abrir PDF
+      </Button>
 
         <input
           type="file"
@@ -462,42 +462,105 @@ function PDFViewer({ url, organismo, documentKey }) {
   Abrir Firma
 </Button>
 
+<Space style={{ position: "relative", width: "fit-content" }}>
+  <Input
+    type="text"
+    placeholder="Buscar en el PDF"
+    value={searchText}
+    onChange={(e) => setSearchText(e.target.value)}
+    style={{
+      width: 200, // Ajusta el ancho según tus necesidades
+      borderRadius: "5px",
+      border: "1px solid #6a0f49", // Borde con color similar al botón
+      paddingRight: "30px", // Aumenta el espacio a la derecha para el botón
+      marginBottom: 0 // Elimina el margen inferior para que esté más pegado al botón
+    }}
+  />
+  <Button
+    onClick={searchInPdf}
+    icon={<SearchOutlined />}
+    style={{
+      position: "absolute",
+      top: "50%",
+      right: "8px", // Alinea el botón hacia la derecha dentro del cuadro de texto
+      transform: "translateY(-50%)", // Centra verticalmente el botón
+      backgroundColor: "#6a0f49",
+      color: "#ffffff",
+      borderRadius: "5px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      border: "none", // Elimina el borde del botón
+      padding: "4px 8px", // Ajusta el espacio interior del botón
+      fontSize: "14px" // Ajusta el tamaño del texto del botón
+    }}
+  >
+  </Button>
+</Space>
 
-            <Space>
-              <Input
-                type="text"
-                placeholder="Buscar en el PDF"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                style={{ width: 200 }} // Ajusta el ancho según tus necesidades
-              />
-              <Button onClick={searchInPdf} icon={<SearchOutlined />}>
-                Buscar
-              </Button>
-            </Space>
+<div style={{ display: "flex", marginLeft: "-5px" }}>
+  <Button
+    disabled={pageNumber <= 1}
+    onClick={previousPage}
+    icon={<LeftOutlined />}
+    style={{
+      backgroundColor: "#6a0f49",
+      color: "#ffffff",
+      borderRadius: "5px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      marginRight: "5px" // Ajusta el margen derecho para separar los botones
+    }}
+  >
+    Ant
+  </Button>
+
+  <Button
+    disabled={pageNumber >= numPages}
+    onClick={nextPage}
+    icon={<RightOutlined />}
+    style={{
+      backgroundColor: "#6a0f49",
+      color: "#ffffff",
+      borderRadius: "5px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      marginLeft: "5px", // Ajusta el margen izquierdo para separar los botones
+      display: "flex",
+      flexDirection: "row-reverse", // Invierte el orden del contenido dentro del botón
+      alignItems: "center" // Centra verticalmente el texto y el ícono
+    }}
+  >
+    Sig
+  </Button>
+</div>
 
             <Button
-              disabled={pageNumber <= 1}
-              onClick={previousPage}
-              icon={<LeftOutlined />}
-            >
-              Anterior
-            </Button>
-            <Button
-              disabled={pageNumber >= numPages}
-              onClick={nextPage}
-              icon={<RightOutlined />}
-            >
-              Siguiente
-            </Button>
+  onClick={applySignatureToPdf}
+  type="primary"
+  style={{
+    backgroundColor: "#6a0f49",
+    color: "#ffffff",
+    borderRadius: "5px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    marginRight: "10px" // Margen derecho para separar los botones
+  }}
+>
+  Aplicar Firma en el PDF
+</Button>
 
-            <Button onClick={applySignatureToPdf}>
-              Aplicar Firma en el PDF
-            </Button>
-
-            <Button onClick={uploadSignedPdfToS3}>
-              Guardar PDF Firmado en S3
-            </Button>
+<Button
+  onClick={uploadSignedPdfToS3}
+  type="primary"
+  style={{
+    backgroundColor: "#6a0f49", // Color de fondo
+    color: "#ffffff", // Color del texto
+    borderRadius: "5px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    padding: "8px 16px", // Ajusta el padding según tus preferencias
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center' // Centra horizontalmente el contenido del botón
+  }}
+  icon={<img src="/computacion-en-la-nube.png" alt="Nombre de la imagen" style={{ width: '20px', height: '20px', verticalAlign: 'middle' }} />} // Centra verticalmente la imagen
+>
+</Button>
           </>
         )}
       </div>
