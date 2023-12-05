@@ -8,7 +8,7 @@ const showAlert = (type, message) => {
   });
 };
 
-const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
+const SesionProgreso = ({organismo, sesionesEnProgreso, onFinalizarSesion }) => {
   const [selectedSesionId, setSelectedSesionId] = useState(null);
 
   const renderItem = (sesion) => (
@@ -28,8 +28,34 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
   const selectedSesion = sesionesEnProgreso.find(
     (sesion) => sesion.idSesion === selectedSesionId
   );
-  const documentos = selectedSesion?.documentos || [];
-  const firstDocumentoUrl = documentos.length > 0 ? documentos[0] : null;
+
+  // Suponiendo que tienes estos valores en tu objeto de sesión
+  const bucket = selectedSesion?.organismo; // o el bucket correspondiente
+  const documentKey = selectedSesion?.actaDeSesionUrl; // o la key correspondiente
+  console.log("bucket SESION", bucket )
+
+  console.log("organismo exportado", organismo)
+
+  let lastTwoSegments = '';
+
+  try {
+    if (documentKey) {
+      const urlObject = new URL(documentKey);
+      const path = urlObject.pathname;
+      const segments = path.split('/');
+  
+      // Verificar si hay al menos dos segmentos antes de intentar acceder a ellos
+      if (segments.length >= 2) {
+        const lastTwoDecodedSegments = segments.slice(-2).map(decodeURIComponent);
+        lastTwoSegments = lastTwoDecodedSegments.join('/');
+      }
+    }
+  } catch (error) {
+    console.error("Error al procesar la URL:", error);
+  }
+  
+  console.log("Últimos dos segmentos de la URL:", lastTwoSegments);
+  
 
   return (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -42,7 +68,11 @@ const SesionProgreso = ({ sesionesEnProgreso, onFinalizarSesion }) => {
         />
       </div>
       <div style={{ width: "60%" }}>
-        <PDFViewer url="https://sisogem.s3.amazonaws.com/sesion_20231203_161843/APPBEJAS.pdf" />
+        {documentKey ? (
+          <PDFViewer url={documentKey} organismo={organismo} documentKey={lastTwoSegments} />
+        ) : (
+          <p>No hay Acta de Sesión disponible para esta sesión.</p>
+        )}
       </div>
     </div>
   );

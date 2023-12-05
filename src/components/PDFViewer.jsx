@@ -123,7 +123,9 @@ function SignaturePreview({ signatureImage, onResizeStop, onDragStop }) {
   );
 }
 
-function PDFViewer({ url }) {
+
+function PDFViewer({ url, organismo, documentKey }) {
+  console.log("organismo PDFViewer",organismo)
   const [pdfFile, setPdfFile] = useState(null);
   const [signatureImage, setSignatureImage] = useState(null);
   const [pageNumber, setPageNumber] = useState(1); // Página actual
@@ -174,24 +176,25 @@ function PDFViewer({ url }) {
       console.error("No hay un PDF firmado para subir.");
       return;
     }
-
+  
     const s3 = new AWS.S3();
     const params = {
-      Bucket: "sisogem", // Reemplaza con el nombre de tu bucket
-      Key: "sesion_20231203_161843/APPBEJAS.pdf", // Reemplaza con la ruta del archivo en S3
+      Bucket: organismo, // Reemplaza con el nombre de tu bucket
+      Key: documentKey, // Reemplaza con la ruta del archivo en S3
       Body: signedPdfFile,
       ContentType: "application/pdf",
       ACL: "public-read", // Establecer el ACL como público
-
     };
-
+  
     try {
+      console.log("Nombre del bucket:", organismo);
       await s3.putObject(params).promise();
       console.log("PDF firmado subido con éxito.");
     } catch (error) {
       console.error("Error al subir el PDF a S3:", error);
     }
   };
+  
 
   const onPdfClick = (event) => {
     if (!signatureImage || !pdfFile) return;

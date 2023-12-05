@@ -27,7 +27,6 @@ import { v4 as uuidv4 } from "uuid";
 import { Upload, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useContext } from "react";
-import { async } from "q";
 import { UserService } from "../services/UserService";
 
 const { Option } = Select;
@@ -41,6 +40,7 @@ const ProgramarSesion = () => {
   const [sesionesProgramadas, setSesionesProgramadas] = useState([]);
   const [sesionesEnProgreso, setSesionesEnProgreso] = useState([]);
   const [sesionEditando, setSesionEditando] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [nuevasSesionesProgramadas, setNuevasSesionesProgramadas] = useState(0);
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
@@ -49,16 +49,8 @@ const ProgramarSesion = () => {
   //importamos el contexto de organimos
   const { organismo, setOrganismo } = useContext(OrganismoContext);
   const { currentUser } = useContext(UserRoleContext);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [documentoActual, setDocumentoActual] = useState("Acta de Sesión");
 
-  const [documentosRequeridos, setDocumentosRequeridos] = useState({
-    "Acta de Sesión": null,
-    Convocatoria: null,
-    "Orden del Día": null,
-    "Estados Financieros": null,
-  });
-  const [documentosAdicionales, setDocumentosAdicionales] = useState([]);
+  const [actaDeSesion, setActaDeSesion] = useState(null);
 
   AWS.config.update({
     accessKeyId: "AKIASAHHYXZDGGYMQIEG",
@@ -97,7 +89,7 @@ const ProgramarSesion = () => {
           ...nuevasSesionesEnProgreso,
         ]);
       }
-    }, 60000); // Revisa cada minuto
+    }, 10000); // Revisa cada minuto
 
     return () => clearInterval(interval);
   }, [sesionesProgramadas]);
@@ -115,16 +107,28 @@ const ProgramarSesion = () => {
       const idSesion = uuidv4();
       const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
 
-      // Subir archivos a S3 y recolectar detalles
-      const fileDetailsArray = [];
-      for (let file of fileList) {
+      // Subir el Acta de Sesión a S3 si está presente y obtener su URL
+      let actaDeSesionUrl;
+      if (actaDeSesion) {
         const response = await uploadFileToS3(
-          file.originFileObj,
+          actaDeSesion,
           organismo,
-          `${folderName}/${file.name}`
+          `${folderName}/${actaDeSesion.name}`
         );
-        fileDetailsArray.push({ nombre: file.name, url: response.Location });
+        actaDeSesionUrl = response.Location;
       }
+
+      // Subir los demás archivos a S3 y recolectar detalles
+      const fileDetailsArray = await Promise.all(
+        fileList.map(async (file) => {
+          const response = await uploadFileToS3(
+            file.originFileObj,
+            organismo,
+            `${folderName}/${file.name}`
+          );
+          return { nombre: file.name, url: response.Location };
+        })
+      );
 
       // Construir objeto con todos los detalles de la sesión
       const sessionData = {
@@ -135,6 +139,7 @@ const ProgramarSesion = () => {
         horaInicio: horaInicio ? horaInicio.format("HH:mm") : null,
         folderUrl: `https://${organismo}.s3.amazonaws.com/${folderName}`,
         archivos: fileDetailsArray,
+        actaDeSesionUrl, // Incluir la URL del Acta de Sesión
         estatus: "Programado", // Puede ser "Programado", "Activo" o "Finalizado"
         organismo: organismo,
         contador: [currentUser.email],
@@ -144,6 +149,7 @@ const ProgramarSesion = () => {
       // Guardar en DynamoDB
       await saveSessionToDynamoDB(sessionData);
       setFileList([]);
+      setActaDeSesion(null); // Limpiar el estado del Acta de Sesión
     } catch (error) {
       console.error("Error al cargar archivos:", error);
       message.error("Error al cargar archivos");
@@ -335,40 +341,6 @@ const ProgramarSesion = () => {
     }
   };
 
-  // Nueva función para guardar detalles de la sesión en DynamoDB
-  const saveSessionDetailsToDynamoDB = async (sessionDetails) => {
-    try {
-      const AWS = require("aws-sdk");
-      const docClient = new AWS.DynamoDB.DocumentClient();
-
-      const params = {
-        TableName: "Sesiones",
-        Item: {
-          idSesion: sessionDetails.idSesion,
-          tipoSesion: sessionDetails.tipoSesion,
-          numeroSesion: sessionDetails.numeroSesion,
-          fecha: sessionDetails.fecha,
-          horaInicio: sessionDetails.horaInicio,
-          documentos: sessionDetails.documentos.map((file) => ({
-            nombre: file.nombre,
-            url: file.url,
-          })),
-        },
-      };
-
-      console.log("Antes de llamar a DynamoDB:", params);
-      await docClient.put(params).promise();
-      console.log("Después de llamar a DynamoDB.");
-    } catch (error) {
-      console.error(
-        "Error al guardar detalles de la sesión en DynamoDB:",
-        error
-      );
-      setLoading(false); // Detiene la carga en caso de error
-      throw error; // Es importante lanzar el error para que pueda ser capturado por el bloque try-catch en handleProgramarSesion
-    }
-  };
-
   const handleIniciarSesion = async (sesion) => {
     try {
       setLoading(true);
@@ -439,16 +411,38 @@ const ProgramarSesion = () => {
     });
   };
 
-  const handleFinalizarSesion = (sesion) => {
-    setSesionesEnProgreso(sesionesEnProgreso.filter((s) => s !== sesion));
-    // Puedes agregar lógica adicional al finalizar una sesión
-    openNotification(
-      "success",
-      "Sesión finalizada",
-      "La sesión se ha finalizado correctamente."
-    );
-    setNuevasSesionesEnProgreso(nuevasSesionesEnProgreso - 1);
+  const handleFinalizarSesion = async (sesion) => {
+    const updateParams = {
+      TableName: "Sesiones",
+      Key: {
+        idSesion: sesion.idSesion,
+      },
+      UpdateExpression: "set estatus = :newStatus",
+      ExpressionAttributeValues: {
+        ":newStatus": "Finalizada",
+      },
+      ReturnValues: "ALL_NEW",
+    };
+  
+    try {
+      await docClient.update(updateParams).promise();
+      openNotification(
+        "success",
+        "Sesión finalizada",
+        "La sesión se ha finalizado correctamente."
+      );
+      // Actualizar el estado local después de cambiar el estatus
+      fetchSesionesProgramadas();
+    } catch (error) {
+      console.error("Error al finalizar la sesión:", error);
+      openNotification(
+        "error",
+        "Error al finalizar la sesión",
+        "No se pudo finalizar la sesión."
+      );
+    }
   };
+  
 
   const renderNumeroSesionOptions = () => {
     const maxSesiones = tipoSesion === "ordinario" ? 4 : 24;
@@ -502,62 +496,30 @@ const ProgramarSesion = () => {
       TableName: "Sesiones",
       // Aquí puedes agregar filtros si son necesarios
     };
-
+  
     try {
       const data = await docClient.scan(params).promise();
       const sesiones = data.Items;
-
+  
       // Filtrar sesiones según su estatus y organismo
       const sesionesFiltradas = sesiones.filter(
         (sesion) =>
-          (sesion.estatus === "Programado" || sesion.estatus === "Activo") &&
-          sesion.organismo === organismo, // Asegúrate de que 'organismo' sea el código del organismo del usuario actual
-        console.log("el organismo", organismo)
+          sesion.estatus !== "Finalizada" &&
+          sesion.organismo === organismo
       );
-
-      const sesionesEnProgreso = sesiones.filter(
-        (sesion) =>
-          sesion.estatus === "En Progreso" && sesion.organismo === organismo
+  
+      // Aquí se pueden separar las sesiones programadas y en progreso
+      const sesionesProgramadasFiltradas = sesionesFiltradas.filter(
+        (sesion) => sesion.estatus === "Programado"
       );
-
-      setSesionesProgramadas(sesionesFiltradas);
-      setSesionesEnProgreso(sesionesEnProgreso);
+      const sesionesEnProgresoFiltradas = sesionesFiltradas.filter(
+        (sesion) => sesion.estatus === "En Progreso"
+      );
+  
+      setSesionesProgramadas(sesionesProgramadasFiltradas);
+      setSesionesEnProgreso(sesionesEnProgresoFiltradas);
     } catch (error) {
       console.error("Error al recuperar sesiones:", error);
-      // Manejo de errores
-    }
-  };
-
-  const handleUpload = (file, docName) => {
-    // Actualizar el estado con el archivo subido para el documento actual
-    setDocumentosRequeridos(prev => ({ ...prev, [docName]: file }));
-  
-    // Determinar el próximo documento requerido o cambiar al modo de documentos adicionales
-    const documentosRequeridosKeys = Object.keys(documentosRequeridos);
-    const currentIndex = documentosRequeridosKeys.indexOf(docName);
-    if (currentIndex < documentosRequeridosKeys.length - 1) {
-      // Establecer el próximo documento requerido
-      setDocumentoActual(documentosRequeridosKeys[currentIndex + 1]);
-    } else {
-      // Todos los documentos requeridos han sido subidos, verificar y permitir subir documentos adicionales
-      verificarDocumentosRequeridos();
-    }
-  
-    return false; // Evita la carga automática del archivo
-  };
-  
-  const verificarDocumentosRequeridos = () => {
-    const todosSubidos = Object.values(documentosRequeridos).every(doc => doc != null);
-    if (todosSubidos) {
-      // Cambiar a permitir documentos adicionales
-      // Aquí puedes cambiar el estado para mostrar la interfaz de carga de documentos adicionales
-      // Por ejemplo: setIsCargandoDocumentosAdicionales(true);
-    } else {
-      // Si alguno de los documentos requeridos no se ha subido, puedes mostrar un mensaje de error
-      notification.error({
-        message: "Documentos Incompletos",
-        description: "Por favor, asegúrese de subir todos los documentos requeridos."
-      });
     }
   };
   
@@ -631,6 +593,22 @@ const ProgramarSesion = () => {
                   />
                 </Form.Item>
 
+                <Form.Item label="Cargar Acta de Sesión" name="actaDeSesion">
+                  <Upload
+                    beforeUpload={(file) => {
+                      setActaDeSesion(file);
+                      return false; // Evita que Ant Design suba automáticamente el archivo
+                    }}
+                    accept=".pdf"
+                    maxCount={1} // Asegura que solo se pueda subir un archivo
+                    onRemove={() => setActaDeSesion(null)}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Click para cargar el Acta de Sesión
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
                 {/* Nuevo campo para cargar documentos */}
                 <Form.Item label="Cargar Documentos" name="documentos">
                   <Upload
@@ -695,6 +673,7 @@ const ProgramarSesion = () => {
               key="progreso"
             >
               <SesionProgreso
+                 organismo={organismo}
                 sesionesEnProgreso={sesionesEnProgreso}
                 onFinalizarSesion={handleFinalizarSesion}
               />
@@ -758,24 +737,6 @@ const ProgramarSesion = () => {
               <TimePicker format="HH:mm" />
             </Form.Item>
           </Form>
-        </Modal>
-
-        <Modal
-          title="Subir Documentos"
-          visible={modalVisible}
-          onCancel={() => setModalVisible(false)}
-          footer={null}
-        >
-          <h3>Subir {documentoActual}</h3>
-          <Upload
-            beforeUpload={(file) => handleUpload(file, documentoActual)}
-            showUploadList={false}
-          >
-            <Button>
-              <UploadOutlined /> Click para cargar {documentoActual}
-            </Button>
-          </Upload>
-          {/* Agrega aquí la lógica para mostrar los documentos adicionales y subirlos */}
         </Modal>
       </Spin>
     </div>
