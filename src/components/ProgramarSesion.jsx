@@ -32,6 +32,7 @@ import { UserService } from "../services/UserService";
 const { Option } = Select;
 const { TabPane } = Tabs;
 
+
 const ProgramarSesion = () => {
   const [tipoSesion, setTipoSesion] = useState("Ordinario");
   const [fecha, setFecha] = useState(null);
@@ -46,11 +47,30 @@ const ProgramarSesion = () => {
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isHovered, setIsHovered] = useState({
+    actaDeSesion: false,
+    documentos: false,  // Agrega un identificador único para el otro botón
+  });
   //importamos el contexto de organimos
   const { organismo, setOrganismo } = useContext(OrganismoContext);
   const { currentUser } = useContext(UserRoleContext);
 
   const [actaDeSesion, setActaDeSesion] = useState(null);
+
+  const handleMouseEnter = (buttonName) => {
+    setIsHovered((prev) => ({
+      ...prev,
+      [buttonName]: true,
+    }));
+  };
+  
+  const handleMouseLeave = (buttonName) => {
+    setIsHovered((prev) => ({
+      ...prev,
+      [buttonName]: false,
+    }));
+  };
+
   const [estadosFinancieros, setEstadosFinancieros] = useState(null);
   const [ordenDelDia, setOrdenDelDia] = useState(null);
   const [convocatoria, setConvocatoria] = useState(null);
@@ -617,6 +637,7 @@ const ProgramarSesion = () => {
       console.error("Error al recuperar sesiones:", error);
     }
   };
+  
 
   return (
     <div>
@@ -646,7 +667,7 @@ const ProgramarSesion = () => {
                 <Form.Item
                   label="Tipo de Sesión"
                   name="tipoSesion"
-                  initialValue="Ordinario"
+                  initialValue="ordinario"
                 >
                   <Select onChange={handleTipoSesionChange}>
                     <Option value="Ordinario">Ordinario</Option>
@@ -668,7 +689,7 @@ const ProgramarSesion = () => {
                     { required: true, message: "Por favor ingrese la fecha" },
                   ]}
                 >
-                  <DatePicker onChange={handleFechaChange} />
+                  <DatePicker onChange={handleFechaChange} style={{ border: '2px solid #F1CDD3' }}/>
                 </Form.Item>
                 <Form.Item
                   label="Hora de Inicio"
@@ -681,6 +702,7 @@ const ProgramarSesion = () => {
                   ]}
                 >
                   <TimePicker
+                  style={{ border: '2px solid #F1CDD3' }}
                     format="HH:mm"
                     onChange={handleHoraInicioChange}
                   />
@@ -696,9 +718,18 @@ const ProgramarSesion = () => {
                     maxCount={1} // Asegura que solo se pueda subir un archivo
                     onRemove={() => setActaDeSesion(null)}
                   >
-                    <Button icon={<UploadOutlined />}>
-                      Click para cargar el Acta de Sesión
-                    </Button>
+                    <Button
+      icon={<UploadOutlined />}
+      style={{
+        backgroundColor: isHovered.actaDeSesion ? '#701e45' : '#fff',
+        color: isHovered.actaDeSesion ? '#fff' : '#701e45',
+        border: '2px solid #F1CDD3',
+      }}
+      onMouseEnter={() => handleMouseEnter('actaDeSesion')}
+      onMouseLeave={() => handleMouseLeave('actaDeSesion')}
+    >
+      Click para cargar el Acta de Sesión
+    </Button>
                   </Upload>
                 </Form.Item>
 
@@ -758,9 +789,18 @@ const ProgramarSesion = () => {
                     multiple
                     onChange={handleChange}
                   >
-                    <Button icon={<UploadOutlined />}>
-                      Click para cargar documentos
-                    </Button>
+                                <Button
+      icon={<UploadOutlined />}
+      style={{
+        backgroundColor: isHovered.documentos ? '#701e45' : '#fff',
+        color: isHovered.documentos ? '#fff' : '#701e45',
+        border: '2px solid #F1CDD3',
+      }}
+      onMouseEnter={() => handleMouseEnter('documentos')}
+      onMouseLeave={() => handleMouseLeave('documentos')}
+    >
+      Click para cargar Documentos
+    </Button>
                   </Upload>
                 </Form.Item>
 
