@@ -11,8 +11,6 @@ const { Option } = Select;
 const Repositorio = () => {
   const { organismo } = useContext(OrganismoContext);
 
-
-
   const [sesionesFinalizadas, setSesionesFinalizadas] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [filteredSesiones, setFilteredSesiones] = useState([]);
@@ -58,21 +56,19 @@ const Repositorio = () => {
       console.error("Error al descargar el archivo:", error);
     }
   };
-  
 
   // Código para descargar archivos de una sesión
   const descargarArchivosSesion = async (sesion) => {
     const zip = new JSZip();
 
-    // Agregar documentos si están disponibles
-    const documentos = [
+    // Agregar documentos obligatorios
+    const documentosObligatorios = [
       { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
-      { url: sesion.estadosFinancierosUrl, nombre: "Estados_Financieros.pdf" },
-      { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
-      { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
+      // Agrega aquí otros documentos obligatorios si los hay...
     ];
 
-    for (const doc of documentos) {
+    // Agregar documentos obligatorios al ZIP
+    for (const doc of documentosObligatorios) {
       if (doc.url) {
         try {
           const response = await fetch(doc.url);
@@ -81,6 +77,20 @@ const Repositorio = () => {
         } catch (error) {
           console.error(`Error al descargar ${doc.nombre}:`, error);
         }
+      }
+    }
+
+    // Agregar documentos adicionales al ZIP
+    for (const archivo of sesion.archivos || []) {
+      try {
+        const response = await fetch(archivo.url);
+        const blob = await response.blob();
+        zip.file(archivo.nombre, blob);
+      } catch (error) {
+        console.error(
+          `Error al descargar archivo adicional ${archivo.nombre}:`,
+          error
+        );
       }
     }
 
@@ -98,38 +108,59 @@ const Repositorio = () => {
       console.error("Error: selectedYear no está definido");
       return;
     }
-  
+
     const zip = new JSZip();
 
-    
-  
     // Utiliza Promise.all para manejar la asincronía
     await Promise.all(
       filteredSesiones.map(async (sesion) => {
         // Usar tanto el tipo como el número de sesión para crear un identificador único
         const sesionFolderName = `Sesion_${sesion.tipoSesion}_${sesion.numeroSesion}`;
         const sesionFolder = zip.folder(sesionFolderName);
-  
-        try {
-          const responseActa = await fetch(sesion.actaDeSesionUrl);
-          const blobActa = await responseActa.blob();
-          sesionFolder.file(`Acta_de_Sesion.pdf`, blobActa);
-        } catch (error) {
-          console.error(`Error al cargar Acta de Sesión para la sesión ${sesionFolderName}:`, error);
+
+        // Agregar documentos obligatorios
+        const documentosObligatorios = [
+          { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
+          {
+            url: sesion.estadosFinancierosUrl,
+            nombre: "Estados_Financieros.pdf",
+          },
+          { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
+          { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
+          // Agrega aquí otros documentos obligatorios si los hay...
+        ];
+
+        for (const doc of documentosObligatorios) {
+          if (doc.url) {
+            try {
+              const response = await fetch(doc.url);
+              const blob = await response.blob();
+              sesionFolder.file(doc.nombre, blob);
+            } catch (error) {
+              console.error(
+                `Error al cargar ${doc.nombre} para la sesión ${sesionFolderName}:`,
+                error
+              );
+            }
+          }
         }
-  
-        for (const archivo of sesion.archivos) {
+
+        // Agregar documentos adicionales
+        for (const archivo of sesion.archivos || []) {
           try {
             const response = await fetch(archivo.url);
             const blob = await response.blob();
-            sesionFolder.file(`${archivo.nombre}`, blob);
+            sesionFolder.file(archivo.nombre, blob);
           } catch (error) {
-            console.error(`Error al cargar archivo ${archivo.nombre} para la sesión ${sesionFolderName}:`, error);
+            console.error(
+              `Error al cargar archivo adicional ${archivo.nombre} para la sesión ${sesionFolderName}:`,
+              error
+            );
           }
         }
       })
     );
-  
+
     try {
       const zipBlob = await zip.generateAsync({ type: "blob" });
       saveAs(zipBlob, `archivos_${selectedYear}.zip`);
@@ -137,9 +168,6 @@ const Repositorio = () => {
       console.error("Error al generar o descargar el archivo ZIP:", error);
     }
   };
-  
-  
-  
 
   const handleYearClick = (year) => {
     setSelectedYear(year, () => {
@@ -173,46 +201,76 @@ const Repositorio = () => {
         <>
           {record.actaDeSesionUrl && (
             <Button
-            onClick={() => descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")}
-            style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
-          >
-            Descargar Acta de Sesión
-          </Button>
+              onClick={() =>
+                descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
+            >
+              Descargar Acta de Sesión
+            </Button>
           )}
           {record.estadosFinancierosUrl && (
             <Button
-              onClick={() => descargarArchivo(record.estadosFinancierosUrl, "Estados_Financieros.pdf")}
-              style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
+              onClick={() =>
+                descargarArchivo(
+                  record.estadosFinancierosUrl,
+                  "Estados_Financieros.pdf"
+                )
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
             >
               Descargar Estados Financieros
             </Button>
           )}
           {record.ordenDelDiaUrl && (
             <Button
-              onClick={() => descargarArchivo(record.ordenDelDiaUrl, "Orden_del_Dia.pdf")}
-              style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
+              onClick={() =>
+                descargarArchivo(record.ordenDelDiaUrl, "Orden_del_Dia.pdf")
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
             >
               Descargar Orden del Día
             </Button>
           )}
           {record.convocatoriaUrl && (
             <Button
-              onClick={() => descargarArchivo(record.convocatoriaUrl, "Convocatoria.pdf")}
-              style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
+              onClick={() =>
+                descargarArchivo(record.convocatoriaUrl, "Convocatoria.pdf")
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
             >
               Descargar Convocatoria
             </Button>
           )}
           <Button
             onClick={() => descargarArchivosSesion(record)}
-            style={{ margin: '5px', backgroundColor: '#f1cdd3', color: '#701e45' }}
+            style={{
+              margin: "5px",
+              backgroundColor: "#f1cdd3",
+              color: "#701e45",
+            }}
           >
             Descargar Todos
           </Button>
         </>
       ),
     },
-  
   ];
 
   const years = [
@@ -221,7 +279,6 @@ const Repositorio = () => {
   const tiposDeSesion = [
     ...new Set(sesionesFinalizadas.map((sesion) => sesion.tipoSesion)),
   ];
-  
 
   return (
     <div style={{ padding: 20 }}>
@@ -268,8 +325,14 @@ const Repositorio = () => {
             ))}
           </Select>
 
-          <Button onClick={descargarTodoElAno} style={{ marginLeft: 10 }}
-          style={{ margin: '5px', backgroundColor: '#f1cdd3', color: '#701e45' }}>
+          <Button
+            onClick={descargarTodoElAno}
+            style={{
+              margin: "5px",
+              backgroundColor: "#f1cdd3",
+              color: "#701e45",
+            }}
+          >
             Descargar Todo el Año
           </Button>
           <Table dataSource={filteredSesiones} columns={columns} />
