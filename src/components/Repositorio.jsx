@@ -60,14 +60,16 @@ const Repositorio = () => {
   // Código para descargar archivos de una sesión
   const descargarArchivosSesion = async (sesion) => {
     const zip = new JSZip();
-
-    // Agregar documentos obligatorios
+  
+    // Agregar documentos obligatorios si están disponibles
     const documentosObligatorios = [
       { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
+      { url: sesion.estadosFinancierosUrl, nombre: "Estados_Financieros.pdf" },
+      { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
+      { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
       // Agrega aquí otros documentos obligatorios si los hay...
     ];
-
-    // Agregar documentos obligatorios al ZIP
+  
     for (const doc of documentosObligatorios) {
       if (doc.url) {
         try {
@@ -79,21 +81,18 @@ const Repositorio = () => {
         }
       }
     }
-
-    // Agregar documentos adicionales al ZIP
+  
+    // Agregar documentos adicionales si están disponibles
     for (const archivo of sesion.archivos || []) {
       try {
         const response = await fetch(archivo.url);
         const blob = await response.blob();
         zip.file(archivo.nombre, blob);
       } catch (error) {
-        console.error(
-          `Error al descargar archivo adicional ${archivo.nombre}:`,
-          error
-        );
+        console.error(`Error al descargar archivo adicional ${archivo.nombre}:`, error);
       }
     }
-
+  
     // Generar y descargar el ZIP
     try {
       const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -102,6 +101,7 @@ const Repositorio = () => {
       console.error("Error al generar el archivo ZIP:", error);
     }
   };
+  
 
   const descargarTodoElAno = async () => {
     if (!selectedYear) {
