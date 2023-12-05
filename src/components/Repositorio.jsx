@@ -173,16 +173,16 @@ const Repositorio = () => {
         <>
           {record.actaDeSesionUrl && (
             <Button
-              onClick={() => descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")}
-              style={{ margin: '5px' }}
-            >
-              Descargar Acta de Sesión
-            </Button>
+            onClick={() => descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")}
+            style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
+          >
+            Descargar Acta de Sesión
+          </Button>
           )}
           {record.estadosFinancierosUrl && (
             <Button
               onClick={() => descargarArchivo(record.estadosFinancierosUrl, "Estados_Financieros.pdf")}
-              style={{ margin: '5px' }}
+              style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
             >
               Descargar Estados Financieros
             </Button>
@@ -190,7 +190,7 @@ const Repositorio = () => {
           {record.ordenDelDiaUrl && (
             <Button
               onClick={() => descargarArchivo(record.ordenDelDiaUrl, "Orden_del_Dia.pdf")}
-              style={{ margin: '5px' }}
+              style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
             >
               Descargar Orden del Día
             </Button>
@@ -198,14 +198,14 @@ const Repositorio = () => {
           {record.convocatoriaUrl && (
             <Button
               onClick={() => descargarArchivo(record.convocatoriaUrl, "Convocatoria.pdf")}
-              style={{ margin: '5px' }}
+              style={{ margin: '5px', backgroundColor: '#6a0f49', color: 'white' }}
             >
               Descargar Convocatoria
             </Button>
           )}
           <Button
             onClick={() => descargarArchivosSesion(record)}
-            style={{ margin: '5px', backgroundColor: '#4CAF50', color: 'white' }}
+            style={{ margin: '5px', backgroundColor: '#f1cdd3', color: '#701e45' }}
           >
             Descargar Todos
           </Button>
@@ -268,7 +268,8 @@ const Repositorio = () => {
             ))}
           </Select>
 
-          <Button onClick={descargarTodoElAno} style={{ marginLeft: 10 }}>
+          <Button onClick={descargarTodoElAno} style={{ marginLeft: 10 }}
+          style={{ margin: '5px', backgroundColor: '#f1cdd3', color: '#701e45' }}>
             Descargar Todo el Año
           </Button>
           <Table dataSource={filteredSesiones} columns={columns} />
