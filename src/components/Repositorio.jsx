@@ -11,6 +11,8 @@ const { Option } = Select;
 const Repositorio = () => {
   const { organismo } = useContext(OrganismoContext);
 
+
+
   const [sesionesFinalizadas, setSesionesFinalizadas] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [filteredSesiones, setFilteredSesiones] = useState([]);
@@ -47,32 +49,48 @@ const Repositorio = () => {
   }, [selectedYear, tipoSesionFilter, organismo, sesionesFinalizadas]);
 
   // Código para descargar un archivo individual
-  const descargarArchivo = async (url, nombre) => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    saveAs(blob, nombre);
+  const descargarArchivo = async (url, nombreArchivo) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      saveAs(blob, nombreArchivo);
+    } catch (error) {
+      console.error("Error al descargar el archivo:", error);
+    }
   };
+  
 
   // Código para descargar archivos de una sesión
-  const descargarArchivosSesion = async (archivos, actaDeSesionUrl) => {
+  const descargarArchivosSesion = async (sesion) => {
     const zip = new JSZip();
 
-    // Agregar el Acta de la Sesión si está disponible
-    if (actaDeSesionUrl) {
-      const responseActa = await fetch(actaDeSesionUrl);
-      const blobActa = await responseActa.blob();
-      zip.file("Acta_de_Sesion.pdf", blobActa);
+    // Agregar documentos si están disponibles
+    const documentos = [
+      { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
+      { url: sesion.estadosFinancierosUrl, nombre: "Estados_Financieros.pdf" },
+      { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
+      { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
+    ];
+
+    for (const doc of documentos) {
+      if (doc.url) {
+        try {
+          const response = await fetch(doc.url);
+          const blob = await response.blob();
+          zip.file(doc.nombre, blob);
+        } catch (error) {
+          console.error(`Error al descargar ${doc.nombre}:`, error);
+        }
+      }
     }
 
-    // Agregar el resto de archivos
-    for (const archivo of archivos) {
-      const response = await fetch(archivo.url);
-      const blob = await response.blob();
-      zip.file(archivo.nombre, blob);
+    // Generar y descargar el ZIP
+    try {
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `documentos_sesion_${sesion.numeroSesion}.zip`);
+    } catch (error) {
+      console.error("Error al generar el archivo ZIP:", error);
     }
-
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    saveAs(zipBlob, "archivos_sesion.zip");
   };
 
   const descargarTodoElAno = async () => {
@@ -82,6 +100,8 @@ const Repositorio = () => {
     }
   
     const zip = new JSZip();
+
+    
   
     // Utiliza Promise.all para manejar la asincronía
     await Promise.all(
@@ -151,24 +171,48 @@ const Repositorio = () => {
       key: "acciones",
       render: (text, record) => (
         <>
+          {record.actaDeSesionUrl && (
+            <Button
+              onClick={() => descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")}
+              style={{ margin: '5px' }}
+            >
+              Descargar Acta de Sesión
+            </Button>
+          )}
+          {record.estadosFinancierosUrl && (
+            <Button
+              onClick={() => descargarArchivo(record.estadosFinancierosUrl, "Estados_Financieros.pdf")}
+              style={{ margin: '5px' }}
+            >
+              Descargar Estados Financieros
+            </Button>
+          )}
+          {record.ordenDelDiaUrl && (
+            <Button
+              onClick={() => descargarArchivo(record.ordenDelDiaUrl, "Orden_del_Dia.pdf")}
+              style={{ margin: '5px' }}
+            >
+              Descargar Orden del Día
+            </Button>
+          )}
+          {record.convocatoriaUrl && (
+            <Button
+              onClick={() => descargarArchivo(record.convocatoriaUrl, "Convocatoria.pdf")}
+              style={{ margin: '5px' }}
+            >
+              Descargar Convocatoria
+            </Button>
+          )}
           <Button
-            onClick={() =>
-              descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")
-            }
+            onClick={() => descargarArchivosSesion(record)}
+            style={{ margin: '5px', backgroundColor: '#4CAF50', color: 'white' }}
           >
-            Descargar Acta
-          </Button>
-          <Button
-            onClick={() =>
-              descargarArchivosSesion(record.archivos, record.actaDeSesionUrl)
-            }
-            style={{ marginLeft: 10 }}
-          >
-            Descargar Archivos
+            Descargar Todos
           </Button>
         </>
       ),
     },
+  
   ];
 
   const years = [

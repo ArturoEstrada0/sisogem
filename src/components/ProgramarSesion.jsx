@@ -109,9 +109,12 @@ const ProgramarSesion = () => {
       // Generar un ID único para la sesión
       const idSesion = uuidv4();
       const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
-  
-      let actaDeSesionUrl, estadosFinancierosUrl, ordenDelDiaUrl, convocatoriaUrl;
-  
+
+      let actaDeSesionUrl,
+        estadosFinancierosUrl,
+        ordenDelDiaUrl,
+        convocatoriaUrl;
+
       // Subir el Acta de Sesión a S3 si está presente y obtener su URL
       if (actaDeSesion) {
         const response = await uploadFileToS3(
@@ -121,7 +124,7 @@ const ProgramarSesion = () => {
         );
         actaDeSesionUrl = response.Location;
       }
-  
+
       // Subir Estados Financieros si está presente y obtener su URL
       if (estadosFinancieros) {
         const response = await uploadFileToS3(
@@ -131,7 +134,7 @@ const ProgramarSesion = () => {
         );
         estadosFinancierosUrl = response.Location;
       }
-  
+
       // Subir Orden del Día si está presente y obtener su URL
       if (ordenDelDia) {
         const response = await uploadFileToS3(
@@ -141,7 +144,7 @@ const ProgramarSesion = () => {
         );
         ordenDelDiaUrl = response.Location;
       }
-  
+
       // Subir Convocatoria si está presente y obtener su URL
       if (convocatoria) {
         const response = await uploadFileToS3(
@@ -151,7 +154,7 @@ const ProgramarSesion = () => {
         );
         convocatoriaUrl = response.Location;
       }
-  
+
       // Subir los demás archivos a S3 y recolectar detalles
       const fileDetailsArray = await Promise.all(
         fileList.map(async (file) => {
@@ -163,7 +166,7 @@ const ProgramarSesion = () => {
           return { nombre: file.name, url: response.Location };
         })
       );
-  
+
       // Construir objeto con todos los detalles de la sesión
       const sessionData = {
         idSesion,
@@ -182,7 +185,7 @@ const ProgramarSesion = () => {
         contador: [currentUser.email],
         // otros datos relevantes...
       };
-  
+
       // Guardar en DynamoDB
       await saveSessionToDynamoDB(sessionData);
       setFileList([]);
@@ -195,7 +198,6 @@ const ProgramarSesion = () => {
       message.error("Error al cargar archivos");
     }
   };
-  
 
   const saveSessionToDynamoDB = async (sessionData) => {
     try {
@@ -207,6 +209,30 @@ const ProgramarSesion = () => {
       await docClient.put(params).promise();
     } catch (error) {
       console.error("Error al guardar sesión en DynamoDB:", error);
+      throw error;
+    }
+  };
+
+  const validarNumeroDeSesion = async (numeroSesion, tipoSesion, organismo) => {
+    const params = {
+      TableName: "Sesiones",
+    };
+
+    try {
+      const data = await docClient.scan(params).promise();
+      console.log("Items recuperados:", data.Items); // Agrega este log
+
+      const sesionesFiltradas = data.Items.filter(
+        (item) =>
+          item.tipoSesion === tipoSesion &&
+          item.organismo === organismo &&
+          parseInt(item.numeroSesion) === numeroSesion // Asegúrate de que los tipos coincidan
+      );
+
+      console.log("Sesiones filtradas:", sesionesFiltradas); // Agrega este log
+      return sesionesFiltradas.length > 0;
+    } catch (error) {
+      console.error("Error al validar el número de sesión:", error);
       throw error;
     }
   };
@@ -329,6 +355,23 @@ const ProgramarSesion = () => {
           "Por favor, selecciona fecha y hora de inicio."
         );
         setLoading(false); // Detiene la carga en caso de error temprano
+        return;
+      }
+
+      // Validar si ya existe el número de sesión
+      const esNumeroValido = await validarNumeroDeSesion(
+        numeroSesion,
+        tipoSesion,
+        organismo
+      );
+      if (esNumeroValido) {
+        // Si es verdadero, significa que ya existe una sesión con este número
+        openNotification(
+          "error",
+          "Número de Sesión Repetido",
+          "Ya existe una sesión con este número. Por favor, elige otro número."
+        );
+        setLoading(false);
         return;
       }
 
@@ -541,6 +584,19 @@ const ProgramarSesion = () => {
       const data = await docClient.scan(params).promise();
       const sesiones = data.Items;
 
+      // Calcula el próximo número de sesión
+      const maxNumeroSesion = sesiones
+        .filter(
+          (sesion) =>
+            sesion.tipoSesion === tipoSesion && sesion.organismo === organismo
+        )
+        .reduce(
+          (max, sesion) =>
+            sesion.numeroSesion > max ? sesion.numeroSesion : max,
+          0
+        );
+      setNumeroSesion(maxNumeroSesion + 1);
+
       // Filtrar sesiones según su estatus y organismo
       const sesionesFiltradas = sesiones.filter(
         (sesion) =>
@@ -597,15 +653,14 @@ const ProgramarSesion = () => {
                     <Option value="Extraordinario">Extraordinario</Option>
                   </Select>
                 </Form.Item>
-                <Form.Item
-                  label="Número de Sesión"
-                  name="numeroSesion"
-                  initialValue={1}
-                >
-                  <Select onChange={handleNumeroSesionChange}>
-                    {renderNumeroSesionOptions()}
+                <Form.Item label="Número de Sesión" name="numeroSesion">
+                  <Select disabled={true} value={numeroSesion}>
+                    <Option
+                      value={numeroSesion}
+                    >{`Sesión ${numeroSesion}`}</Option>
                   </Select>
                 </Form.Item>
+
                 <Form.Item
                   label="Fecha"
                   name="fecha"
