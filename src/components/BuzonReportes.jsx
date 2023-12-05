@@ -101,7 +101,7 @@ function BuzonReportes() {
 
   useEffect(() => {
     axios
-      .get('http://localhost:3002/reportes')
+      .get('http://localhost:3001/reportes')
       .then((response) => {
         const dataKeys = response.data.map((item) => ({
           ...item,
@@ -170,7 +170,7 @@ function BuzonReportes() {
       )
     } else {
       axios
-        .post('http://localhost:3002/email', email)
+        .post('http://localhost:3001/email', email)
         .then(() => {
           message.success('Reporte enviado con éxito.')
           setTitle('')
