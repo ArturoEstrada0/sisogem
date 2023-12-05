@@ -1,147 +1,183 @@
-import React, { useState } from "react";
-import { Table, Card, Row, Col, Input, Select, Button } from "antd";
-import "antd/dist/reset.css";
+import React, { useState, useEffect, useContext } from "react";
+import { Table, Card, Row, Col, Button, Select } from "antd";
+import AWS from "aws-sdk";
 import { FolderOutlined } from "@ant-design/icons";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { OrganismoContext } from "../context/OrganismoContext";
 
-const { Search } = Input;
 const { Option } = Select;
 
-const data = [
-  {
-    key: "1",
-    nombreArchivo: "Archivo 2021-01.xls",
-    fecha: "2021-01-05",
-    tipo: "xls",
-    tamanio: "123 KB",
-    ruta: "C:\\Users\\ASUS\\Desktop\\universidad\\Topicos selectos de ingenieria de software\\recursos\\Manual de Contabilidad Gubernamental.pdf",
-  },
-  {
-    key: "2",
-    nombreArchivo: "Archivo 2021-02.csv",
-    fecha: "2021-02-15",
-    tipo: "csv",
-    tamanio: "87 KB",
-  },
-  {
-    key: "3",
-    nombreArchivo: "Archivo 2021-03.xls",
-    fecha: "2021-03-25",
-    tipo: "xls",
-    tamanio: "156 KB",
-  },
-  {
-    key: "4",
-    nombreArchivo: "Archivo 2022-01.xls",
-    fecha: "2022-01-10",
-    tipo: "xls",
-    tamanio: "110 KB",
-  },
-  {
-    key: "5",
-    nombreArchivo: "Archivo 2022-02.csv",
-    fecha: "2022-02-20",
-    tipo: "csv",
-    tamanio: "92 KB",
-  },
-  {
-    key: "6",
-    nombreArchivo: "Archivo 2022-03.xls",
-    fecha: "2022-03-30",
-    tipo: "xls",
-    tamanio: "167 KB",
-  },
-  {
-    key: "7",
-    nombreArchivo: "Archivo 2023-01.xlsx",
-    fecha: "2023-01-10",
-    tipo: "xlsx",
-    tamanio: "145 KB",
-  },
-  {
-    key: "8",
-    nombreArchivo: "Archivo 2023-02.csv",
-    fecha: "2023-02-18",
-    tipo: "csv",
-    tamanio: "102 KB",
-  },
-];
+const Repositorio = () => {
+  const { organismo } = useContext(OrganismoContext);
 
-const columns = [
-  {
-    title: "Nombre de Archivo",
-    dataIndex: "nombreArchivo",
-    key: "nombreArchivo",
-  },
-  {
-    title: "Fecha",
-    dataIndex: "fecha",
-    key: "fecha",
-  },
-  {
-    title: "Tipo",
-    dataIndex: "tipo",
-    key: "tipo",
-  },
-  {
-    title: "Tamaño",
-    dataIndex: "tamanio",
-    key: "tamanio",
-  },
-];
-
-function Repositorio() {
-  const [yearFilter, setYearFilter] = useState(null);
-  const [searchText, setSearchText] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState([]);
+  const [sesionesFinalizadas, setSesionesFinalizadas] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [filteredSesiones, setFilteredSesiones] = useState([]);
+  const [tipoSesionFilter, setTipoSesionFilter] = useState(null);
 
-  const handleChangeYearFilter = (value) => {
-    setYearFilter(value);
-    setSelectedYear(value);
+  useEffect(() => {
+    const cargarSesionesFinalizadas = async () => {
+      const docClient = new AWS.DynamoDB.DocumentClient();
+      const params = {
+        TableName: "Sesiones",
+        FilterExpression: "estatus = :estatus",
+        ExpressionAttributeValues: { ":estatus": "Finalizada" },
+      };
+
+      try {
+        const data = await docClient.scan(params).promise();
+        setSesionesFinalizadas(data.Items);
+      } catch (error) {
+        console.error("Error al cargar sesiones finalizadas:", error);
+      }
+    };
+
+    cargarSesionesFinalizadas();
+  }, []);
+
+  useEffect(() => {
+    const filtered = sesionesFinalizadas.filter(
+      (sesion) =>
+        (selectedYear ? sesion.fecha.startsWith(selectedYear) : true) &&
+        (tipoSesionFilter ? sesion.tipoSesion === tipoSesionFilter : true) &&
+        (organismo ? sesion.organismo === organismo : true)
+    );
+    setFilteredSesiones(filtered);
+  }, [selectedYear, tipoSesionFilter, organismo, sesionesFinalizadas]);
+
+  // Código para descargar un archivo individual
+  const descargarArchivo = async (url, nombre) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    saveAs(blob, nombre);
   };
 
-  const handleSearch = (value) => {
-    setSearchText(value.toLowerCase());
-  };
-
-  const handleFilterChange = (value) => {
-    setSelectedFilters(value);
-  };
-
-  const years = [...new Set(data.map((item) => item.fecha.split("-")[0]))];
-
-  const filteredData = data.filter(
-    (item) =>
-      (yearFilter ? item.fecha.includes(yearFilter) : true) &&
-      (searchText
-        ? item.nombreArchivo.toLowerCase().includes(searchText)
-        : true) &&
-      (selectedFilters.length > 0
-        ? selectedFilters.includes(item.tipo)
-        : true)
-  );
-
-  // Función para crear y descargar el archivo ZIP
-  const exportToZIP = () => {
+  // Código para descargar archivos de una sesión
+  const descargarArchivosSesion = async (archivos, actaDeSesionUrl) => {
     const zip = new JSZip();
-    const csvData = filteredData.map((item) => ({
-      "Nombre de Archivo": item.nombreArchivo,
-      Fecha: item.fecha,
-      Tipo: item.tipo,
-      Tamaño: item.tamanio,
-    }));
 
-    // Agrega un archivo CSV con todos los datos al ZIP
-    //zip.file("data.csv", CSVLink.createCSV(csvData, { headers: csvData[0] }));
+    // Agregar el Acta de la Sesión si está disponible
+    if (actaDeSesionUrl) {
+      const responseActa = await fetch(actaDeSesionUrl);
+      const blobActa = await responseActa.blob();
+      zip.file("Acta_de_Sesion.pdf", blobActa);
+    }
 
-    // Crea y descarga el archivo ZIP
-    zip.generateAsync({ type: "blob" }).then((content) => {
-      const zipName = "archivos.zip"; // Cambia el nombre del archivo ZIP si es necesario
-      saveAs(content, zipName);
+    // Agregar el resto de archivos
+    for (const archivo of archivos) {
+      const response = await fetch(archivo.url);
+      const blob = await response.blob();
+      zip.file(archivo.nombre, blob);
+    }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    saveAs(zipBlob, "archivos_sesion.zip");
+  };
+
+  const descargarTodoElAno = async () => {
+    if (!selectedYear) {
+      console.error("Error: selectedYear no está definido");
+      return;
+    }
+  
+    const zip = new JSZip();
+  
+    // Utiliza Promise.all para manejar la asincronía
+    await Promise.all(
+      filteredSesiones.map(async (sesion) => {
+        // Usar tanto el tipo como el número de sesión para crear un identificador único
+        const sesionFolderName = `Sesion_${sesion.tipoSesion}_${sesion.numeroSesion}`;
+        const sesionFolder = zip.folder(sesionFolderName);
+  
+        try {
+          const responseActa = await fetch(sesion.actaDeSesionUrl);
+          const blobActa = await responseActa.blob();
+          sesionFolder.file(`Acta_de_Sesion.pdf`, blobActa);
+        } catch (error) {
+          console.error(`Error al cargar Acta de Sesión para la sesión ${sesionFolderName}:`, error);
+        }
+  
+        for (const archivo of sesion.archivos) {
+          try {
+            const response = await fetch(archivo.url);
+            const blob = await response.blob();
+            sesionFolder.file(`${archivo.nombre}`, blob);
+          } catch (error) {
+            console.error(`Error al cargar archivo ${archivo.nombre} para la sesión ${sesionFolderName}:`, error);
+          }
+        }
+      })
+    );
+  
+    try {
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `archivos_${selectedYear}.zip`);
+    } catch (error) {
+      console.error("Error al generar o descargar el archivo ZIP:", error);
+    }
+  };
+  
+  
+  
+
+  const handleYearClick = (year) => {
+    setSelectedYear(year, () => {
+      // Después de que setSelectedYear haya actualizado el estado
+      descargarTodoElAno();
     });
   };
+
+  const columns = [
+    {
+      title: "Tipo de Sesión",
+      dataIndex: "tipoSesion",
+      key: "tipoSesion",
+    },
+
+    {
+      title: "Número de Sesión",
+      dataIndex: "numeroSesion",
+      key: "numeroSesion",
+    },
+    {
+      title: "Fecha",
+      dataIndex: "fecha",
+      key: "fecha",
+    },
+
+    {
+      title: "Acciones",
+      key: "acciones",
+      render: (text, record) => (
+        <>
+          <Button
+            onClick={() =>
+              descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")
+            }
+          >
+            Descargar Acta
+          </Button>
+          <Button
+            onClick={() =>
+              descargarArchivosSesion(record.archivos, record.actaDeSesionUrl)
+            }
+            style={{ marginLeft: 10 }}
+          >
+            Descargar Archivos
+          </Button>
+        </>
+      ),
+    },
+  ];
+
+  const years = [
+    ...new Set(sesionesFinalizadas.map((sesion) => sesion.fecha.split("-")[0])),
+  ];
+  const tiposDeSesion = [
+    ...new Set(sesionesFinalizadas.map((sesion) => sesion.tipoSesion)),
+  ];
+  
 
   return (
     <div style={{ padding: 20 }}>
@@ -150,7 +186,7 @@ function Repositorio() {
         {years.map((year) => (
           <Col span={8} key={year}>
             <Card
-              onClick={() => handleChangeYearFilter(year)}
+              onClick={() => handleYearClick(year)}
               hoverable
               style={{
                 cursor: "pointer",
@@ -160,7 +196,10 @@ function Repositorio() {
                 alignItems: "center",
                 justifyContent: "center",
                 textAlign: "center",
-                border: selectedYear === year ? "2px solid #F1CDD3" : "2px solid transparent",
+                border:
+                  selectedYear === year
+                    ? "2px solid #F1CDD3"
+                    : "2px solid transparent",
               }}
             >
               <FolderOutlined style={{ fontSize: 48 }} />
@@ -169,32 +208,30 @@ function Repositorio() {
           </Col>
         ))}
       </Row>
-      {yearFilter && (
-        <div style={{ marginTop: "20px", marginLeft: "10px" }}>
-          <h3>Archivos de {yearFilter}</h3>
-          <div>
-            <Search
-              placeholder="Buscar por nombre de archivo"
-              onSearch={handleSearch}
-              style={{ width: 300, marginBottom: "10px" }}
-            />
-          </div>
+      {selectedYear && (
+        <div>
+          <h3>Sesiones de {selectedYear}</h3>
           <Select
-            mode="multiple"
-            placeholder="Filtrar por tipo"
-            style={{ width: 200, marginBottom: "10px" }}
-            onChange={handleFilterChange}
+            placeholder="Filtrar por tipo de sesión"
+            style={{ width: 200, marginRight: 10 }}
+            onChange={(value) => setTipoSesionFilter(value)}
+            allowClear
           >
-            <Option value="xls">xls</Option>
-            <Option value="csv">csv</Option>
-            <Option value="xlsx">xlsx</Option>
+            {tiposDeSesion.map((tipo) => (
+              <Option key={tipo} value={tipo}>
+                {tipo}
+              </Option>
+            ))}
           </Select>
-          <Button onClick={exportToZIP}>Exportar a ZIP</Button> {/* Botón para exportar a ZIP */}
-          <Table dataSource={filteredData} columns={columns} />
+
+          <Button onClick={descargarTodoElAno} style={{ marginLeft: 10 }}>
+            Descargar Todo el Año
+          </Button>
+          <Table dataSource={filteredSesiones} columns={columns} />
         </div>
       )}
     </div>
   );
-}
+};
 
 export default Repositorio;

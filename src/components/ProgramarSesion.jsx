@@ -33,7 +33,7 @@ const { Option } = Select;
 const { TabPane } = Tabs;
 
 const ProgramarSesion = () => {
-  const [tipoSesion, setTipoSesion] = useState("ordinario");
+  const [tipoSesion, setTipoSesion] = useState("Ordinario");
   const [fecha, setFecha] = useState(null);
   const [horaInicio, setHoraInicio] = useState(null);
   const [numeroSesion, setNumeroSesion] = useState(1);
@@ -329,7 +329,7 @@ const ProgramarSesion = () => {
         setNuevasSesionesProgramadas(nuevasSesionesProgramadas + 1);
       }
 
-      setTipoSesion("ordinario");
+      setTipoSesion("Ordinario");
       setNumeroSesion(1);
       setFecha(null);
       setHoraInicio(null);
@@ -445,7 +445,7 @@ const ProgramarSesion = () => {
   
 
   const renderNumeroSesionOptions = () => {
-    const maxSesiones = tipoSesion === "ordinario" ? 4 : 24;
+    const maxSesiones = tipoSesion === "Ordinario" ? 4 : 24;
     const opciones = [];
 
     for (let i = 1; i <= maxSesiones; i++) {
@@ -552,11 +552,11 @@ const ProgramarSesion = () => {
                 <Form.Item
                   label="Tipo de Sesión"
                   name="tipoSesion"
-                  initialValue="ordinario"
+                  initialValue="Ordinario"
                 >
                   <Select onChange={handleTipoSesionChange}>
-                    <Option value="ordinario">Ordinario</Option>
-                    <Option value="extraordinario">Extraordinario</Option>
+                    <Option value="Ordinario">Ordinario</Option>
+                    <Option value="Extraordinario">Extraordinario</Option>
                   </Select>
                 </Form.Item>
                 <Form.Item
@@ -699,8 +699,8 @@ const ProgramarSesion = () => {
               ]}
             >
               <Select>
-                <Option value="ordinario">Ordinario</Option>
-                <Option value="extraordinario">Extraordinario</Option>
+                <Option value="Ordinario">Ordinario</Option>
+                <Option value="Extraordinario">Extraordinario</Option>
               </Select>
             </Form.Item>
             <Form.Item
