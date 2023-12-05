@@ -29,7 +29,7 @@ const SesionesProgramadas = ({
         <Button
           type="primary"
           onClick={() => onIniciarSesion(sesion)}
-          style={{ backgroundColor: "#6A0F49", borderBlockColor: "#6A0F49" }}
+          style={{ backgroundColor: "#6A0F49", color: "#fff" ,borderBlockColor: "#6A0F49" }}
           disabled={!esSesionActivable(sesion)}
         >
           Celebrar Sesión
@@ -63,7 +63,7 @@ const SesionesProgramadas = ({
             console.log("Descargando documentos de la sesión:", sesion);
             onDescargarDocumentos(sesion);
           }}
-          style={{ marginBottom: 8 }}
+          style={{ backgroundColor: '#fff', color: '#701e45', border: '1px solid #F1CDD3', marginLeft: 8 }}
         >
           Descargar Documentos
         </Button>
