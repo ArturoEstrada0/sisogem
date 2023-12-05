@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Button, Modal, Input, Space } from "antd";
+import { Button, Modal, Input, Space, Image, message } from "antd";
 import {
   SearchOutlined,
   LeftOutlined,
@@ -50,6 +50,7 @@ async function insertSignatureIntoPdf(
       console.error("Número de página inválido.");
       return;
     }
+    
 
     // Obtener la página correcta basada en el número de página
     const page = pdfDoc.getPage(pageNumber - 1);
@@ -353,9 +354,16 @@ function PDFViewer({ url, organismo, documentKey }) {
 
   const onImageChange = (event) => {
     if (event.target.files && event.target.files[0]) {
-      let img = event.target.files[0];
+      const img = event.target.files[0];
+
+      // Verifica que la imagen sea de tipo PNG
+      if (!img.type || img.type.split('/')[1] !== 'png') {
+        message.error('Por favor, selecciona una imagen en formato PNG.');
+        return;
+      }
+
       setSignatureImage(URL.createObjectURL(img));
-      console.log("Imagen de firma cargada:", img.name);
+      console.log('Imagen de firma cargada:', img.name);
     }
   };
 
@@ -510,31 +518,68 @@ function PDFViewer({ url, organismo, documentKey }) {
           onOk={handleOk}
           onCancel={handleCancel}
           width={600}
+          style={{ borderRadius: '10px', textAlign: 'center' }}
+          okButtonProps={{ style: { backgroundColor: '#701e45', color: '#fff', border: '1px solid #F1CDD3' } }}
+          cancelButtonProps={{ style: { backgroundColor: '#fff', color: '#701e45', border: '1px solid #701e45' } }}
         >
           {showCanvas ? (
             <div>
-              <p>Firma aquí:</p>
+              <p style={{ fontSize: '16px', marginBottom: '10px' }}>Firma aquí:</p>
               <SignatureCanvas
                 penColor="black"
                 canvasProps={{
                   width: 500,
                   height: 200,
-                  className: "sigCanvas",
+                  className: 'sigCanvas',
+                  border: '1px solid #F1CDD3',
                 }}
                 ref={sigPad}
               />
-              <Button onClick={clearSignature}>Limpiar</Button>
+              <Button
+                onClick={clearSignature}
+                style={{ marginTop: '10px', backgroundColor: '#701e45', color: '#fff', border: '1px solid #F1CDD3' }}
+              >
+                Limpiar
+              </Button>
             </div>
           ) : (
             <div>
-              <input type="file" onChange={onImageChange} accept="image/*" />
+              <input
+                type="file"
+                onChange={onImageChange}
+                accept="image/png" // Restringe la selección a archivos PNG
+                style={{
+                  marginBottom: '10px',
+                  padding: '10px',
+                  border: '2px dashed #F1CDD3',
+                  borderRadius: '8px',
+                  backgroundColor: '#f9f9f9',
+                }}
+              />
+              {/* Previsualización de la imagen */}
+              {signatureImage && (
+                <Image
+                  src={signatureImage}
+                  alt="Previsualización de firma"
+                  preview={false} // Desactiva la vista previa de la imagen
+                  style={{ marginTop: '10px', width: '100%', height: 'auto' }}
+                />
+              )}
             </div>
           )}
 
-          <Button onClick={toggleCanvas}>
+          <Button
+            onClick={toggleCanvas}
+            style={{
+              marginTop: '10px',
+              backgroundColor: '#701e45',
+              color: '#fff',
+              border: '1px solid #F1CDD3',
+            }}
+          >
             {showCanvas
-              ? "Cambiar a Subir Imagen"
-              : "Cambiar a Firma en Canvas"}
+              ? 'Firmar con Imagen'
+              : 'Firmar con Trazo'}
           </Button>
         </Modal>
       )}
