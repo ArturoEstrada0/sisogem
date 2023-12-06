@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Button, Modal, Input, Space, Image, message } from "antd";
+import { Button, Modal, Input, Space, Image, message, Spin } from "antd";
 import {
   SearchOutlined,
   LeftOutlined,
@@ -9,6 +9,7 @@ import {
   SaveOutlined,
   EraserOutlined,
   FilePdfOutlined,
+  EditOutlined ,
   FileImageOutlined,
 } from "@ant-design/icons";
 import AWS from "aws-sdk";
@@ -67,7 +68,6 @@ async function insertSignatureIntoPdf(
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-    window.open(url, "_blank");
   } catch (error) {
     console.error("Error al insertar la firma en el PDF:", error);
   }
@@ -136,6 +136,8 @@ function PDFViewer({ url, organismo, documentKey }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showCanvas, setShowCanvas] = useState(true);
   const [signaturePosition, setSignaturePosition] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   // Agrega un nuevo estado para el PDF firmado
   const [signedPdfFile, setSignedPdfFile] = useState(null);
 
@@ -154,7 +156,6 @@ function PDFViewer({ url, organismo, documentKey }) {
   useEffect(() => {
     if (signedPdfFile) {
       const pdfUrl = URL.createObjectURL(signedPdfFile);
-      window.open(pdfUrl, "_blank");
     }
   }, [signedPdfFile]); // Se activará cada vez que signedPdfFile cambie
 
@@ -175,6 +176,8 @@ function PDFViewer({ url, organismo, documentKey }) {
       return;
     }
 
+    setLoading(true); // Inicia el indicador de carga
+
     const s3 = new AWS.S3();
     const params = {
       Bucket: organismo, // Reemplaza con el nombre de tu bucket
@@ -190,6 +193,8 @@ function PDFViewer({ url, organismo, documentKey }) {
       console.log("PDF firmado subido con éxito.");
     } catch (error) {
       console.error("Error al subir el PDF a S3:", error);
+    } finally {
+      setLoading(false); // Detiene el indicador de carga
     }
   };
 
@@ -424,298 +429,302 @@ function PDFViewer({ url, organismo, documentKey }) {
     }
   }
 
+  useEffect(() => {
+    if (signatureImage && signaturePosition && pdfFile) {
+      applySignatureToPdf();
+    }
+  }, [signatureImage, signaturePosition, signatureSize, pdfFile]);
+
   return (
     <div>
-      {/* Botones y controles de acción en una sola línea */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          marginBottom: "10px",
-        }}
-      >
-        <Button
-          icon={<FilePdfOutlined />}
-          type="primary"
-          onClick={handleFileButtonClick}
-          style={{ backgroundColor: "#6A0F49", borderColor: "#6A0F49" }}
+      {/* Si loading es true, muestra el Spin que cubre toda la página */}
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            height: "100%",
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+          }}
         >
-          Abrir PDF
-        </Button>
+          <Spin spinning={loading} size="large" className="custom-spin" />
+        </div>
+      )}
+      <div>
+        {/* Botones y controles de acción en una sola línea */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            marginBottom: "10px",
+          }}
+        >
+          <input
+            type="file"
+            onChange={onFileChange}
+            accept="application/pdf"
+            hidden
+            ref={fileInputRef}
+          />
 
-        <input
-          type="file"
-          onChange={onFileChange}
-          accept="application/pdf"
-          hidden
-          ref={fileInputRef}
-        />
-
-        {pdfFile && (
-          <>
-            <Button
-              type="primary"
-              onClick={showModal}
-              icon={<FileImageOutlined />}
-              style={{ backgroundColor: "#6A0F49", borderColor: "#6A0F49" }}
-            >
-              Abrir Firma
-            </Button>
-
-            <Space style={{ position: "relative", width: "fit-content" }}>
-              <Input
-                type="text"
-                placeholder="Buscar en el PDF"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                style={{
-                  width: 200, // Ajusta el ancho según tus necesidades
-                  borderRadius: "5px",
-                  border: "1px solid #6a0f49", // Borde con color similar al botón
-                  paddingRight: "30px", // Aumenta el espacio a la derecha para el botón
-                  marginBottom: 0, // Elimina el margen inferior para que esté más pegado al botón
-                }}
-              />
+          {pdfFile && (
+            <>
               <Button
-                onClick={searchInPdf}
-                icon={<SearchOutlined />}
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  right: "8px", // Alinea el botón hacia la derecha dentro del cuadro de texto
-                  transform: "translateY(-50%)", // Centra verticalmente el botón
-                  backgroundColor: "#6a0f49",
-                  color: "#ffffff",
-                  borderRadius: "5px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  border: "none", // Elimina el borde del botón
-                  padding: "4px 8px", // Ajusta el espacio interior del botón
-                  fontSize: "14px", // Ajusta el tamaño del texto del botón
-                }}
-              ></Button>
-            </Space>
-
-            <div style={{ display: "flex", marginLeft: "-5px" }}>
-              <Button
-                disabled={pageNumber <= 1}
-                onClick={previousPage}
-                icon={<LeftOutlined />}
-                style={{
-                  backgroundColor: "#6a0f49",
-                  color: "#ffffff",
-                  borderRadius: "5px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  marginRight: "5px", // Ajusta el margen derecho para separar los botones
-                }}
+                type="primary"
+                onClick={showModal}
+                icon={<EditOutlined  />}
+                style={{ backgroundColor: "#6A0F49", borderColor: "#6A0F49" }}
               >
-                Ant
+                Firmar{" "}
               </Button>
 
-              <Button
-                disabled={pageNumber >= numPages}
-                onClick={nextPage}
-                icon={<RightOutlined />}
-                style={{
-                  backgroundColor: "#6a0f49",
-                  color: "#ffffff",
-                  borderRadius: "5px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  marginLeft: "5px", // Ajusta el margen izquierdo para separar los botones
-                  display: "flex",
-                  flexDirection: "row-reverse", // Invierte el orden del contenido dentro del botón
-                  alignItems: "center", // Centra verticalmente el texto y el ícono
-                }}
-              >
-                Sig
-              </Button>
-            </div>
-
-            <Button
-              onClick={applySignatureToPdf}
-              type="primary"
-              style={{
-                backgroundColor: "#6a0f49",
-                color: "#ffffff",
-                borderRadius: "5px",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                marginRight: "10px", // Margen derecho para separar los botones
-              }}
-            >
-              Aplicar Firma en el PDF
-            </Button>
-
-            <Button
-              onClick={uploadSignedPdfToS3}
-              type="primary"
-              style={{
-                backgroundColor: "#6a0f49", // Color de fondo
-                color: "#ffffff", // Color del texto
-                borderRadius: "5px",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                padding: "8px 16px", // Ajusta el padding según tus preferencias
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center", // Centra horizontalmente el contenido del botón
-              }}
-              icon={
-                <img
-                  src="/computacion-en-la-nube.png"
-                  alt="Nombre de la imagen"
+              <Space style={{ position: "relative", width: "fit-content" }}>
+                <Input
+                  type="text"
+                  placeholder="Buscar en el PDF"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   style={{
-                    width: "20px",
-                    height: "20px",
-                    verticalAlign: "middle",
+                    width: 200, // Ajusta el ancho según tus necesidades
+                    borderRadius: "5px",
+                    border: "1px solid #6a0f49", // Borde con color similar al botón
+                    paddingRight: "30px", // Aumenta el espacio a la derecha para el botón
+                    marginBottom: 0, // Elimina el margen inferior para que esté más pegado al botón
                   }}
                 />
-              } // Centra verticalmente la imagen
-            ></Button>
-          </>
-        )}
-      </div>
+                <Button
+                  onClick={searchInPdf}
+                  icon={<SearchOutlined />}
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    right: "8px", // Alinea el botón hacia la derecha dentro del cuadro de texto
+                    transform: "translateY(-50%)", // Centra verticalmente el botón
+                    backgroundColor: "#6a0f49",
+                    color: "#ffffff",
+                    borderRadius: "5px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    border: "none", // Elimina el borde del botón
+                    padding: "4px 8px", // Ajusta el espacio interior del botón
+                    fontSize: "14px", // Ajusta el tamaño del texto del botón
+                  }}
+                ></Button>
+              </Space>
 
-      {/* Modal para la firma */}
-      {pdfFile && (
-        <Modal
-          title="Firma"
-          visible={isModalVisible}
-          onOk={handleOk}
-          onCancel={handleCancel}
-          width={600}
-          style={{ borderRadius: "10px", textAlign: "center" }}
-          okButtonProps={{
-            style: {
-              backgroundColor: "#701e45",
-              color: "#fff",
-              border: "1px solid #F1CDD3",
-            },
-          }}
-          cancelButtonProps={{
-            style: {
-              backgroundColor: "#fff",
-              color: "#701e45",
-              border: "1px solid #701e45",
-            },
-          }}
-        >
-          {showCanvas ? (
-            <div>
-              <p style={{ fontSize: "16px", marginBottom: "10px" }}>
-                Firma aquí:
-              </p>
-              <SignatureCanvas
-                penColor="black"
-                canvasProps={{
-                  width: 500,
-                  height: 200,
-                  className: "sigCanvas",
-                  border: "1px solid #F1CDD3",
-                }}
-                ref={sigPad}
-              />
+              <div style={{ display: "flex", marginLeft: "-5px" }}>
+                <Button
+                  disabled={pageNumber <= 1}
+                  onClick={previousPage}
+                  icon={<LeftOutlined />}
+                  style={{
+                    backgroundColor: "#6a0f49",
+                    color: "#ffffff",
+                    borderRadius: "5px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    marginRight: "5px", // Ajusta el margen derecho para separar los botones
+                  }}
+                >
+                  Ant
+                </Button>
+
+                <Button
+                  disabled={pageNumber >= numPages}
+                  onClick={nextPage}
+                  icon={<RightOutlined />}
+                  style={{
+                    backgroundColor: "#6a0f49",
+                    color: "#ffffff",
+                    borderRadius: "5px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    marginLeft: "5px", // Ajusta el margen izquierdo para separar los botones
+                    display: "flex",
+                    flexDirection: "row-reverse", // Invierte el orden del contenido dentro del botón
+                    alignItems: "center", // Centra verticalmente el texto y el ícono
+                  }}
+                >
+                  Sig
+                </Button>
+              </div>
+
               <Button
-                onClick={clearSignature}
+                onClick={uploadSignedPdfToS3}
+                type="primary"
                 style={{
-                  marginTop: "10px",
-                  backgroundColor: "#701e45",
-                  color: "#fff",
-                  border: "1px solid #F1CDD3",
+                  backgroundColor: "#6a0f49", // Color de fondo
+                  color: "#ffffff", // Color del texto
+                  borderRadius: "5px",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  padding: "8px 16px", // Ajusta el padding según tus preferencias
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center", // Centra horizontalmente el contenido del botón
                 }}
-              >
-                Limpiar
-              </Button>
-            </div>
-          ) : (
-            <div>
-              <input
-                type="file"
-                onChange={onImageChange}
-                accept="image/png" // Restringe la selección a archivos PNG
-                style={{
-                  marginBottom: "10px",
-                  padding: "10px",
-                  border: "2px dashed #F1CDD3",
-                  borderRadius: "8px",
-                  backgroundColor: "#f9f9f9",
-                }}
-              />
-              {/* Previsualización de la imagen */}
-              {signatureImage && (
-                <Image
-                  src={signatureImage}
-                  alt="Previsualización de firma"
-                  preview={false} // Desactiva la vista previa de la imagen
-                  style={{ marginTop: "10px", width: "100%", height: "auto" }}
-                />
-              )}
-            </div>
+                icon={
+                  <img
+                    src="/computacion-en-la-nube.png"
+                    alt="Nombre de la imagen"
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      verticalAlign: "middle",
+                    }}
+                  />
+                } // Centra verticalmente la imagen
+              ></Button>
+            </>
           )}
-
-          <Button
-            onClick={toggleCanvas}
-            style={{
-              marginTop: "10px",
-              backgroundColor: "#701e45",
-              color: "#fff",
-              border: "1px solid #F1CDD3",
-            }}
-          >
-            {showCanvas ? "Firmar con Imagen" : "Firmar con Trazo"}
-          </Button>
-        </Modal>
-      )}
-
-      {/* Renderizado del PDF */}
-      <div
-        ref={pdfWrapperRef}
-        onClick={onPdfClick}
-        style={{ cursor: "handwriting" }}
-      >
-        <div className="pdf-container">
-          <Document
-            file={url}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={<div>Cargando PDF...</div>}
-          >
-            <Page
-              key={`page_${pageNumber}`}
-              pageNumber={pageNumber}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-            />
-          </Document>
         </div>
 
-        {/* Vista previa de la firma (fuera del modal y sobre el PDF) */}
-        {signatureImage && (
-          <SignaturePreview
-            signatureImage={signatureImage}
-            onResizeStop={(e, direction, ref, delta, position) => {
-              setSignatureSize({
-                width: ref.offsetWidth,
-                height: ref.offsetHeight,
-              });
-              setSignatureCoordinates({ x: position.x, y: position.y });
+        {/* Modal para la firma */}
+        {pdfFile && (
+          <Modal
+            title="Firma"
+            visible={isModalVisible}
+            onOk={handleOk}
+            onCancel={handleCancel}
+            width={600}
+            style={{ borderRadius: "10px", textAlign: "center" }}
+            okButtonProps={{
+              style: {
+                backgroundColor: "#701e45",
+                color: "#fff",
+                border: "1px solid #F1CDD3",
+              },
             }}
-            onDragStop={(e, d) => {
-              setSignatureCoordinates({ x: d.x, y: d.y });
+            cancelButtonProps={{
+              style: {
+                backgroundColor: "#fff",
+                color: "#701e45",
+                border: "1px solid #701e45",
+              },
             }}
-          />
+          >
+            {showCanvas ? (
+              <div>
+                <p style={{ fontSize: "16px", marginBottom: "10px" }}>
+                  Firma aquí:
+                </p>
+                <SignatureCanvas
+                  penColor="black"
+                  canvasProps={{
+                    width: 500,
+                    height: 200,
+                    className: "sigCanvas",
+                    border: "1px solid #F1CDD3",
+                  }}
+                  ref={sigPad}
+                />
+                <Button
+                  onClick={clearSignature}
+                  style={{
+                    marginTop: "10px",
+                    backgroundColor: "#701e45",
+                    color: "#fff",
+                    border: "1px solid #F1CDD3",
+                  }}
+                >
+                  Limpiar
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="file"
+                  onChange={onImageChange}
+                  accept="image/png" // Restringe la selección a archivos PNG
+                  style={{
+                    marginBottom: "10px",
+                    padding: "10px",
+                    border: "2px dashed #F1CDD3",
+                    borderRadius: "8px",
+                    backgroundColor: "#f9f9f9",
+                  }}
+                />
+                {/* Previsualización de la imagen */}
+                {signatureImage && (
+                  <Image
+                    src={signatureImage}
+                    alt="Previsualización de firma"
+                    preview={false} // Desactiva la vista previa de la imagen
+                    style={{ marginTop: "10px", width: "100%", height: "auto" }}
+                  />
+                )}
+              </div>
+            )}
+
+            <Button
+              onClick={toggleCanvas}
+              style={{
+                marginTop: "10px",
+                backgroundColor: "#701e45",
+                color: "#fff",
+                border: "1px solid #F1CDD3",
+              }}
+            >
+              {showCanvas ? "Firmar con Imagen" : "Firmar con Trazo"}
+            </Button>
+          </Modal>
+        )}
+
+        {/* Renderizado del PDF */}
+        <div
+          ref={pdfWrapperRef}
+          onClick={onPdfClick}
+          style={{ cursor: "handwriting" }}
+        >
+          <div className="pdf-container">
+            <Document
+              file={url}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={<div>Cargando PDF...</div>}
+            >
+              <Page
+                key={`page_${pageNumber}`}
+                pageNumber={pageNumber}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </Document>
+          </div>
+
+          {/* Vista previa de la firma (fuera del modal y sobre el PDF) */}
+          {signatureImage && (
+            <SignaturePreview
+              signatureImage={signatureImage}
+              onResizeStop={(e, direction, ref, delta, position) => {
+                setSignatureSize({
+                  width: ref.offsetWidth,
+                  height: ref.offsetHeight,
+                });
+                setSignatureCoordinates({ x: position.x, y: position.y });
+              }}
+              onDragStop={(e, d) => {
+                setSignatureCoordinates({ x: d.x, y: d.y });
+              }}
+            />
+          )}
+        </div>
+
+        {/* Resultados de la búsqueda y controles adicionales */}
+        {matches.length > 0 && pdfFile && (
+          <div>
+            <p>Palabra encontrada en las páginas: </p>
+            {matches.map((match, index) => (
+              <button key={index} onClick={() => goToPage(match)}>
+                Ir a la página {match}
+              </button>
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Resultados de la búsqueda y controles adicionales */}
-      {matches.length > 0 && pdfFile && (
-        <div>
-          <p>Palabra encontrada en las páginas: </p>
-          {matches.map((match, index) => (
-            <button key={index} onClick={() => goToPage(match)}>
-              Ir a la página {match}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

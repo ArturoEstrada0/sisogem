@@ -13,7 +13,7 @@ import {
   Spin,
   Input,
   Row,
-  Col
+  Col,
 } from "antd";
 import AWS from "aws-sdk";
 import { gapi } from "gapi-script";
@@ -75,6 +75,14 @@ const ProgramarSesion = () => {
   const { currentUser } = useContext(UserRoleContext);
 
   const [actaDeSesion, setActaDeSesion] = useState(null);
+
+  
+  useEffect(() => {
+    if (organismo === "") {
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    }
+  }, [currentUser]);
 
   const showAlert = (type, message) => {
     notification[type]({
@@ -222,17 +230,11 @@ const ProgramarSesion = () => {
           ...nuevasSesionesEnProgreso,
         ]);
       }
-    }, 1000); // Revisa cada minuto
+    }, 3000); // Revisa cada minuto
 
     return () => clearInterval(interval);
   }, [sesionesProgramadas]);
 
-  useEffect(() => {
-    if (organismo === "") {
-      if (currentUser) setOrganismo(currentUser.organismo[0].code);
-      else return;
-    }
-  }, [currentUser]);
 
   // Asegúrate de cargar las bibliotecas de Google API antes de utilizar esta función.
 
@@ -503,12 +505,7 @@ const ProgramarSesion = () => {
       }
 
       console.log("Subiendo PDF a S3...");
-      const responseS3 = await uploadFileToS3(
-        pdfBlob,
-        organismo,
-        s3
-      
-      );
+      const responseS3 = await uploadFileToS3(pdfBlob, organismo, s3);
       const pdfUrl = responseS3.Location;
       console.log("PDF exportado y subido a S3 con éxito. URL:", pdfUrl);
 
@@ -954,7 +951,7 @@ const ProgramarSesion = () => {
 
   return (
     <div>
-      <Spin spinning={loading} size="large" className="custom-spin">
+          <Spin spinning={loading} size="large" className="custom-spin" >
         <Card>
           <Tabs
             defaultActiveKey="programar"
@@ -977,7 +974,7 @@ const ProgramarSesion = () => {
                 key="programar"
               >
                 <h2>Programar Sesión</h2>
-              <Form form={form} layout="vertical">
+                <Form form={form} layout="vertical">
                   <Form.Item
                     label="Tipo de Sesión"
                     name="tipoSesion"
@@ -989,37 +986,57 @@ const ProgramarSesion = () => {
                     </Select>
                   </Form.Item>
 
-                  <Form.Item label="Número de Sesión" name="numeroSesion">
-                    <Select disabled value={numeroSesion || 1}>
-                      <Option value={numeroSesion || 1}>{`Sesión ${
-                        numeroSesion || 1
-                      }`}</Option>
-                    </Select>
+                  <Form.Item
+                    label="Número de Sesión"
+                    name="numeroSesion"
+                    key={numeroSesion}
+                  >
+                    {/* <Select disabled>
+                    <Option value={numeroSesion} >
+                      {`Sesión ${ numeroSesion }`}
+                    </Option>
+                    </Select> */}
+                    <Input
+                      disabled
+                      defaultValue={numeroSesion}
+                      key={numeroSesion}
+                    />
                   </Form.Item>
 
-                <Form.Item
-  label="Fecha y Hora"
-  name="fechaYHora"
-  rules={[
-    { required: true, message: "Por favor ingrese la fecha y hora" },
-  ]}
->
-  <Row gutter={[8, 0]}>
-    <Col span={4}>
-      <DatePicker
-        onChange={handleFechaChange}
-        style={{ border: "2px solid #F1CDD3", width: '100%', maxWidth: '160px' }}
-      />
-    </Col>
-    <Col span={10}>
-      <TimePicker
-        style={{ border: "2px solid #F1CDD3", width: '100%', maxWidth: '160px' }}
-        format="HH:mm"
-        onChange={handleHoraInicioChange}
-      />
-    </Col>
-  </Row>
-</Form.Item>
+                  <Form.Item
+                    label="Fecha y Hora"
+                    name="fechaYHora"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Por favor ingrese la fecha y hora",
+                      },
+                    ]}
+                  >
+                    <Row gutter={[8, 0]}>
+                      <Col span={4}>
+                        <DatePicker
+                          onChange={handleFechaChange}
+                          style={{
+                            border: "2px solid #F1CDD3",
+                            width: "100%",
+                            maxWidth: "160px",
+                          }}
+                        />
+                      </Col>
+                      <Col span={10}>
+                        <TimePicker
+                          style={{
+                            border: "2px solid #F1CDD3",
+                            width: "100%",
+                            maxWidth: "160px",
+                          }}
+                          format="HH:mm"
+                          onChange={handleHoraInicioChange}
+                        />
+                      </Col>
+                    </Row>
+                  </Form.Item>
 
                   <Form.Item label="Cargar Acta de Sesión" name="actaDeSesion">
                     <Upload
@@ -1049,80 +1066,91 @@ const ProgramarSesion = () => {
                   </Form.Item>
 
                   <Form.Item
-    label="Cargar Estados Financieros"
-    name="estadosFinancieros"
-  >
-    <Upload
-      beforeUpload={(file) => {
-        setEstadosFinancieros(file);
-        return false;
-      }}
-      accept=".pdf"
-      maxCount={1}
-    >
-      <Button
-      icon={<UploadOutlined />}
-      style={{
-        backgroundColor: isHovered.estadosFinancieros ? "#701e45" : "#fff",
-        color: isHovered.estadosFinancieros ? "#fff" : "#701e45",
-        border: "2px solid #F1CDD3",
-      }}
-      onMouseEnter={() => handleMouseEnter("estadosFinancieros")}
-      onMouseLeave={() => handleMouseLeave("estadosFinancieros")}
-    >
-        Cargar Estados Financieros
-      </Button>
-    </Upload>
-  </Form.Item>
+                    label="Cargar Estados Financieros"
+                    name="estadosFinancieros"
+                  >
+                    <Upload
+                      beforeUpload={(file) => {
+                        setEstadosFinancieros(file);
+                        return false;
+                      }}
+                      accept=".pdf"
+                      maxCount={1}
+                    >
+                      <Button
+                        icon={<UploadOutlined />}
+                        style={{
+                          backgroundColor: isHovered.estadosFinancieros
+                            ? "#701e45"
+                            : "#fff",
+                          color: isHovered.estadosFinancieros
+                            ? "#fff"
+                            : "#701e45",
+                          border: "2px solid #F1CDD3",
+                        }}
+                        onMouseEnter={() =>
+                          handleMouseEnter("estadosFinancieros")
+                        }
+                        onMouseLeave={() =>
+                          handleMouseLeave("estadosFinancieros")
+                        }
+                      >
+                        Cargar Estados Financieros
+                      </Button>
+                    </Upload>
+                  </Form.Item>
 
-  <Form.Item label="Cargar Orden del Día" name="ordenDelDia">
-    <Upload
-      beforeUpload={(file) => {
-        setOrdenDelDia(file);
-        return false;
-      }}
-      accept=".pdf"
-      maxCount={1}
-    >
-      <Button
-      icon={<UploadOutlined />}
-      style={{
-        backgroundColor: isHovered.ordenDelDia ? "#701e45" : "#fff",
-        color: isHovered.ordenDelDia ? "#fff" : "#701e45",
-        border: "2px solid #F1CDD3",
-      }}
-      onMouseEnter={() => handleMouseEnter("ordenDelDia")}
-      onMouseLeave={() => handleMouseLeave("ordenDelDia")}
-    >
-        Cargar Orden del Día
-      </Button>
-    </Upload>
-  </Form.Item>
+                  <Form.Item label="Cargar Orden del Día" name="ordenDelDia">
+                    <Upload
+                      beforeUpload={(file) => {
+                        setOrdenDelDia(file);
+                        return false;
+                      }}
+                      accept=".pdf"
+                      maxCount={1}
+                    >
+                      <Button
+                        icon={<UploadOutlined />}
+                        style={{
+                          backgroundColor: isHovered.ordenDelDia
+                            ? "#701e45"
+                            : "#fff",
+                          color: isHovered.ordenDelDia ? "#fff" : "#701e45",
+                          border: "2px solid #F1CDD3",
+                        }}
+                        onMouseEnter={() => handleMouseEnter("ordenDelDia")}
+                        onMouseLeave={() => handleMouseLeave("ordenDelDia")}
+                      >
+                        Cargar Orden del Día
+                      </Button>
+                    </Upload>
+                  </Form.Item>
 
-  <Form.Item label="Cargar Convocatoria" name="convocatoria">
-    <Upload
-      beforeUpload={(file) => {
-        setConvocatoria(file);
-        return false;
-      }}
-      accept=".pdf"
-      maxCount={1}
-    >
-      <Button
-      icon={<UploadOutlined />}
-      style={{
-        backgroundColor: isHovered.convocatoria ? "#701e45" : "#fff",
-        color: isHovered.convocatoria ? "#fff" : "#701e45",
-        border: "2px solid #F1CDD3",
-      }}
-      onMouseEnter={() => handleMouseEnter("convocatoria")}
-      onMouseLeave={() => handleMouseLeave("convocatoria")}
-    >
-        Cargar Convocatoria
-      </Button>
-    </Upload>
-  </Form.Item>
-
+                  <Form.Item label="Cargar Convocatoria" name="convocatoria">
+                    <Upload
+                      beforeUpload={(file) => {
+                        setConvocatoria(file);
+                        return false;
+                      }}
+                      accept=".pdf"
+                      maxCount={1}
+                    >
+                      <Button
+                        icon={<UploadOutlined />}
+                        style={{
+                          backgroundColor: isHovered.convocatoria
+                            ? "#701e45"
+                            : "#fff",
+                          color: isHovered.convocatoria ? "#fff" : "#701e45",
+                          border: "2px solid #F1CDD3",
+                        }}
+                        onMouseEnter={() => handleMouseEnter("convocatoria")}
+                        onMouseLeave={() => handleMouseLeave("convocatoria")}
+                      >
+                        Cargar Convocatoria
+                      </Button>
+                    </Upload>
+                  </Form.Item>
 
                   {/* Nuevo campo para cargar documentos */}
                   <Form.Item label="Cargar Documentos" name="documentos">
@@ -1265,7 +1293,7 @@ const ProgramarSesion = () => {
             </Form.Item>
           </Form>
         </Modal>
-        <Button
+        {/* <Button
           onClick={() => {
             console.log("Botón para exportar y subir PDF clickeado");
             if (actaDeSesionGoogleDriveUrl) {
@@ -1276,11 +1304,11 @@ const ProgramarSesion = () => {
           }}
         >
           Exportar a PDF y Subir a S3
-        </Button>
+        </Button> */}
 
-        <Button onClick={handleAuthClick}>
+        {/* <Button onClick={handleAuthClick}>
           {isSignedIn ? "Cerrar Sesión" : "Iniciar Sesión con Google"}
-        </Button>
+        </Button> */}
       </Spin>
     </div>
   );

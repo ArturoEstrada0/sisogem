@@ -586,12 +586,12 @@ const OrganoGobierno = () => {
                 message: "Por favor, selecciona la representación",
               },
             ]}
-            initialValue={userOrganismo?.code} // Establecer el valor inicial
+            initialValue={userOrganismo?._id} // Establecer el valor inicial
           >
             <Select disabled>
               {" "}
               {userOrganismo && (
-                <Select.Option value={userOrganismo.code}>
+                <Select.Option value={userOrganismo._id}>
                   {userOrganismo.name}
                 </Select.Option>
               )}
