@@ -39,6 +39,7 @@ const SesionProgreso = ({
       }}
     >
       <div style={{ width: "30%" }}>
+      <h2>Sesiones en Progreso</h2>
         <List
           dataSource={sesionesEnProgreso}
           renderItem={renderItem}

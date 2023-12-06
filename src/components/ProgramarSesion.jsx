@@ -12,7 +12,9 @@ import {
   notification,
   Badge,
   Spin,
-  Input
+  Input,
+  Row,
+  Col
 } from "antd";
 import AWS from "aws-sdk";
 
@@ -710,7 +712,6 @@ const ProgramarSesion = () => {
   return (
     <div>
       <Spin spinning={loading} size="large" className="custom-spin">
-        <h2>Programar Sesión</h2>
         <Card>
           <Tabs
             defaultActiveKey="programar"
@@ -731,6 +732,7 @@ const ProgramarSesion = () => {
               }
               key="programar"
             >
+              <h2>Programar Sesión</h2>
               <Form form={form} layout="vertical">
                 <Form.Item
                   label="Tipo de Sesión"
@@ -753,33 +755,28 @@ const ProgramarSesion = () => {
                 </Form.Item>
 
                 <Form.Item
-                  label="Fecha"
-                  name="fecha"
-                  rules={[
-                    { required: true, message: "Por favor ingrese la fecha" },
-                  ]}
-                >
-                  <DatePicker
-                    onChange={handleFechaChange}
-                    style={{ border: "2px solid #F1CDD3" }}
-                  />
-                </Form.Item>
-                <Form.Item
-                  label="Hora de Inicio"
-                  name="horaInicio"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Por favor ingrese la hora de inicio",
-                    },
-                  ]}
-                >
-                  <TimePicker
-                    style={{ border: "2px solid #F1CDD3" }}
-                    format="HH:mm"
-                    onChange={handleHoraInicioChange}
-                  />
-                </Form.Item>
+  label="Fecha y Hora"
+  name="fechaYHora"
+  rules={[
+    { required: true, message: "Por favor ingrese la fecha y hora" },
+  ]}
+>
+  <Row gutter={[8, 0]}>
+    <Col span={4}>
+      <DatePicker
+        onChange={handleFechaChange}
+        style={{ border: "2px solid #F1CDD3", width: '100%', maxWidth: '160px' }}
+      />
+    </Col>
+    <Col span={10}>
+      <TimePicker
+        style={{ border: "2px solid #F1CDD3", width: '100%', maxWidth: '160px' }}
+        format="HH:mm"
+        onChange={handleHoraInicioChange}
+      />
+    </Col>
+  </Row>
+</Form.Item>
 
                 <Form.Item label="Cargar Acta de Sesión" name="actaDeSesion">
                   <Upload
@@ -809,52 +806,80 @@ const ProgramarSesion = () => {
                 </Form.Item>
 
                 <Form.Item
-                  label="Cargar Estados Financieros"
-                  name="estadosFinancieros"
-                >
-                  <Upload
-                    beforeUpload={(file) => {
-                      setEstadosFinancieros(file);
-                      return false;
-                    }}
-                    accept=".pdf"
-                    maxCount={1}
-                  >
-                    <Button icon={<UploadOutlined />}>
-                      Cargar Estados Financieros
-                    </Button>
-                  </Upload>
-                </Form.Item>
+  label="Cargar Estados Financieros"
+  name="estadosFinancieros"
+>
+  <Upload
+    beforeUpload={(file) => {
+      setEstadosFinancieros(file);
+      return false;
+    }}
+    accept=".pdf"
+    maxCount={1}
+  >
+    <Button
+      icon={<UploadOutlined />}
+      style={{
+        backgroundColor: isHovered.estadosFinancieros ? "#701e45" : "#fff",
+        color: isHovered.estadosFinancieros ? "#fff" : "#701e45",
+        border: "2px solid #F1CDD3",
+      }}
+      onMouseEnter={() => handleMouseEnter("estadosFinancieros")}
+      onMouseLeave={() => handleMouseLeave("estadosFinancieros")}
+    >
+      Cargar Estados Financieros
+    </Button>
+  </Upload>
+</Form.Item>
 
-                <Form.Item label="Cargar Orden del Día" name="ordenDelDia">
-                  <Upload
-                    beforeUpload={(file) => {
-                      setOrdenDelDia(file);
-                      return false;
-                    }}
-                    accept=".pdf"
-                    maxCount={1}
-                  >
-                    <Button icon={<UploadOutlined />}>
-                      Cargar Orden del Día
-                    </Button>
-                  </Upload>
-                </Form.Item>
+<Form.Item label="Cargar Orden del Día" name="ordenDelDia">
+  <Upload
+    beforeUpload={(file) => {
+      setOrdenDelDia(file);
+      return false;
+    }}
+    accept=".pdf"
+    maxCount={1}
+  >
+    <Button
+      icon={<UploadOutlined />}
+      style={{
+        backgroundColor: isHovered.ordenDelDia ? "#701e45" : "#fff",
+        color: isHovered.ordenDelDia ? "#fff" : "#701e45",
+        border: "2px solid #F1CDD3",
+      }}
+      onMouseEnter={() => handleMouseEnter("ordenDelDia")}
+      onMouseLeave={() => handleMouseLeave("ordenDelDia")}
+    >
+      Cargar Orden del Día
+    </Button>
+  </Upload>
+</Form.Item>
 
-                <Form.Item label="Cargar Convocatoria" name="convocatoria">
-                  <Upload
-                    beforeUpload={(file) => {
-                      setConvocatoria(file);
-                      return false;
-                    }}
-                    accept=".pdf"
-                    maxCount={1}
-                  >
-                    <Button icon={<UploadOutlined />}>
-                      Cargar Convocatoria
-                    </Button>
-                  </Upload>
-                </Form.Item>
+<Form.Item label="Cargar Convocatoria" name="convocatoria">
+  <Upload
+    beforeUpload={(file) => {
+      setConvocatoria(file);
+      return false;
+    }}
+    accept=".pdf"
+    maxCount={1}
+  >
+    <Button
+      icon={<UploadOutlined />}
+      style={{
+        backgroundColor: isHovered.convocatoria ? "#701e45" : "#fff",
+        color: isHovered.convocatoria ? "#fff" : "#701e45",
+        border: "2px solid #F1CDD3",
+      }}
+      onMouseEnter={() => handleMouseEnter("convocatoria")}
+      onMouseLeave={() => handleMouseLeave("convocatoria")}
+    >
+      Cargar Convocatoria
+    </Button>
+  </Upload>
+</Form.Item>
+
 
                 {/* Nuevo campo para cargar documentos */}
                 <Form.Item label="Cargar Documentos" name="documentos">
