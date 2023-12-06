@@ -1,14 +1,47 @@
 import React, { useState } from "react";
-import { Container, Typography, Button, Grid, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
-import { DownloadOutlined, CalendarOutlined, BookOutlined } from "@ant-design/icons";
-import { Button as AntButton, Radio, Space } from 'antd';
+import { Table, Typography, Button, Space, Input, Select } from 'antd';
+import { CloudDownloadOutlined, DownloadOutlined, CalendarOutlined } from "@ant-design/icons";
+
+const { Column } = Table;
+
+const EditableCell = ({ editing, dataIndex, title, inputType, record, index, children, ...restProps }) => {
+  let inputNode;
+
+  if (dataIndex === 'col1') {
+    // La primera columna no es editable
+    inputNode = <div>{children}</div>;
+  } else {
+    inputNode = <Input />;
+  }
+
+  return <td {...restProps}>{inputNode}</td>;
+};
 
 function Indicadores() {
   const [formatoArchivo, setFormatoArchivo] = useState("xls");
   const [year, setYear] = useState(new Date().getFullYear());
   const [trimestre, setTrimestre] = useState("Q1");
   const [generating, setGenerating] = useState(false);
+  const [editingKey, setEditingKey] = useState('');
+
+  const isEditing = (record) => record.key === editingKey;
+
+  const edit = (key) => {
+    setEditingKey(key);
+  };
+
+  const cancel = () => {
+    setEditingKey('');
+  };
+
+  const save = (form, key) => {
+    form.validateFields().then((row) => {
+      // Aquí puedes manejar la lógica de guardar los datos editados
+      console.log(row);
+
+      setEditingKey('');
+    });
+  };
 
   const handleGenerateReport = () => {
     setGenerating(true);
@@ -18,63 +51,142 @@ function Indicadores() {
     }, 2000);
   };
 
+  // Datos de ejemplo para la tabla
+  const data = Array.from({ length: 5 }, (_, index) => ({
+    key: index + 1,
+    col1: `Dato ${index + 1}-1 (no editable)`,
+    col2: `Dato ${index + 1}-2`,
+    col3: `Dato ${index + 1}-3`,
+    col4: `Dato ${index + 1}-4`,
+    col5: `Dato ${index + 1}-5`,
+    col6: `Dato ${index + 1}-6`,
+  }));
+
   return (
-    <Container>
+    <div>
       <Typography variant="h4" align="center" style={{ marginBottom: 16 }}>
         Indicadores
       </Typography>
       <p style={{ marginBottom: 32 }}>Selecciona las opciones y genera el informe de indicadores:</p>
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <FormControl variant="outlined" fullWidth>
-            <InputLabel htmlFor="formato-archivo">Formato de Archivo</InputLabel>
-            <Select
-              label="Formato de Archivo"
-              id="formato-archivo"
-              value={formatoArchivo}
-              onChange={(e) => setFormatoArchivo(e.target.value)}
-            >
-              <MenuItem value="xls">.xls</MenuItem>
-              <MenuItem value="csv">.csv</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={3}>
-          <FormControl variant="outlined" fullWidth>
-            <InputLabel htmlFor="anio">Año</InputLabel>
-            <Select
-              label="Año"
-              id="anio"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-            >
-              <MenuItem value={new Date().getFullYear()}>Año Actual</MenuItem>
-              <MenuItem value={new Date().getFullYear() - 1}>Año Anterior</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={3}>
-          <FormControl variant="outlined" fullWidth>
-            <InputLabel htmlFor="trimestre">Trimestre</InputLabel>
-            <Select
-              label="Trimestre"
-              id="trimestre"
-              value={trimestre}
-              onChange={(e) => setTrimestre(e.target.value)}
-            >
-              <MenuItem value="Q1">Q1</MenuItem>
-              <MenuItem value="Q2">Q2</MenuItem>
-              <MenuItem value="Q3">Q3</MenuItem>
-              <MenuItem value="Q4">Q4</MenuItem>
-              <MenuItem value="Todo el Historial">Todo el Historial</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
+      {/* Agrega la tabla de Ant Design */}
+      <Table dataSource={data} bordered>
+        <Column
+          title="Columna 1 (no editable)"
+          dataIndex="col1"
+          key="col1"
+          width="25%"
+          editable={false}
+        />
+        <Column
+          title="Columna 2"
+          dataIndex="col2"
+          key="col2"
+          width="15%"
+          editable={true}
+          render={(text, record) => (
+            <span>
+              {text}
+              {isEditing(record) ? (
+                <Button type="link" onClick={() => save(record.form, record.key)}>
+                  Guardar
+                </Button>
+              ) : (
+                <Button type="link" disabled={editingKey !== ''} onClick={() => edit(record.key)}>
+                  Editar
+                </Button>
+              )}
+            </span>
+          )}
+        />
+        <Column
+          title="Columna 3"
+          dataIndex="col3"
+          key="col3"
+          width="15%"
+          editable={true}
+          render={(text, record) => (
+            <span>
+              {text}
+              {isEditing(record) ? (
+                <Button type="link" onClick={() => save(record.form, record.key)}>
+                  Guardar
+                </Button>
+              ) : (
+                <Button type="link" disabled={editingKey !== ''} onClick={() => edit(record.key)}>
+                  Editar
+                </Button>
+              )}
+            </span>
+          )}
+        />
+        <Column
+          title="Columna 4"
+          dataIndex="col4"
+          key="col4"
+          width="15%"
+          editable={true}
+          render={(text, record) => (
+            <span>
+              {text}
+              {isEditing(record) ? (
+                <Button type="link" onClick={() => save(record.form, record.key)}>
+                  Guardar
+                </Button>
+              ) : (
+                <Button type="link" disabled={editingKey !== ''} onClick={() => edit(record.key)}>
+                  Editar
+                </Button>
+              )}
+            </span>
+          )}
+        />
+        <Column
+          title="Columna 5"
+          dataIndex="col5"
+          key="col5"
+          width="15%"
+          editable={true}
+          render={(text, record) => (
+            <span>
+              {text}
+              {isEditing(record) ? (
+                <Button type="link" onClick={() => save(record.form, record.key)}>
+                  Guardar
+                </Button>
+              ) : (
+                <Button type="link" disabled={editingKey !== ''} onClick={() => edit(record.key)}>
+                  Editar
+                </Button>
+              )}
+            </span>
+          )}
+        />
+        <Column
+          title="Columna 6"
+          dataIndex="col6"
+          key="col6"
+          width="15%"
+          editable={true}
+          render={(text, record) => (
+            <span>
+              {text}
+              {isEditing(record) ? (
+                <Button type="link" onClick={() => save(record.form, record.key)}>
+                  Guardar
+                </Button>
+              ) : (
+                <Button type="link" disabled={editingKey !== ''} onClick={() => edit(record.key)}>
+                  Editar
+                </Button>
+              )}
+            </span>
+          )}
+        />
+      </Table>
       <Button
         variant="contained"
         color="primary"
-        startIcon={<CloudDownloadIcon />}
+        icon={<CloudDownloadOutlined />}
         onClick={handleGenerateReport}
         disabled={generating}
         style={{ marginTop: 32 }}
@@ -84,24 +196,24 @@ function Indicadores() {
       {generating && <p>Generando informe, por favor espera...</p>}
       <p style={{ marginTop: 32 }}>Alternativamente, puedes usar estos botones:</p>
       <Space size={16} style={{ marginTop: 16 }}>
-        <AntButton
+        <Button
           type="primary"
           icon={<DownloadOutlined />}
           onClick={handleGenerateReport}
           disabled={generating}
         >
           {generating ? "Generando..." : "Descargar .xls"}
-        </AntButton>
-        <AntButton
+        </Button>
+        <Button
           type="primary"
           icon={<CalendarOutlined />}
           onClick={handleGenerateReport}
           disabled={generating}
         >
           {generating ? "Generando..." : "Descargar .csv"}
-        </AntButton>
+        </Button>
       </Space>
-    </Container>
+    </div>
   );
 }
 
