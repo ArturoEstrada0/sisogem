@@ -33,7 +33,6 @@ const { Dragger } = Upload;
 const { Column } = Table;
 
 const UploadCard = () => {
-  const { organismo, setOrganismo } = useContext(OrganismoContext);
 
   const [selectedMenuItem, setSelectedMenuItem] = useState("option1");
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -45,6 +44,8 @@ const UploadCard = () => {
   const [menuOptionSelected, setMenuOptionSelected] = useState(false);
   const [deleteFileUid, setDeleteFileUid] = useState(null);
   const { currentUser } = useContext(UserRoleContext);
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
+
   const itemsPerPage = 5;
 
   useEffect(() => {
