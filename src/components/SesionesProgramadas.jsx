@@ -42,7 +42,7 @@ const SesionesProgramadas = ({
           Editar
         </Button> */}
 
-        <Button style={{ marginLeft: 8 }} onClick={() => paseListaDeUsuario(sesion)} disabled={sesion.contador.includes(currentUser.email)}>
+        <Button style={{ marginLeft: 8 }} onClick={() => paseListaDeUsuario(sesion)} disabled={sesion.contador?.includes(currentUser.email)}>
           CONFIRMAR ASISTENCIA
         </Button>
 

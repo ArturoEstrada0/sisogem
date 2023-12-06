@@ -13,14 +13,17 @@ import {
   SendOutlined,
   MailOutlined,
   QuestionCircleOutlined,
+  FilePdfOutlined,
+  FileImageOutlined,
 } from '@ant-design/icons'
 import axios from 'axios'
 import './BuzonReportes.css'
 import { OrganismoContext } from '../context/OrganismoContext'
+import { UserRoleContext } from '../context/UserRoleContext'
 
-const { TextArea } = Input
-const { Option } = Select
-const { TabPane } = Tabs
+const { TextArea } = Input;
+const { Option } = Select;
+const { TabPane } = Tabs;
 
 const categories = [
   'Malfuncionamiento de la página',
@@ -40,7 +43,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    width: '70%',
+    width: '77%',
     margin: '0 auto',
     padding: '20px',
     borderRadius: '12px',
@@ -81,12 +84,13 @@ const styles = {
     textAlign: 'center',
     marginTop: '30px',
     fontSize: '16px',
-    color: '#6A0F49',
+    color: '#524b4f',
   },
 }
 
 function BuzonReportes() {
-  const { organismo } = useContext(OrganismoContext)
+  const { currentUser } = useContext(UserRoleContext);
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
 
   const [email, setEmail] = useState({
     subject: '',
@@ -95,13 +99,20 @@ function BuzonReportes() {
     organismo: organismo,
   })
 
-  console.log(email)
+
+  useEffect(() => {
+    if (organismo === "") {
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    }
+  }, [organismo, currentUser]);
+
 
   const [data, setData] = useState([])
 
   useEffect(() => {
     axios
-      .get('http://localhost:3002/reportes')
+      .get('http://localhost:3001/reportes')
       .then((response) => {
         const dataKeys = response.data.map((item) => ({
           ...item,
@@ -170,7 +181,7 @@ function BuzonReportes() {
       )
     } else {
       axios
-        .post('http://localhost:3002/email', email)
+        .post('http://localhost:3001/email', email)
         .then(() => {
           message.success('Reporte enviado con éxito.')
           setTitle('')
@@ -188,7 +199,10 @@ function BuzonReportes() {
   return (
     <>
       <Tabs tabPosition={'left'}>
-        <TabPane tab='Nuevo Reporte' key='1'>
+      <TabPane
+      tab={<span style={{ color: '#000000' }}>Nuevo Reporte</span>}
+       key='1'
+            >
           <div
             style={{
               display: 'flex',
@@ -267,7 +281,7 @@ function BuzonReportes() {
                 alignItems: 'center',
                 width: '70%',
                 margin: '0 auto',
-                padding: '20px',
+                padding: '10px',
               }}>
               <h1 style={styles.infoText}>
                 <p style={{ textAlign: 'justify' }}>
@@ -285,7 +299,10 @@ function BuzonReportes() {
             </div>
           </div>
         </TabPane>
-        <TabPane tab='Historial de Reportes' key='2'>
+        <TabPane
+          tab={<span style={{ color: '#000000' }}>Historial de Reportes</span>}
+           key='2'
+            >
           <Table
             columns={columns}
             expandable={{

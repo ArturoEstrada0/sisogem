@@ -11,6 +11,7 @@ import {
   notification,
   Badge,
   Spin,
+  Input
 } from "antd";
 import AWS from "aws-sdk";
 
@@ -32,9 +33,8 @@ import { UserService } from "../services/UserService";
 const { Option } = Select;
 const { TabPane } = Tabs;
 
-
 const ProgramarSesion = () => {
-  const [tipoSesion, setTipoSesion] = useState("ordinario");
+  const [tipoSesion, setTipoSesion] = useState("Ordinario");
   const [fecha, setFecha] = useState(null);
   const [horaInicio, setHoraInicio] = useState(null);
   const [numeroSesion, setNumeroSesion] = useState(1);
@@ -49,7 +49,7 @@ const ProgramarSesion = () => {
   const [loading, setLoading] = useState(false);
   const [isHovered, setIsHovered] = useState({
     actaDeSesion: false,
-    documentos: false,  // Agrega un identificador único para el otro botón
+    documentos: false, // Agrega un identificador único para el otro botón
   });
   //importamos el contexto de organimos
   const { organismo, setOrganismo } = useContext(OrganismoContext);
@@ -63,7 +63,7 @@ const ProgramarSesion = () => {
       [buttonName]: true,
     }));
   };
-  
+
   const handleMouseLeave = (buttonName) => {
     setIsHovered((prev) => ({
       ...prev,
@@ -71,6 +71,9 @@ const ProgramarSesion = () => {
     }));
   };
 
+  const [estadosFinancieros, setEstadosFinancieros] = useState(null);
+  const [ordenDelDia, setOrdenDelDia] = useState(null);
+  const [convocatoria, setConvocatoria] = useState(null);
 
   AWS.config.update({
     accessKeyId: "AKIASAHHYXZDGGYMQIEG",
@@ -84,6 +87,60 @@ const ProgramarSesion = () => {
   useEffect(() => {
     fetchSesionesProgramadas();
   }, []);
+
+  useEffect(() => {
+    const actualizarNumeroSesion = async () => {
+      const maxSesionesOrdinarias = 4;
+      const maxSesionesExtraordinarias = 24;
+
+      const docClient = new AWS.DynamoDB.DocumentClient();
+      const params = {
+        TableName: "Sesiones",
+        FilterExpression: "tipoSesion = :ts and organismo = :org",
+        ExpressionAttributeValues: {
+          ":ts": tipoSesion,
+          ":org": organismo,
+        },
+      };
+
+      try {
+        const data = await docClient.scan(params).promise();
+        const numeroMaximoSesion = data.Items.reduce(
+          (max, sesion) => Math.max(max, sesion.numeroSesion || 0),
+          0
+        );
+
+        const limiteSesiones =
+          tipoSesion === "Ordinario"
+            ? maxSesionesOrdinarias
+            : maxSesionesExtraordinarias;
+
+        if (numeroMaximoSesion >= limiteSesiones) {
+          if (tipoSesion === "Ordinario") {
+            openNotification(
+              "warning",
+              "Límite Alcanzado",
+              "Has alcanzado el límite de sesiones ordinarias. Considera programar una sesión extraordinaria."
+            );
+          } else {
+            openNotification(
+              "error",
+              "Límite Alcanzado",
+              "Se ha alcanzado el límite de sesiones extraordinarias. Por favor, contacta al administrador."
+            );
+          }
+          setLoading(false);
+          return;
+        }
+
+        setNumeroSesion(numeroMaximoSesion + 1);
+      } catch (error) {
+        console.error("Error al obtener el número máximo de sesión:", error);
+      }
+    };
+
+    actualizarNumeroSesion();
+  }, [tipoSesion, organismo]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -109,7 +166,7 @@ const ProgramarSesion = () => {
           ...nuevasSesionesEnProgreso,
         ]);
       }
-    }, 10000); // Revisa cada minuto
+    }, 60000); // Revisa cada minuto
 
     return () => clearInterval(interval);
   }, [sesionesProgramadas]);
@@ -127,8 +184,12 @@ const ProgramarSesion = () => {
       const idSesion = uuidv4();
       const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
 
+      let actaDeSesionUrl,
+        estadosFinancierosUrl,
+        ordenDelDiaUrl,
+        convocatoriaUrl;
+
       // Subir el Acta de Sesión a S3 si está presente y obtener su URL
-      let actaDeSesionUrl;
       if (actaDeSesion) {
         const response = await uploadFileToS3(
           actaDeSesion,
@@ -136,6 +197,36 @@ const ProgramarSesion = () => {
           `${folderName}/${actaDeSesion.name}`
         );
         actaDeSesionUrl = response.Location;
+      }
+
+      // Subir Estados Financieros si está presente y obtener su URL
+      if (estadosFinancieros) {
+        const response = await uploadFileToS3(
+          estadosFinancieros,
+          organismo,
+          `${folderName}/${estadosFinancieros.name}`
+        );
+        estadosFinancierosUrl = response.Location;
+      }
+
+      // Subir Orden del Día si está presente y obtener su URL
+      if (ordenDelDia) {
+        const response = await uploadFileToS3(
+          ordenDelDia,
+          organismo,
+          `${folderName}/${ordenDelDia.name}`
+        );
+        ordenDelDiaUrl = response.Location;
+      }
+
+      // Subir Convocatoria si está presente y obtener su URL
+      if (convocatoria) {
+        const response = await uploadFileToS3(
+          convocatoria,
+          organismo,
+          `${folderName}/${convocatoria.name}`
+        );
+        convocatoriaUrl = response.Location;
       }
 
       // Subir los demás archivos a S3 y recolectar detalles
@@ -159,8 +250,11 @@ const ProgramarSesion = () => {
         horaInicio: horaInicio ? horaInicio.format("HH:mm") : null,
         folderUrl: `https://${organismo}.s3.amazonaws.com/${folderName}`,
         archivos: fileDetailsArray,
-        actaDeSesionUrl, // Incluir la URL del Acta de Sesión
-        estatus: "Programado", // Puede ser "Programado", "Activo" o "Finalizado"
+        actaDeSesionUrl,
+        estadosFinancierosUrl,
+        ordenDelDiaUrl,
+        convocatoriaUrl,
+        estatus: "Programado",
         organismo: organismo,
         contador: [currentUser.email],
         // otros datos relevantes...
@@ -169,7 +263,10 @@ const ProgramarSesion = () => {
       // Guardar en DynamoDB
       await saveSessionToDynamoDB(sessionData);
       setFileList([]);
-      setActaDeSesion(null); // Limpiar el estado del Acta de Sesión
+      setActaDeSesion(null);
+      setEstadosFinancieros(null);
+      setOrdenDelDia(null);
+      setConvocatoria(null); // Limpiar los estados de los archivos
     } catch (error) {
       console.error("Error al cargar archivos:", error);
       message.error("Error al cargar archivos");
@@ -186,6 +283,30 @@ const ProgramarSesion = () => {
       await docClient.put(params).promise();
     } catch (error) {
       console.error("Error al guardar sesión en DynamoDB:", error);
+      throw error;
+    }
+  };
+
+  const validarNumeroDeSesion = async (numeroSesion, tipoSesion, organismo) => {
+    const params = {
+      TableName: "Sesiones",
+    };
+
+    try {
+      const data = await docClient.scan(params).promise();
+      console.log("Items recuperados:", data.Items); // Agrega este log
+
+      const sesionesFiltradas = data.Items.filter(
+        (item) =>
+          item.tipoSesion === tipoSesion &&
+          item.organismo === organismo &&
+          parseInt(item.numeroSesion) === numeroSesion // Asegúrate de que los tipos coincidan
+      );
+
+      console.log("Sesiones filtradas:", sesionesFiltradas); // Agrega este log
+      return sesionesFiltradas.length > 0;
+    } catch (error) {
+      console.error("Error al validar el número de sesión:", error);
       throw error;
     }
   };
@@ -226,7 +347,7 @@ const ProgramarSesion = () => {
     };
     docClient.update(params, async (err, data) => {
       if (err) {
-        console.log("Error al actualizar");
+        console.log(err);
         return;
       }
       await fetchSesionesProgramadas();
@@ -298,7 +419,7 @@ const ProgramarSesion = () => {
   };
 
   const handleProgramarSesion = async () => {
-    setLoading(true); // Inicia el estado de carga
+    setLoading(true);
 
     try {
       if (!fecha || !horaInicio) {
@@ -308,6 +429,37 @@ const ProgramarSesion = () => {
           "Por favor, selecciona fecha y hora de inicio."
         );
         setLoading(false); // Detiene la carga en caso de error temprano
+        return;
+      }
+
+      // Validar si ya existe el número de sesión
+      const esNumeroValido = await validarNumeroDeSesion(
+        numeroSesion,
+        tipoSesion,
+        organismo
+      );
+      if (esNumeroValido) {
+        // Si es verdadero, significa que ya existe una sesión con este número
+        openNotification(
+          "error",
+          "Número de Sesión Repetido",
+          "Ya existe una sesión con este número. Por favor, elige otro número."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Validación de documentos para sesiones ordinarias
+      if (
+        tipoSesion === "Ordinario" &&
+        (!actaDeSesion || !estadosFinancieros || !ordenDelDia || !convocatoria)
+      ) {
+        openNotification(
+          "error",
+          "Documentos Faltantes",
+          "Todos los documentos son obligatorios para las sesiones ordinarias."
+        );
+        setLoading(false);
         return;
       }
 
@@ -349,7 +501,7 @@ const ProgramarSesion = () => {
         setNuevasSesionesProgramadas(nuevasSesionesProgramadas + 1);
       }
 
-      setTipoSesion("ordinario");
+      setTipoSesion("Ordinario");
       setNumeroSesion(1);
       setFecha(null);
       setHoraInicio(null);
@@ -443,7 +595,7 @@ const ProgramarSesion = () => {
       },
       ReturnValues: "ALL_NEW",
     };
-  
+
     try {
       await docClient.update(updateParams).promise();
       openNotification(
@@ -462,10 +614,9 @@ const ProgramarSesion = () => {
       );
     }
   };
-  
 
   const renderNumeroSesionOptions = () => {
-    const maxSesiones = tipoSesion === "ordinario" ? 4 : 24;
+    const maxSesiones = tipoSesion === "Ordinario" ? 4 : 24;
     const opciones = [];
 
     for (let i = 1; i <= maxSesiones; i++) {
@@ -516,18 +667,30 @@ const ProgramarSesion = () => {
       TableName: "Sesiones",
       // Aquí puedes agregar filtros si son necesarios
     };
-  
+
     try {
       const data = await docClient.scan(params).promise();
       const sesiones = data.Items;
-  
+
+      // Calcula el próximo número de sesión
+      const maxNumeroSesion = sesiones
+        .filter(
+          (sesion) =>
+            sesion.tipoSesion === tipoSesion && sesion.organismo === organismo
+        )
+        .reduce(
+          (max, sesion) =>
+            sesion.numeroSesion > max ? sesion.numeroSesion : max,
+          0
+        );
+      setNumeroSesion(maxNumeroSesion + 1);
+
       // Filtrar sesiones según su estatus y organismo
       const sesionesFiltradas = sesiones.filter(
         (sesion) =>
-          sesion.estatus !== "Finalizada" &&
-          sesion.organismo === organismo
+          sesion.estatus !== "Finalizada" && sesion.organismo === organismo
       );
-  
+
       // Aquí se pueden separar las sesiones programadas y en progreso
       const sesionesProgramadasFiltradas = sesionesFiltradas.filter(
         (sesion) => sesion.estatus === "Programado"
@@ -535,16 +698,13 @@ const ProgramarSesion = () => {
       const sesionesEnProgresoFiltradas = sesionesFiltradas.filter(
         (sesion) => sesion.estatus === "En Progreso"
       );
-  
+
       setSesionesProgramadas(sesionesProgramadasFiltradas);
       setSesionesEnProgreso(sesionesEnProgresoFiltradas);
     } catch (error) {
       console.error("Error al recuperar sesiones:", error);
     }
   };
-
-  
-  
 
   return (
     <div>
@@ -574,23 +734,23 @@ const ProgramarSesion = () => {
                 <Form.Item
                   label="Tipo de Sesión"
                   name="tipoSesion"
-                  initialValue="ordinario"
-
+                  initialValue="Ordinario"
                 >
                   <Select onChange={handleTipoSesionChange}>
-                    <Option value="ordinario">Ordinario</Option>
-                    <Option value="extraordinario">Extraordinario</Option>
+                    <Option value="Ordinario">Ordinario</Option>
+                    <Option value="Extraordinario">Extraordinario</Option>
                   </Select>
                 </Form.Item>
-                <Form.Item
-                  label="Número de Sesión"
-                  name="numeroSesion"
-                  initialValue={1}
-                >
-                  <Select onChange={handleNumeroSesionChange}>
-                    {renderNumeroSesionOptions()}
-                  </Select>
+
+                <Form.Item label="Número de Sesión" name="numeroSesion" key={numeroSesion}>
+                  { /* <Select disabled>
+                    <Option value={numeroSesion} >
+                      {`Sesión ${ numeroSesion }`}
+                    </Option>
+                    </Select> */}
+                    <Input disabled defaultValue={numeroSesion} key={numeroSesion}/>
                 </Form.Item>
+
                 <Form.Item
                   label="Fecha"
                   name="fecha"
@@ -598,7 +758,10 @@ const ProgramarSesion = () => {
                     { required: true, message: "Por favor ingrese la fecha" },
                   ]}
                 >
-                  <DatePicker onChange={handleFechaChange} style={{ border: '2px solid #F1CDD3' }}/>
+                  <DatePicker
+                    onChange={handleFechaChange}
+                    style={{ border: "2px solid #F1CDD3" }}
+                  />
                 </Form.Item>
                 <Form.Item
                   label="Hora de Inicio"
@@ -611,7 +774,7 @@ const ProgramarSesion = () => {
                   ]}
                 >
                   <TimePicker
-                  style={{ border: '2px solid #F1CDD3' }}
+                    style={{ border: "2px solid #F1CDD3" }}
                     format="HH:mm"
                     onChange={handleHoraInicioChange}
                   />
@@ -628,17 +791,67 @@ const ProgramarSesion = () => {
                     onRemove={() => setActaDeSesion(null)}
                   >
                     <Button
-      icon={<UploadOutlined />}
-      style={{
-        backgroundColor: isHovered.actaDeSesion ? '#701e45' : '#fff',
-        color: isHovered.actaDeSesion ? '#fff' : '#701e45',
-        border: '2px solid #F1CDD3',
-      }}
-      onMouseEnter={() => handleMouseEnter('actaDeSesion')}
-      onMouseLeave={() => handleMouseLeave('actaDeSesion')}
-    >
-      Click para cargar el Acta de Sesión
-    </Button>
+                      icon={<UploadOutlined />}
+                      style={{
+                        backgroundColor: isHovered.actaDeSesion
+                          ? "#701e45"
+                          : "#fff",
+                        color: isHovered.actaDeSesion ? "#fff" : "#701e45",
+                        border: "2px solid #F1CDD3",
+                      }}
+                      onMouseEnter={() => handleMouseEnter("actaDeSesion")}
+                      onMouseLeave={() => handleMouseLeave("actaDeSesion")}
+                    >
+                      Click para cargar el Acta de Sesión
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
+                <Form.Item
+                  label="Cargar Estados Financieros"
+                  name="estadosFinancieros"
+                >
+                  <Upload
+                    beforeUpload={(file) => {
+                      setEstadosFinancieros(file);
+                      return false;
+                    }}
+                    accept=".pdf"
+                    maxCount={1}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Cargar Estados Financieros
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
+                <Form.Item label="Cargar Orden del Día" name="ordenDelDia">
+                  <Upload
+                    beforeUpload={(file) => {
+                      setOrdenDelDia(file);
+                      return false;
+                    }}
+                    accept=".pdf"
+                    maxCount={1}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Cargar Orden del Día
+                    </Button>
+                  </Upload>
+                </Form.Item>
+
+                <Form.Item label="Cargar Convocatoria" name="convocatoria">
+                  <Upload
+                    beforeUpload={(file) => {
+                      setConvocatoria(file);
+                      return false;
+                    }}
+                    accept=".pdf"
+                    maxCount={1}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Cargar Convocatoria
+                    </Button>
                   </Upload>
                 </Form.Item>
 
@@ -650,18 +863,20 @@ const ProgramarSesion = () => {
                     multiple
                     onChange={handleChange}
                   >
-                                <Button
-      icon={<UploadOutlined />}
-      style={{
-        backgroundColor: isHovered.documentos ? '#701e45' : '#fff',
-        color: isHovered.documentos ? '#fff' : '#701e45',
-        border: '2px solid #F1CDD3',
-      }}
-      onMouseEnter={() => handleMouseEnter('documentos')}
-      onMouseLeave={() => handleMouseLeave('documentos')}
-    >
-      Click para cargar Documentos
-    </Button>
+                    <Button
+                      icon={<UploadOutlined />}
+                      style={{
+                        backgroundColor: isHovered.documentos
+                          ? "#701e45"
+                          : "#fff",
+                        color: isHovered.documentos ? "#fff" : "#701e45",
+                        border: "2px solid #F1CDD3",
+                      }}
+                      onMouseEnter={() => handleMouseEnter("documentos")}
+                      onMouseLeave={() => handleMouseLeave("documentos")}
+                    >
+                      Click para cargar Documentos
+                    </Button>
                   </Upload>
                 </Form.Item>
 
@@ -715,7 +930,7 @@ const ProgramarSesion = () => {
               key="progreso"
             >
               <SesionProgreso
-                 organismo={organismo}
+                organismo={organismo}
                 sesionesEnProgreso={sesionesEnProgreso}
                 onFinalizarSesion={handleFinalizarSesion}
               />
@@ -741,8 +956,8 @@ const ProgramarSesion = () => {
               ]}
             >
               <Select>
-                <Option value="ordinario">Ordinario</Option>
-                <Option value="extraordinario">Extraordinario</Option>
+                <Option value="Ordinario">Ordinario</Option>
+                <Option value="Extraordinario">Extraordinario</Option>
               </Select>
             </Form.Item>
             <Form.Item

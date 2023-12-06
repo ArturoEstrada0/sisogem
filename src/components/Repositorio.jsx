@@ -1,147 +1,294 @@
-import React, { useState } from "react";
-import { Table, Card, Row, Col, Input, Select, Button } from "antd";
-import "antd/dist/reset.css";
+import React, { useState, useEffect, useContext } from "react";
+import { Table, Card, Row, Col, Button, Select } from "antd";
+import AWS from "aws-sdk";
 import { FolderOutlined } from "@ant-design/icons";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { OrganismoContext } from "../context/OrganismoContext";
+import { UserRoleContext } from "../context/UserRoleContext";
 
-const { Search } = Input;
 const { Option } = Select;
 
-const data = [
-  {
-    key: "1",
-    nombreArchivo: "Archivo 2021-01.xls",
-    fecha: "2021-01-05",
-    tipo: "xls",
-    tamanio: "123 KB",
-    ruta: "C:\\Users\\ASUS\\Desktop\\universidad\\Topicos selectos de ingenieria de software\\recursos\\Manual de Contabilidad Gubernamental.pdf",
-  },
-  {
-    key: "2",
-    nombreArchivo: "Archivo 2021-02.csv",
-    fecha: "2021-02-15",
-    tipo: "csv",
-    tamanio: "87 KB",
-  },
-  {
-    key: "3",
-    nombreArchivo: "Archivo 2021-03.xls",
-    fecha: "2021-03-25",
-    tipo: "xls",
-    tamanio: "156 KB",
-  },
-  {
-    key: "4",
-    nombreArchivo: "Archivo 2022-01.xls",
-    fecha: "2022-01-10",
-    tipo: "xls",
-    tamanio: "110 KB",
-  },
-  {
-    key: "5",
-    nombreArchivo: "Archivo 2022-02.csv",
-    fecha: "2022-02-20",
-    tipo: "csv",
-    tamanio: "92 KB",
-  },
-  {
-    key: "6",
-    nombreArchivo: "Archivo 2022-03.xls",
-    fecha: "2022-03-30",
-    tipo: "xls",
-    tamanio: "167 KB",
-  },
-  {
-    key: "7",
-    nombreArchivo: "Archivo 2023-01.xlsx",
-    fecha: "2023-01-10",
-    tipo: "xlsx",
-    tamanio: "145 KB",
-  },
-  {
-    key: "8",
-    nombreArchivo: "Archivo 2023-02.csv",
-    fecha: "2023-02-18",
-    tipo: "csv",
-    tamanio: "102 KB",
-  },
-];
+const Repositorio = () => {
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
 
-const columns = [
-  {
-    title: "Nombre de Archivo",
-    dataIndex: "nombreArchivo",
-    key: "nombreArchivo",
-  },
-  {
-    title: "Fecha",
-    dataIndex: "fecha",
-    key: "fecha",
-  },
-  {
-    title: "Tipo",
-    dataIndex: "tipo",
-    key: "tipo",
-  },
-  {
-    title: "Tamaño",
-    dataIndex: "tamanio",
-    key: "tamanio",
-  },
-];
-
-function Repositorio() {
-  const [yearFilter, setYearFilter] = useState(null);
-  const [searchText, setSearchText] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState([]);
+  const [sesionesFinalizadas, setSesionesFinalizadas] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [filteredSesiones, setFilteredSesiones] = useState([]);
+  const [tipoSesionFilter, setTipoSesionFilter] = useState(null);
 
-  const handleChangeYearFilter = (value) => {
-    setYearFilter(value);
-    setSelectedYear(value);
+  const { currentUser } = useContext(UserRoleContext);
+
+  useEffect(() => {
+    if (organismo === "") {
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    }
+  }, [organismo, currentUser]);
+
+  useEffect(() => {
+    const cargarSesionesFinalizadas = async () => {
+      const docClient = new AWS.DynamoDB.DocumentClient();
+      const params = {
+        TableName: "Sesiones",
+        FilterExpression: "estatus = :estatus",
+        ExpressionAttributeValues: { ":estatus": "Finalizada" },
+      };
+
+      try {
+        const data = await docClient.scan(params).promise();
+        setSesionesFinalizadas(data.Items);
+      } catch (error) {
+        console.error("Error al cargar sesiones finalizadas:", error);
+      }
+    };
+
+    cargarSesionesFinalizadas();
+  }, []);
+
+  useEffect(() => {
+    const filtered = sesionesFinalizadas.filter(
+      (sesion) =>
+        (selectedYear ? sesion.fecha.startsWith(selectedYear) : true) &&
+        (tipoSesionFilter ? sesion.tipoSesion === tipoSesionFilter : true) &&
+        (organismo ? sesion.organismo === organismo : true)
+    );
+    setFilteredSesiones(filtered);
+  }, [selectedYear, tipoSesionFilter, organismo, sesionesFinalizadas]);
+
+  // Código para descargar un archivo individual
+  const descargarArchivo = async (url, nombreArchivo) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      saveAs(blob, nombreArchivo);
+    } catch (error) {
+      console.error("Error al descargar el archivo:", error);
+    }
   };
 
-  const handleSearch = (value) => {
-    setSearchText(value.toLowerCase());
-  };
-
-  const handleFilterChange = (value) => {
-    setSelectedFilters(value);
-  };
-
-  const years = [...new Set(data.map((item) => item.fecha.split("-")[0]))];
-
-  const filteredData = data.filter(
-    (item) =>
-      (yearFilter ? item.fecha.includes(yearFilter) : true) &&
-      (searchText
-        ? item.nombreArchivo.toLowerCase().includes(searchText)
-        : true) &&
-      (selectedFilters.length > 0
-        ? selectedFilters.includes(item.tipo)
-        : true)
-  );
-
-  // Función para crear y descargar el archivo ZIP
-  const exportToZIP = () => {
+  // Código para descargar archivos de una sesión
+  const descargarArchivosSesion = async (sesion) => {
     const zip = new JSZip();
-    const csvData = filteredData.map((item) => ({
-      "Nombre de Archivo": item.nombreArchivo,
-      Fecha: item.fecha,
-      Tipo: item.tipo,
-      Tamaño: item.tamanio,
-    }));
+  
+    // Agregar documentos obligatorios si están disponibles
+    const documentosObligatorios = [
+      { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
+      { url: sesion.estadosFinancierosUrl, nombre: "Estados_Financieros.pdf" },
+      { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
+      { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
+      // Agrega aquí otros documentos obligatorios si los hay...
+    ];
+  
+    for (const doc of documentosObligatorios) {
+      if (doc.url) {
+        try {
+          const response = await fetch(doc.url);
+          const blob = await response.blob();
+          zip.file(doc.nombre, blob);
+        } catch (error) {
+          console.error(`Error al descargar ${doc.nombre}:`, error);
+        }
+      }
+    }
+  
+    // Agregar documentos adicionales si están disponibles
+    for (const archivo of sesion.archivos || []) {
+      try {
+        const response = await fetch(archivo.url);
+        const blob = await response.blob();
+        zip.file(archivo.nombre, blob);
+      } catch (error) {
+        console.error(`Error al descargar archivo adicional ${archivo.nombre}:`, error);
+      }
+    }
+  
+    // Generar y descargar el ZIP
+    try {
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `documentos_sesion_${sesion.numeroSesion}.zip`);
+    } catch (error) {
+      console.error("Error al generar el archivo ZIP:", error);
+    }
+  };
+  
 
-    // Agrega un archivo CSV con todos los datos al ZIP
-    //zip.file("data.csv", CSVLink.createCSV(csvData, { headers: csvData[0] }));
+  const descargarTodoElAno = async () => {
+    if (!selectedYear) {
+      console.error("Error: selectedYear no está definido");
+      return;
+    }
 
-    // Crea y descarga el archivo ZIP
-    zip.generateAsync({ type: "blob" }).then((content) => {
-      const zipName = "archivos.zip"; // Cambia el nombre del archivo ZIP si es necesario
-      saveAs(content, zipName);
+    const zip = new JSZip();
+
+    // Utiliza Promise.all para manejar la asincronía
+    await Promise.all(
+      filteredSesiones.map(async (sesion) => {
+        // Usar tanto el tipo como el número de sesión para crear un identificador único
+        const sesionFolderName = `Sesion_${sesion.tipoSesion}_${sesion.numeroSesion}`;
+        const sesionFolder = zip.folder(sesionFolderName);
+
+        // Agregar documentos obligatorios
+        const documentosObligatorios = [
+          { url: sesion.actaDeSesionUrl, nombre: "Acta_de_Sesion.pdf" },
+          {
+            url: sesion.estadosFinancierosUrl,
+            nombre: "Estados_Financieros.pdf",
+          },
+          { url: sesion.ordenDelDiaUrl, nombre: "Orden_del_Dia.pdf" },
+          { url: sesion.convocatoriaUrl, nombre: "Convocatoria.pdf" },
+          // Agrega aquí otros documentos obligatorios si los hay...
+        ];
+
+        for (const doc of documentosObligatorios) {
+          if (doc.url) {
+            try {
+              const response = await fetch(doc.url);
+              const blob = await response.blob();
+              sesionFolder.file(doc.nombre, blob);
+            } catch (error) {
+              console.error(
+                `Error al cargar ${doc.nombre} para la sesión ${sesionFolderName}:`,
+                error
+              );
+            }
+          }
+        }
+
+        // Agregar documentos adicionales
+        for (const archivo of sesion.archivos || []) {
+          try {
+            const response = await fetch(archivo.url);
+            const blob = await response.blob();
+            sesionFolder.file(archivo.nombre, blob);
+          } catch (error) {
+            console.error(
+              `Error al cargar archivo adicional ${archivo.nombre} para la sesión ${sesionFolderName}:`,
+              error
+            );
+          }
+        }
+      })
+    );
+
+    try {
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `archivos_${selectedYear}.zip`);
+    } catch (error) {
+      console.error("Error al generar o descargar el archivo ZIP:", error);
+    }
+  };
+
+  const handleYearClick = (year) => {
+    setSelectedYear(year, () => {
+      // Después de que setSelectedYear haya actualizado el estado
+      descargarTodoElAno();
     });
   };
+
+  const columns = [
+    {
+      title: "Tipo de Sesión",
+      dataIndex: "tipoSesion",
+      key: "tipoSesion",
+    },
+
+    {
+      title: "Número de Sesión",
+      dataIndex: "numeroSesion",
+      key: "numeroSesion",
+    },
+    {
+      title: "Fecha",
+      dataIndex: "fecha",
+      key: "fecha",
+    },
+
+    {
+      title: "Acciones",
+      key: "acciones",
+      render: (text, record) => (
+        <>
+          {record.actaDeSesionUrl && (
+            <Button
+              onClick={() =>
+                descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
+            >
+              Descargar Acta de Sesión
+            </Button>
+          )}
+          {record.estadosFinancierosUrl && (
+            <Button
+              onClick={() =>
+                descargarArchivo(
+                  record.estadosFinancierosUrl,
+                  "Estados_Financieros.pdf"
+                )
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
+            >
+              Descargar Estados Financieros
+            </Button>
+          )}
+          {record.ordenDelDiaUrl && (
+            <Button
+              onClick={() =>
+                descargarArchivo(record.ordenDelDiaUrl, "Orden_del_Dia.pdf")
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
+            >
+              Descargar Orden del Día
+            </Button>
+          )}
+          {record.convocatoriaUrl && (
+            <Button
+              onClick={() =>
+                descargarArchivo(record.convocatoriaUrl, "Convocatoria.pdf")
+              }
+              style={{
+                margin: "5px",
+                backgroundColor: "#6a0f49",
+                color: "white",
+              }}
+            >
+              Descargar Convocatoria
+            </Button>
+          )}
+          <Button
+            onClick={() => descargarArchivosSesion(record)}
+            style={{
+              margin: "5px",
+              backgroundColor: "#f1cdd3",
+              color: "#701e45",
+            }}
+          >
+            Descargar Todos
+          </Button>
+        </>
+      ),
+    },
+  ];
+
+  const years = [
+    ...new Set(sesionesFinalizadas.map((sesion) => sesion.fecha.split("-")[0])),
+  ];
+  const tiposDeSesion = [
+    ...new Set(sesionesFinalizadas.map((sesion) => sesion.tipoSesion)),
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -150,7 +297,7 @@ function Repositorio() {
         {years.map((year) => (
           <Col span={8} key={year}>
             <Card
-              onClick={() => handleChangeYearFilter(year)}
+              onClick={() => handleYearClick(year)}
               hoverable
               style={{
                 cursor: "pointer",
@@ -160,7 +307,10 @@ function Repositorio() {
                 alignItems: "center",
                 justifyContent: "center",
                 textAlign: "center",
-                border: selectedYear === year ? "2px solid #F1CDD3" : "2px solid transparent",
+                border:
+                  selectedYear === year
+                    ? "2px solid #F1CDD3"
+                    : "2px solid transparent",
               }}
             >
               <FolderOutlined style={{ fontSize: 48 }} />
@@ -169,32 +319,37 @@ function Repositorio() {
           </Col>
         ))}
       </Row>
-      {yearFilter && (
-        <div style={{ marginTop: "20px", marginLeft: "10px" }}>
-          <h3>Archivos de {yearFilter}</h3>
-          <div>
-            <Search
-              placeholder="Buscar por nombre de archivo"
-              onSearch={handleSearch}
-              style={{ width: 300, marginBottom: "10px" }}
-            />
-          </div>
+      {selectedYear && (
+        <div>
+          <h3>Sesiones de {selectedYear}</h3>
           <Select
-            mode="multiple"
-            placeholder="Filtrar por tipo"
-            style={{ width: 200, marginBottom: "10px" }}
-            onChange={handleFilterChange}
+            placeholder="Filtrar por tipo de sesión"
+            style={{ width: 200, marginRight: 10 }}
+            onChange={(value) => setTipoSesionFilter(value)}
+            allowClear
           >
-            <Option value="xls">xls</Option>
-            <Option value="csv">csv</Option>
-            <Option value="xlsx">xlsx</Option>
+            {tiposDeSesion.map((tipo) => (
+              <Option key={tipo} value={tipo}>
+                {tipo}
+              </Option>
+            ))}
           </Select>
-          <Button onClick={exportToZIP}>Exportar a ZIP</Button> {/* Botón para exportar a ZIP */}
-          <Table dataSource={filteredData} columns={columns} />
+
+          <Button
+            onClick={descargarTodoElAno}
+            style={{
+              margin: "5px",
+              backgroundColor: "#f1cdd3",
+              color: "#701e45",
+            }}
+          >
+            Descargar Todo el Año
+          </Button>
+          <Table dataSource={filteredSesiones} columns={columns} />
         </div>
       )}
     </div>
   );
-}
+};
 
 export default Repositorio;
