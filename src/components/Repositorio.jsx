@@ -5,16 +5,26 @@ import { FolderOutlined } from "@ant-design/icons";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { OrganismoContext } from "../context/OrganismoContext";
+import { UserRoleContext } from "../context/UserRoleContext";
 
 const { Option } = Select;
 
 const Repositorio = () => {
-  const { organismo } = useContext(OrganismoContext);
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
 
   const [sesionesFinalizadas, setSesionesFinalizadas] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
   const [filteredSesiones, setFilteredSesiones] = useState([]);
   const [tipoSesionFilter, setTipoSesionFilter] = useState(null);
+
+  const { currentUser } = useContext(UserRoleContext);
+
+  useEffect(() => {
+    if (organismo === "") {
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    }
+  }, [organismo, currentUser]);
 
   useEffect(() => {
     const cargarSesionesFinalizadas = async () => {
