@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { List, Button, Card, notification } from "antd";
+import { List, Button, Card, notification, Switch } from "antd";
 import PDFViewer from "./PDFViewer";
 
 const SesionProgreso = ({
   organismo,
   sesionesEnProgreso,
   onFinalizarSesion,
+  exportarYSubirPDF,
 }) => {
   const [selectedSesionId, setSelectedSesionId] = useState(null);
+  const [isEditing, setisEditing] = useState(false);
 
   const renderItem = (sesion) => (
     <List.Item onClick={() => setSelectedSesionId(sesion.idSesion)}>
@@ -30,14 +32,37 @@ const SesionProgreso = ({
   const documentKey = selectedSesion?.actaDeSesionUrl;
   const googleDocsUrl = selectedSesion?.actaDeSesionGoogleDriveUrl;
 
+  let lastTwoSegments = '';
+  if (documentKey) {
+    try {
+      const urlObject = new URL(documentKey);
+      const path = urlObject.pathname;
+      const segments = path.split('/');
+      if (segments.length >= 2) {
+        const lastTwoDecodedSegments = segments.slice(-2).map(decodeURIComponent);
+        lastTwoSegments = lastTwoDecodedSegments.join('/');
+      }
+    } catch (error) {
+      console.error("Error al procesar la URL:", error);
+    }
+  }
+
+  const handleExportarPDF = async () => {
+    if (selectedSesionId) {
+      const s3Path = `${lastTwoSegments}`;
+      await exportarYSubirPDF(googleDocsUrl, s3Path);
+    }
+  };
+
+  const handleSwitchChange = async (isChecked) => {
+    if (!isChecked && selectedSesionId) {
+      await handleExportarPDF();
+    }
+    setisEditing(isChecked);
+  };
+
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        marginTop: "25px",
-      }}
-    >
+    <div style={{ display: "flex", marginTop: "25px" }}>
       <div style={{ width: "30%" }}>
         <List
           dataSource={sesionesEnProgreso}
@@ -45,32 +70,31 @@ const SesionProgreso = ({
           locale={{ emptyText: "No hay sesiones en progreso" }}
         />
       </div>
-      <div style={{ width: "35%", margin: "0px 20px" }}>
-        {documentKey ? (
-          <PDFViewer
-            url={documentKey}
-            organismo={organismo}
-            documentKey={documentKey}
-          />
-        ) : (
-          <p>No hay Acta de Sesión en PDF disponible para esta sesión.</p>
-        )}
-      </div>
-      <div style={{ width: "35%" }}>
-        {googleDocsUrl ? (
-          <iframe
-            src={googleDocsUrl}
-            width="100%"
-            height="600px"
-            frameBorder="0"
-            title="Acta de Sesión en Google Docs"
-          />
-        ) : (
-          <p>
-            No hay Acta de Sesión en Google Docs disponible para esta sesión.
-          </p>
-        )}
-      </div>
+      <Switch onChange={handleSwitchChange} />
+      {!isEditing && (
+        <div>
+          {documentKey ? (
+            <PDFViewer url={documentKey} organismo={organismo} documentKey={lastTwoSegments} />
+          ) : (
+            <p>No hay Acta de Sesión en PDF disponible para esta sesión.</p>
+          )}
+        </div>
+      )}
+      {isEditing && (
+        <div>
+          {googleDocsUrl ? (
+            <iframe
+              src={googleDocsUrl}
+              width="800px"
+              height="600px"
+              frameBorder="0"
+              title="Acta de Sesión en Google Docs"
+            />
+          ) : (
+            <p>No hay Acta de Sesión en Google Docs disponible para esta sesión.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

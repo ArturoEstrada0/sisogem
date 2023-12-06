@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   DatePicker,
@@ -12,9 +11,9 @@ import {
   notification,
   Badge,
   Spin,
-  Input
 } from "antd";
 import AWS from "aws-sdk";
+import { gapi } from "gapi-script";
 
 import SesionesProgramadas from "./SesionesProgramadas";
 import SesionProgreso from "./SesionProgreso";
@@ -34,6 +33,17 @@ import { UserService } from "../services/UserService";
 const { Option } = Select;
 const { TabPane } = Tabs;
 
+// Tus credenciales y configuraciones de Google API
+const CLIENT_ID =
+  "697900774476-p35j99gvs9em0ue3fpebtuhvg7dhhcdn.apps.googleusercontent.com";
+const API_KEY = "AIzaSyCBSPn5iqtPNrEllJB7MknRrbVngMOcyAo";
+const SCOPES =
+  "https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive";
+const DISCOVERY_DOCS = [
+  "https://docs.googleapis.com/$discovery/rest?version=v1",
+  "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+];
+
 const ProgramarSesion = () => {
   const [tipoSesion, setTipoSesion] = useState("Ordinario");
   const [fecha, setFecha] = useState(null);
@@ -48,6 +58,11 @@ const ProgramarSesion = () => {
   const [nuevasSesionesEnProgreso, setNuevasSesionesEnProgreso] = useState(0);
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [gapiReady, setGapiReady] = useState(false);
+  const [actaDeSesionGoogleDriveUrl, setActaDeSesionGoogleDriveUrl] =
+    useState(null);
+
+  const [isSignedIn, setIsSignedIn] = useState(false); // Nuevo estado para el inicio de sesión
   const [isHovered, setIsHovered] = useState({
     actaDeSesion: false,
     documentos: false, // Agrega un identificador único para el otro botón
@@ -57,6 +72,12 @@ const ProgramarSesion = () => {
   const { currentUser } = useContext(UserRoleContext);
 
   const [actaDeSesion, setActaDeSesion] = useState(null);
+
+  const showAlert = (type, message) => {
+    notification[type]({
+      message,
+    });
+  };
 
   const handleMouseEnter = (buttonName) => {
     setIsHovered((prev) => ({
@@ -83,6 +104,37 @@ const ProgramarSesion = () => {
   });
   // const AWS = require("aws-sdk");
   const docClient = new AWS.DynamoDB.DocumentClient();
+
+  useEffect(() => {
+    gapi.load("client:auth2", () => {
+      gapi.client
+        .init({
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES,
+        })
+        .then(() => {
+          // Escucha cambios en el estado de inicio de sesión
+          gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+          setGapiReady(true);
+          // Establece el estado inicial
+          updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+        });
+    });
+  }, []);
+
+  const updateSigninStatus = (isSignedIn) => {
+    setIsSignedIn(isSignedIn);
+  };
+
+  const handleAuthClick = () => {
+    if (isSignedIn) {
+      gapi.auth2.getAuthInstance().signOut();
+    } else {
+      gapi.auth2.getAuthInstance().signIn();
+    }
+  };
 
   // Dentro de tu componente ProgramarSesion
   useEffect(() => {
@@ -167,7 +219,7 @@ const ProgramarSesion = () => {
           ...nuevasSesionesEnProgreso,
         ]);
       }
-    }, 60000); // Revisa cada minuto
+    }, 1000); // Revisa cada minuto
 
     return () => clearInterval(interval);
   }, [sesionesProgramadas]);
@@ -179,6 +231,116 @@ const ProgramarSesion = () => {
     }
   }, [currentUser]);
 
+  // Asegúrate de cargar las bibliotecas de Google API antes de utilizar esta función.
+
+  const subirArchivoAGoogleDriveSecond = async (archivo) => {
+    if (!gapiReady) {
+      showAlert("error", "Google API aún no está lista");
+      return null;
+    }
+
+    return new Promise(async (resolve, reject) => {
+      const token = gapi.auth.getToken().access_token; // Obtener el token de acceso
+
+      const form = new FormData();
+      form.append(
+        "metadata",
+        new Blob(
+          [
+            JSON.stringify({
+              name: archivo.name,
+              mimeType: "application/vnd.google-apps.document", // Opcional, dependiendo del archivo
+            }),
+          ],
+          { type: "application/json" }
+        )
+      );
+
+      form.append("file", archivo);
+
+      try {
+        const response = await fetch(
+          "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+          {
+            method: "POST",
+            headers: new Headers({ Authorization: "Bearer " + token }),
+            body: form,
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok) {
+          console.log(result);
+          resolve(result.id); // Devuelve el ID del archivo
+        } else {
+          console.error("Error en la respuesta de Google Drive:", result);
+          showAlert("error", "Error al subir el archivo a Google Drive");
+          reject(null);
+        }
+      } catch (error) {
+        console.error("Error al subir el archivo a Google Drive:", error);
+        showAlert("error", "Error al subir el archivo a Google Drive");
+        reject(null);
+      }
+    });
+  };
+
+  const convertirAPdf = async (fileId) => {
+    if (!gapiReady) {
+      showAlert("error", "Google API aún no está lista");
+      return null;
+    }
+
+    const token = gapi.auth.getToken().access_token; // Obtener el token de acceso
+
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=application/pdf`,
+        {
+          method: "GET",
+          headers: new Headers({ Authorization: "Bearer " + token }),
+        }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        console.log(blob);
+        return blob; // Retorna el Blob PDF
+      } else {
+        const errorResult = await response.json();
+        console.error("Error al exportar a PDF:", errorResult);
+        showAlert("error", "Error al exportar el archivo a PDF");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error al exportar el archivo a PDF:", error);
+      showAlert("error", "Error al exportar el archivo a PDF");
+      return null;
+    }
+  };
+
+  const subirArchivoAGoogleDrive = async (archivo) => {
+    // Uso de las funciones
+    return new Promise(async (resolve, reject) => {
+      const driveFileId = await subirArchivoAGoogleDriveSecond(archivo);
+      if (driveFileId) {
+        const pdfBlob = await convertirAPdf(driveFileId);
+        setActaDeSesionGoogleDriveUrl(
+          `https://docs.google.com/document/d/${driveFileId}/edit`
+        );
+
+        resolve([
+          `https://docs.google.com/document/d/${driveFileId}/edit`,
+          pdfBlob,
+        ]);
+      } else {
+        showAlert("error", "Error al subir el archivo a Google Drive");
+        reject(null);
+      }
+    });
+  };
+
   const handleFileUpload = async () => {
     try {
       // Generar un ID único para la sesión
@@ -186,21 +348,35 @@ const ProgramarSesion = () => {
       const folderName = `sesion_${moment().format("YYYYMMDD_HHmmss")}`;
 
       let actaDeSesionUrl,
+        actaDeSesionGoogleDriveUrl,
         estadosFinancierosUrl,
         ordenDelDiaUrl,
         convocatoriaUrl;
 
-      // Subir el Acta de Sesión a S3 si está presente y obtener su URL
-      if (actaDeSesion) {
-        const response = await uploadFileToS3(
-          actaDeSesion,
+      // Subir el Acta de Sesión a S3 y obtener su URL
+      const [fileIdGoogleDrive, blob] = await subirArchivoAGoogleDrive(
+        actaDeSesion
+      );
+      if (fileIdGoogleDrive) {
+        setActaDeSesionGoogleDriveUrl(fileIdGoogleDrive);
+      }
+      console.log([fileIdGoogleDrive, blob]);
+      if (blob) {
+        const responseS3 = await uploadFileToS3(
+          blob,
           organismo,
-          `${folderName}/${actaDeSesion.name}`
+          `${folderName}/${actaDeSesion.name.replace(".docx", ".pdf")}`
         );
-        actaDeSesionUrl = response.Location;
+        actaDeSesionUrl = responseS3.Location;
+
+        // Subir el Acta de Sesión a Google Drive y obtener su URL
+
+        if (fileIdGoogleDrive) {
+          actaDeSesionGoogleDriveUrl = fileIdGoogleDrive; // Asignar directamente
+        }
       }
 
-      // Subir Estados Financieros si está presente y obtener su URL
+      // Subir Estados Financieros a S3 si está presente y obtener su URL
       if (estadosFinancieros) {
         const response = await uploadFileToS3(
           estadosFinancieros,
@@ -210,7 +386,7 @@ const ProgramarSesion = () => {
         estadosFinancierosUrl = response.Location;
       }
 
-      // Subir Orden del Día si está presente y obtener su URL
+      // Subir Orden del Día a S3 si está presente y obtener su URL
       if (ordenDelDia) {
         const response = await uploadFileToS3(
           ordenDelDia,
@@ -220,7 +396,7 @@ const ProgramarSesion = () => {
         ordenDelDiaUrl = response.Location;
       }
 
-      // Subir Convocatoria si está presente y obtener su URL
+      // Subir Convocatoria a S3 si está presente y obtener su URL
       if (convocatoria) {
         const response = await uploadFileToS3(
           convocatoria,
@@ -252,6 +428,7 @@ const ProgramarSesion = () => {
         folderUrl: `https://${organismo}.s3.amazonaws.com/${folderName}`,
         archivos: fileDetailsArray,
         actaDeSesionUrl,
+        actaDeSesionGoogleDriveUrl, // Guardar URL de Google Drive
         estadosFinancierosUrl,
         ordenDelDiaUrl,
         convocatoriaUrl,
@@ -262,7 +439,9 @@ const ProgramarSesion = () => {
       };
 
       // Guardar en DynamoDB
-      await saveSessionToDynamoDB(sessionData);
+      const response = await saveSessionToDynamoDB(sessionData);
+      console.log("Respuesta de DynamoDB:", response);
+
       setFileList([]);
       setActaDeSesion(null);
       setEstadosFinancieros(null);
@@ -271,6 +450,69 @@ const ProgramarSesion = () => {
     } catch (error) {
       console.error("Error al cargar archivos:", error);
       message.error("Error al cargar archivos");
+    }
+  };
+
+  const extraerGoogleDocId = (url) => {
+    const regex = /\/d\/(.+?)\//;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+  };
+
+  const exportarYSubirPDF = async (googleDocsUrl, s3) => {
+    try {
+      console.log(
+        "Iniciando exportación y subida de PDF para la URL:",
+        googleDocsUrl
+      );
+
+      if (!googleDocsUrl) {
+        showAlert(
+          "error",
+          "La URL del documento de Google Docs no está definida"
+        );
+        return;
+      }
+
+      const fileId = extraerGoogleDocId(googleDocsUrl);
+      if (!fileId) {
+        showAlert(
+          "error",
+          "No se pudo obtener el ID del archivo de Google Docs"
+        );
+        console.error(
+          "No se pudo extraer el ID del archivo desde la URL:",
+          googleDocsUrl
+        );
+        return;
+      }
+
+      console.log("Exportando documento con ID:", fileId);
+      const pdfBlob = await convertirAPdf(fileId);
+
+      if (!pdfBlob) {
+        showAlert("error", "Fallo al exportar el archivo a PDF");
+        console.error(
+          "Fallo al obtener el blob PDF para el archivo con ID:",
+          fileId
+        );
+        return;
+      }
+
+      console.log("Subiendo PDF a S3...");
+      const responseS3 = await uploadFileToS3(
+        pdfBlob,
+        organismo,
+        s3
+      
+      );
+      const pdfUrl = responseS3.Location;
+      console.log("PDF exportado y subido a S3 con éxito. URL:", pdfUrl);
+
+      showAlert("success", "PDF exportado y subido a S3 con éxito");
+    } catch (error) {
+      console.error("Error al exportar y subir el PDF:", error);
+      showAlert("error", "Error al exportar y subir el PDF");
     }
   };
 
@@ -348,7 +590,7 @@ const ProgramarSesion = () => {
     };
     docClient.update(params, async (err, data) => {
       if (err) {
-        console.log(err);
+        console.log("Error al actualizar");
         return;
       }
       await fetchSesionesProgramadas();
@@ -710,188 +952,191 @@ const ProgramarSesion = () => {
   return (
     <div>
       <Spin spinning={loading} size="large" className="custom-spin">
-        <h2>Programar Sesión</h2>
         <Card>
           <Tabs
             defaultActiveKey="programar"
             type="card"
             onChange={handleTabsChange}
           >
-            <TabPane
-              tab={
-                <span style={{ color: "#6A0F49" }}>
-                  Programar Sesión{" "}
-                  {nuevasSesionesProgramadas > 0 && (
-                    <Badge
-                      count={nuevasSesionesProgramadas}
-                      style={{ backgroundColor: "#ab1675" }}
+            {currentUser?.rol.rol === "Comisario" && (
+              <TabPane
+                tab={
+                  <span style={{ color: "#6A0F49" }}>
+                    Programar Sesión{" "}
+                    {nuevasSesionesProgramadas > 0 && (
+                      <Badge
+                        count={nuevasSesionesProgramadas}
+                        style={{ backgroundColor: "#ab1675" }}
+                      />
+                    )}
+                  </span>
+                }
+                key="programar"
+              >
+                <Form form={form} layout="vertical">
+                  <Form.Item
+                    label="Tipo de Sesión"
+                    name="tipoSesion"
+                    initialValue="Ordinario"
+                  >
+                    <Select onChange={handleTipoSesionChange}>
+                      <Option value="Ordinario">Ordinario</Option>
+                      <Option value="Extraordinario">Extraordinario</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item label="Número de Sesión" name="numeroSesion">
+                    <Select disabled value={numeroSesion || 1}>
+                      <Option value={numeroSesion || 1}>{`Sesión ${
+                        numeroSesion || 1
+                      }`}</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item
+                    label="Fecha"
+                    name="fecha"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Por favor ingrese la fecha",
+                      },
+                    ]}
+                  >
+                    <DatePicker
+                      onChange={handleFechaChange}
+                      style={{ border: "2px solid #F1CDD3" }}
                     />
-                  )}
-                </span>
-              }
-              key="programar"
-            >
-              <Form form={form} layout="vertical">
-                <Form.Item
-                  label="Tipo de Sesión"
-                  name="tipoSesion"
-                  initialValue="Ordinario"
-                >
-                  <Select onChange={handleTipoSesionChange}>
-                    <Option value="Ordinario">Ordinario</Option>
-                    <Option value="Extraordinario">Extraordinario</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item label="Número de Sesión" name="numeroSesion" key={numeroSesion}>
-                  { /* <Select disabled>
-                    <Option value={numeroSesion} >
-                      {`Sesión ${ numeroSesion }`}
-                    </Option>
-                    </Select> */}
-                    <Input disabled defaultValue={numeroSesion} key={numeroSesion}/>
-                </Form.Item>
-
-                <Form.Item
-                  label="Fecha"
-                  name="fecha"
-                  rules={[
-                    { required: true, message: "Por favor ingrese la fecha" },
-                  ]}
-                >
-                  <DatePicker
-                    onChange={handleFechaChange}
-                    style={{ border: "2px solid #F1CDD3" }}
-                  />
-                </Form.Item>
-                <Form.Item
-                  label="Hora de Inicio"
-                  name="horaInicio"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Por favor ingrese la hora de inicio",
-                    },
-                  ]}
-                >
-                  <TimePicker
-                    style={{ border: "2px solid #F1CDD3" }}
-                    format="HH:mm"
-                    onChange={handleHoraInicioChange}
-                  />
-                </Form.Item>
-
-                <Form.Item label="Cargar Acta de Sesión" name="actaDeSesion">
-                  <Upload
-                    beforeUpload={(file) => {
-                      setActaDeSesion(file);
-                      return false; // Evita que Ant Design suba automáticamente el archivo
-                    }}
-                    accept=".pdf"
-                    maxCount={1} // Asegura que solo se pueda subir un archivo
-                    onRemove={() => setActaDeSesion(null)}
+                  </Form.Item>
+                  <Form.Item
+                    label="Hora de Inicio"
+                    name="horaInicio"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Por favor ingrese la hora de inicio",
+                      },
+                    ]}
                   >
-                    <Button
-                      icon={<UploadOutlined />}
-                      style={{
-                        backgroundColor: isHovered.actaDeSesion
-                          ? "#701e45"
-                          : "#fff",
-                        color: isHovered.actaDeSesion ? "#fff" : "#701e45",
-                        border: "2px solid #F1CDD3",
+                    <TimePicker
+                      style={{ border: "2px solid #F1CDD3" }}
+                      format="HH:mm"
+                      onChange={handleHoraInicioChange}
+                    />
+                  </Form.Item>
+
+                  <Form.Item label="Cargar Acta de Sesión" name="actaDeSesion">
+                    <Upload
+                      beforeUpload={(file) => {
+                        setActaDeSesion(file);
+                        return false; // Evita que Ant Design suba automáticamente el archivo
                       }}
-                      onMouseEnter={() => handleMouseEnter("actaDeSesion")}
-                      onMouseLeave={() => handleMouseLeave("actaDeSesion")}
+                      accept=".doc, .docx"
+                      maxCount={1} // Asegura que solo se pueda subir un archivo
+                      onRemove={() => setActaDeSesion(null)}
                     >
-                      Click para cargar el Acta de Sesión
-                    </Button>
-                  </Upload>
-                </Form.Item>
+                      <Button
+                        icon={<UploadOutlined />}
+                        style={{
+                          backgroundColor: isHovered.actaDeSesion
+                            ? "#701e45"
+                            : "#fff",
+                          color: isHovered.actaDeSesion ? "#fff" : "#701e45",
+                          border: "2px solid #F1CDD3",
+                        }}
+                        onMouseEnter={() => handleMouseEnter("actaDeSesion")}
+                        onMouseLeave={() => handleMouseLeave("actaDeSesion")}
+                      >
+                        Click para cargar el Acta de Sesión
+                      </Button>
+                    </Upload>
+                  </Form.Item>
 
-                <Form.Item
-                  label="Cargar Estados Financieros"
-                  name="estadosFinancieros"
-                >
-                  <Upload
-                    beforeUpload={(file) => {
-                      setEstadosFinancieros(file);
-                      return false;
-                    }}
-                    accept=".pdf"
-                    maxCount={1}
+                  <Form.Item
+                    label="Cargar Estados Financieros"
+                    name="estadosFinancieros"
                   >
-                    <Button icon={<UploadOutlined />}>
-                      Cargar Estados Financieros
-                    </Button>
-                  </Upload>
-                </Form.Item>
-
-                <Form.Item label="Cargar Orden del Día" name="ordenDelDia">
-                  <Upload
-                    beforeUpload={(file) => {
-                      setOrdenDelDia(file);
-                      return false;
-                    }}
-                    accept=".pdf"
-                    maxCount={1}
-                  >
-                    <Button icon={<UploadOutlined />}>
-                      Cargar Orden del Día
-                    </Button>
-                  </Upload>
-                </Form.Item>
-
-                <Form.Item label="Cargar Convocatoria" name="convocatoria">
-                  <Upload
-                    beforeUpload={(file) => {
-                      setConvocatoria(file);
-                      return false;
-                    }}
-                    accept=".pdf"
-                    maxCount={1}
-                  >
-                    <Button icon={<UploadOutlined />}>
-                      Cargar Convocatoria
-                    </Button>
-                  </Upload>
-                </Form.Item>
-
-                {/* Nuevo campo para cargar documentos */}
-                <Form.Item label="Cargar Documentos" name="documentos">
-                  <Upload
-                    beforeUpload={() => false}
-                    accept=".pdf"
-                    multiple
-                    onChange={handleChange}
-                  >
-                    <Button
-                      icon={<UploadOutlined />}
-                      style={{
-                        backgroundColor: isHovered.documentos
-                          ? "#701e45"
-                          : "#fff",
-                        color: isHovered.documentos ? "#fff" : "#701e45",
-                        border: "2px solid #F1CDD3",
+                    <Upload
+                      beforeUpload={(file) => {
+                        setEstadosFinancieros(file);
+                        return false;
                       }}
-                      onMouseEnter={() => handleMouseEnter("documentos")}
-                      onMouseLeave={() => handleMouseLeave("documentos")}
+                      accept=".pdf"
+                      maxCount={1}
                     >
-                      Click para cargar Documentos
-                    </Button>
-                  </Upload>
-                </Form.Item>
+                      <Button icon={<UploadOutlined />}>
+                        Cargar Estados Financieros
+                      </Button>
+                    </Upload>
+                  </Form.Item>
 
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    onClick={handleProgramarSesion}
-                    style={{ backgroundColor: "#6A0F49", color: "white" }}
-                  >
-                    {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
-                  </Button>
-                </Form.Item>
-              </Form>
-            </TabPane>
+                  <Form.Item label="Cargar Orden del Día" name="ordenDelDia">
+                    <Upload
+                      beforeUpload={(file) => {
+                        setOrdenDelDia(file);
+                        return false;
+                      }}
+                      accept=".pdf"
+                      maxCount={1}
+                    >
+                      <Button icon={<UploadOutlined />}>
+                        Cargar Orden del Día
+                      </Button>
+                    </Upload>
+                  </Form.Item>
+
+                  <Form.Item label="Cargar Convocatoria" name="convocatoria">
+                    <Upload
+                      beforeUpload={(file) => {
+                        setConvocatoria(file);
+                        return false;
+                      }}
+                      accept=".pdf"
+                      maxCount={1}
+                    >
+                      <Button icon={<UploadOutlined />}>
+                        Cargar Convocatoria
+                      </Button>
+                    </Upload>
+                  </Form.Item>
+
+                  {/* Nuevo campo para cargar documentos */}
+                  <Form.Item label="Cargar Documentos" name="documentos">
+                    <Upload
+                      beforeUpload={() => false}
+                      accept=".pdf"
+                      multiple
+                      onChange={handleChange}
+                    >
+                      <Button
+                        icon={<UploadOutlined />}
+                        style={{
+                          backgroundColor: isHovered.documentos
+                            ? "#701e45"
+                            : "#fff",
+                          color: isHovered.documentos ? "#fff" : "#701e45",
+                          border: "2px solid #F1CDD3",
+                        }}
+                        onMouseEnter={() => handleMouseEnter("documentos")}
+                        onMouseLeave={() => handleMouseLeave("documentos")}
+                      >
+                        Click para cargar Documentos
+                      </Button>
+                    </Upload>
+                  </Form.Item>
+
+                  <Form.Item>
+                    <Button
+                      type="primary"
+                      onClick={handleProgramarSesion}
+                      style={{ backgroundColor: "#6A0F49", color: "white" }}
+                    >
+                      {sesionEditando ? "Editar Sesión" : "Programar Sesión"}
+                    </Button>
+                  </Form.Item>
+                </Form>
+              </TabPane>
+            )}{" "}
             <TabPane
               tab={
                 <span style={{ color: "#6A0F49" }}>
@@ -934,11 +1179,11 @@ const ProgramarSesion = () => {
                 organismo={organismo}
                 sesionesEnProgreso={sesionesEnProgreso}
                 onFinalizarSesion={handleFinalizarSesion}
+                exportarYSubirPDF={exportarYSubirPDF}
               />
             </TabPane>
           </Tabs>
         </Card>
-
         <Modal
           title="Editar Sesión"
           visible={modalVisible}
@@ -996,6 +1241,22 @@ const ProgramarSesion = () => {
             </Form.Item>
           </Form>
         </Modal>
+        <Button
+          onClick={() => {
+            console.log("Botón para exportar y subir PDF clickeado");
+            if (actaDeSesionGoogleDriveUrl) {
+              exportarYSubirPDF(actaDeSesionGoogleDriveUrl);
+            } else {
+              console.error("actaDeSesionGoogleDriveUrl no está definida");
+            }
+          }}
+        >
+          Exportar a PDF y Subir a S3
+        </Button>
+
+        <Button onClick={handleAuthClick}>
+          {isSignedIn ? "Cerrar Sesión" : "Iniciar Sesión con Google"}
+        </Button>
       </Spin>
     </div>
   );
