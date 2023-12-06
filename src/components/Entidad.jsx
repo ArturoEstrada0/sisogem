@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   Grid,
@@ -23,16 +23,22 @@ import { useContext } from "react";
 import { UserRoleContext } from "../context/UserRoleContext";
 import { OrganismoContext } from "../context/OrganismoContext";
 import LogoMich from "../assets/img/mich2.png";
-
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
 const Entidad = () => {
-  const { currentUser } = useContext(UserRoleContext);
-  const { organismo, setOrganismo } = useContext(OrganismoContext);
   const [openDialog, setOpenDialog] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const { currentUser } = useContext(UserRoleContext);
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
+
+  useEffect(() => {
+    if (organismo === "") {
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    }
+  }, [organismo, currentUser]);
 
   const handleCloseDialog = () => {
     if (confirmed) {
@@ -45,7 +51,13 @@ const Entidad = () => {
   };
 
   return (
-    <Grid container spacing={3} justifyContent="center" alignItems="center" className="grid-container">
+    <Grid
+      container
+      spacing={3}
+      justifyContent="center"
+      alignItems="center"
+      className="grid-container"
+    >
       <Grid item xs={12}>
         <Typography variant="h4" align="center">
           <BusinessIcon fontSize="large" />
@@ -157,13 +169,12 @@ const Entidad = () => {
 
       <ToastContainer position="bottom-right" autoClose={2000} />
       <Grid item xs={12} style={{ marginTop: "125px", textAlign: "center" }}>
-  <img
-    src={LogoMich}
-    alt="LogoMich"
-    style={{ maxWidth: "25%", height: "auto" }}
-  />
-</Grid>
-
+        <img
+          src={LogoMich}
+          alt="LogoMich"
+          style={{ maxWidth: "25%", height: "auto" }}
+        />
+      </Grid>
     </Grid>
   );
 };

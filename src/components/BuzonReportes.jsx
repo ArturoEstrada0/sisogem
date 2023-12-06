@@ -19,6 +19,7 @@ import {
 import axios from 'axios'
 import './BuzonReportes.css'
 import { OrganismoContext } from '../context/OrganismoContext'
+import { UserRoleContext } from '../context/UserRoleContext'
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -88,7 +89,8 @@ const styles = {
 }
 
 function BuzonReportes() {
-  const { organismo } = useContext(OrganismoContext)
+  const { currentUser } = useContext(UserRoleContext);
+  const { organismo, setOrganismo } = useContext(OrganismoContext);
 
   const [email, setEmail] = useState({
     subject: '',
@@ -97,7 +99,14 @@ function BuzonReportes() {
     organismo: organismo,
   })
 
-  console.log(email)
+
+  useEffect(() => {
+    if (organismo === "") {
+      if (currentUser) setOrganismo(currentUser.organismo[0].code);
+      else return;
+    }
+  }, [organismo, currentUser]);
+
 
   const [data, setData] = useState([])
 

@@ -52,7 +52,7 @@ const OrganoGobierno = () => {
   const [formVisible, setFormVisible] = useState(false);
   const { currentUser } = useContext(UserRoleContext);
   const { organismo, setOrganismo } = useContext(OrganismoContext);
-  const userOrganismo = currentUser?.organismo[0];
+  const userOrganismo = currentUser?.organismo.find(org => org.code === organismo);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,7 +70,6 @@ const OrganoGobierno = () => {
       ]);
     };
     if (organismo === "") {
-      console.log("aqui ", organismo);
 
       if (currentUser) setOrganismo(currentUser.organismo[0].code);
       else return;
@@ -587,13 +586,13 @@ const OrganoGobierno = () => {
                 message: "Por favor, selecciona la representación",
               },
             ]}
-            initialValue={userOrganismo?._id} // Establecer el valor inicial
+            initialValue={userOrganismo?.code} // Establecer el valor inicial
           >
             <Select disabled>
               {" "}
               {userOrganismo && (
-                <Select.Option value={userOrganismo._id}>
-                  {userOrganismo.organism}
+                <Select.Option value={userOrganismo.code}>
+                  {userOrganismo.name}
                 </Select.Option>
               )}
             </Select>
