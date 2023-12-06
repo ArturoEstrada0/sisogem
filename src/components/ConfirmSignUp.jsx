@@ -17,7 +17,7 @@ const ConfirmSignUp = ({ confirmSignUpData, changeView, email }) => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBackground((prev) => (prev + 1) % backgrounds.length);
-    }, 5000); // Cambia la imagen cada 5 segundos (ajusta según sea necesario)
+    }, 3000); // Cambia la imagen cada 5 segundos (ajusta según sea necesario)
 
     return () => clearInterval(timer);
   }, [backgrounds.length]);
