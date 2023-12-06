@@ -25,7 +25,6 @@ import MarcoNormativo from './MarcoNormativo'
 import OrganoGobierno from './OrganoGobierno'
 import SesionesProgramadas from './SesionesProgramadas'
 import SesionProgreso from './SesionProgreso'
-import Archivo from './Archivo'
 import Formatos from './Formatos'
 import Indicadores from './Indicadores'
 import Repositorio from './Repositorio'
@@ -51,7 +50,6 @@ const menuItems = [
     icon: <CalendarOutlined />,
   },
 
-  { path: '/archivo', text: 'Archivo', icon: <FileOutlined /> },
   { path: '/formatos', text: 'Formatos', icon: <UnorderedListOutlined /> },
   { path: '/indicadores', text: 'Indicadores', icon: <BarChartOutlined /> },
   { path: '/repositorio', text: 'Repositorio', icon: <ReadOutlined /> },
@@ -134,7 +132,6 @@ function Dashboard({ userRole }) {
             <Route path='/marco-normativo' element={<MarcoNormativo />} />
             <Route path='/organos-de-gobierno' element={<OrganoGobierno />} />
             <Route path='/programar-sesion' element={<ProgramarSesion />} />
-            <Route path='/archivo' element={<Archivo />} />
             <Route path='/formatos' element={<Formatos />} />
             <Route path='/indicadores' element={<Indicadores />} />
             <Route path='/repositorio' element={<Repositorio />} />
