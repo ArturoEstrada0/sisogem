@@ -64,6 +64,7 @@ const SesionProgreso = ({
   return (
     <div style={{ display: "flex", marginTop: "25px" }}>
       <div style={{ width: "30%" }}>
+      <h2>Sesiones en Progreso</h2>
         <List
           dataSource={sesionesEnProgreso}
           renderItem={renderItem}

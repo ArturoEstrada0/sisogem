@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Table, Card, Row, Col, Button, Select } from "antd";
+import { Table, Card, Row, Col, Button, Select, Spin } from "antd";
 import AWS from "aws-sdk";
 import { FolderOutlined } from "@ant-design/icons";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { OrganismoContext } from "../context/OrganismoContext";
 import { UserRoleContext } from "../context/UserRoleContext";
+import GetAppIcon from '@mui/icons-material/GetApp';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import SpeakerNotesIcon from '@mui/icons-material/Announcement';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 const { Option } = Select;
 
 const Repositorio = () => {
+  const [loading, setLoading] = useState(false);
   const { organismo, setOrganismo } = useContext(OrganismoContext);
 
   const [sesionesFinalizadas, setSesionesFinalizadas] = useState([]);
@@ -69,6 +75,7 @@ const Repositorio = () => {
 
   // Código para descargar archivos de una sesión
   const descargarArchivosSesion = async (sesion) => {
+    setLoading(true);
     const zip = new JSZip();
   
     // Agregar documentos obligatorios si están disponibles
@@ -110,6 +117,7 @@ const Repositorio = () => {
     } catch (error) {
       console.error("Error al generar el archivo ZIP:", error);
     }
+    setLoading(false);
   };
   
 
@@ -211,73 +219,144 @@ const Repositorio = () => {
         <>
           {record.actaDeSesionUrl && (
             <Button
-              onClick={() =>
-                descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")
-              }
-              style={{
-                margin: "5px",
-                backgroundColor: "#6a0f49",
-                color: "white",
-              }}
-            >
-              Descargar Acta de Sesión
-            </Button>
+            onClick={() =>
+              descargarArchivo(record.actaDeSesionUrl, "Acta_de_Sesion.pdf")
+            }
+            style={{
+              margin: "5px",
+              backgroundColor: "#6a0f49",
+              color: "white",
+              position: "relative", /* Agregamos position relative para posicionar el Spin */
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              {loading && ( /* Mostramos el Spin si 'loading' está en true */
+                <Spin
+                  className="custom-spin"
+                  style={{
+                    position: "absolute", /* Posicionamos el Spin sobre el botón */
+                    left: "50%", /* Ajustamos la posición horizontalmente */
+                    top: "50%", /* Ajustamos la posición verticalmente */
+                    transform: "translate(-50%, -50%)" /* Centramos el Spin */
+                  }}
+                />
+              )}
+              <DescriptionIcon style={{ marginRight: "8px" }} /> Descargar Acta de Sesión
+            </div>
+          </Button>
+          
           )}
           {record.estadosFinancierosUrl && (
             <Button
-              onClick={() =>
-                descargarArchivo(
-                  record.estadosFinancierosUrl,
-                  "Estados_Financieros.pdf"
-                )
-              }
-              style={{
-                margin: "5px",
-                backgroundColor: "#6a0f49",
-                color: "white",
-              }}
-            >
-              Descargar Estados Financieros
-            </Button>
+            onClick={() =>
+              descargarArchivo(
+                record.estadosFinancierosUrl,
+                "Estados_Financieros.pdf"
+              )
+            }
+            style={{
+              margin: "5px",
+              backgroundColor: "#6a0f49",
+              color: "white",
+              position: "relative", /* Agregamos position relative para posicionar el Spin */
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              {loading && ( /* Mostramos el Spin si 'loading' está en true */
+                <Spin
+                  className="custom-spin"
+                  style={{
+                    position: "absolute", /* Posicionamos el Spin sobre el botón */
+                    left: "50%", /* Ajustamos la posición horizontalmente */
+                    top: "50%", /* Ajustamos la posición verticalmente */
+                    transform: "translate(-50%, -50%)" /* Centramos el Spin */
+                  }}
+                />
+              )}
+              <TrendingUpIcon style={{ marginRight: "8px" }} /> Descargar Estados Financieros
+            </div>
+          </Button>
           )}
           {record.ordenDelDiaUrl && (
             <Button
-              onClick={() =>
-                descargarArchivo(record.ordenDelDiaUrl, "Orden_del_Dia.pdf")
-              }
-              style={{
-                margin: "5px",
-                backgroundColor: "#6a0f49",
-                color: "white",
-              }}
-            >
-              Descargar Orden del Día
-            </Button>
-          )}
-          {record.convocatoriaUrl && (
-            <Button
-              onClick={() =>
-                descargarArchivo(record.convocatoriaUrl, "Convocatoria.pdf")
-              }
-              style={{
-                margin: "5px",
-                backgroundColor: "#6a0f49",
-                color: "white",
-              }}
-            >
-              Descargar Convocatoria
-            </Button>
-          )}
-          <Button
-            onClick={() => descargarArchivosSesion(record)}
+            onClick={() =>
+              descargarArchivo(record.ordenDelDiaUrl, "Orden_del_Dia.pdf")
+            }
             style={{
               margin: "5px",
-              backgroundColor: "#f1cdd3",
-              color: "#701e45",
+              backgroundColor: "#6a0f49",
+              color: "white",
+              position: "relative", /* Agregamos position relative para posicionar el Spin */
             }}
           >
-            Descargar Todos
+            <div style={{ position: 'relative' }}>
+              {loading && ( /* Mostramos el Spin si 'loading' está en true */
+                <Spin
+                  className="custom-spin"
+                  style={{
+                    position: "absolute", /* Posicionamos el Spin sobre el botón */
+                    left: "50%", /* Ajustamos la posición horizontalmente */
+                    top: "50%", /* Ajustamos la posición verticalmente */
+                    transform: "translate(-50%, -50%)" /* Centramos el Spin */
+                  }}
+                />
+              )}
+              <EventNoteIcon style={{ marginRight: "8px" }} /> Descargar Orden del Día
+            </div>
           </Button>
+          )}
+          {record.convocatoriaUrl && (
+  <Button
+    onClick={() =>
+      descargarArchivo(record.convocatoriaUrl, "Convocatoria.pdf")
+    }
+    style={{
+      margin: "5px",
+      backgroundColor: "#6a0f49",
+      color: "white",
+      position: "relative", /* Agregamos position relative para posicionar el Spin */
+    }}
+  >
+    <div style={{ position: 'relative' }}>
+      {loading && ( /* Mostramos el Spin si 'loading' está en true */
+        <Spin
+          className="custom-spin"
+          style={{
+            position: "absolute", /* Posicionamos el Spin sobre el botón */
+            left: "50%", /* Ajustamos la posición horizontalmente */
+            top: "50%", /* Ajustamos la posición verticalmente */
+            transform: "translate(-50%, -50%)" /* Centramos el Spin */
+          }}
+        />
+      )}
+      <SpeakerNotesIcon style={{ marginRight: "8px" }} /> Descargar Convocatoria
+    </div>
+  </Button>
+)}
+          <Button
+  onClick={() => descargarArchivosSesion(record)}
+  style={{
+    margin: "5px",
+    backgroundColor: "#f1cdd3",
+    color: "#701e45",
+    position: "relative", /* Agregamos position relative para posicionar el Spin */
+  }}
+>
+  <div style={{ position: 'relative' }}>
+    {loading && ( /* Mostramos el Spin si 'loading' está en true */
+      <Spin
+        className="custom-spin"
+        style={{
+          position: "absolute", /* Posicionamos el Spin sobre el botón */
+          left: "50%", /* Ajustamos la posición horizontalmente */
+          top: "50%", /* Ajustamos la posición verticalmente */
+          transform: "translate(-50%, -50%)" /* Centramos el Spin */
+        }}
+      />
+    )}
+    <GetAppIcon style={{ marginRight: "8px" }} />Descargar Todos
+  </div>
+</Button>
         </>
       ),
     },
@@ -320,36 +399,52 @@ const Repositorio = () => {
         ))}
       </Row>
       {selectedYear && (
-        <div>
-          <h3>Sesiones de {selectedYear}</h3>
-          <Select
-            placeholder="Filtrar por tipo de sesión"
-            style={{ width: 200, marginRight: 10 }}
-            onChange={(value) => setTipoSesionFilter(value)}
-            allowClear
-          >
-            {tiposDeSesion.map((tipo) => (
-              <Option key={tipo} value={tipo}>
-                {tipo}
-              </Option>
-            ))}
-          </Select>
+      <div>
+        <h3>Sesiones de {selectedYear}</h3>
+        <Select
+          placeholder="Filtrar por tipo de sesión"
+          style={{ width: 200, marginRight: 10 }}
+          onChange={(value) => setTipoSesionFilter(value)}
+          allowClear
+        >
+          {tiposDeSesion.map((tipo) => (
+            <Option key={tipo} value={tipo}>
+              {tipo}
+            </Option>
+          ))}
+        </Select>
 
-          <Button
-            onClick={descargarTodoElAno}
-            style={{
-              margin: "5px",
-              backgroundColor: "#f1cdd3",
-              color: "#701e45",
-            }}
-          >
-            Descargar Todo el Año
-          </Button>
-          <Table dataSource={filteredSesiones} columns={columns} />
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <Button
+  onClick={descargarTodoElAno}
+  style={{
+    margin: "5px",
+    backgroundColor: "#f1cdd3",
+    color: "#701e45",
+    position: "relative",
+  }}
+>
+  <div style={{ position: 'relative' }}>
+    {loading && (
+      <Spin
+        className="custom-spin"
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)"
+        }}
+      />
+    )}
+    <GetAppIcon style={{ marginRight: "8px" }} />Descargar Todo el Año
+  </div>
+</Button>
         </div>
-      )}
-    </div>
-  );
+        <Table dataSource={filteredSesiones} columns={columns} />
+      </div>
+    )}
+  </div>
+);
 };
 
 export default Repositorio;
