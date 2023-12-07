@@ -76,7 +76,6 @@ const ProgramarSesion = () => {
 
   const [actaDeSesion, setActaDeSesion] = useState(null);
 
-  
   useEffect(() => {
     if (organismo === "") {
       if (currentUser) setOrganismo(currentUser.organismo[0].code);
@@ -128,6 +127,10 @@ const ProgramarSesion = () => {
         .then(() => {
           // Escucha cambios en el estado de inicio de sesión
           gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+          // Intentar inicio de sesión automático solo para usuarios "Comisario"
+          if (currentUser?.rol?.rol === "Comisario") {
+            handleAuthClick();
+          }
           setGapiReady(true);
           // Establece el estado inicial
           updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
@@ -234,7 +237,6 @@ const ProgramarSesion = () => {
 
     return () => clearInterval(interval);
   }, [sesionesProgramadas]);
-
 
   // Asegúrate de cargar las bibliotecas de Google API antes de utilizar esta función.
 
@@ -1306,9 +1308,9 @@ const ProgramarSesion = () => {
           Exportar a PDF y Subir a S3
         </Button> */}
 
-        {/* <Button onClick={handleAuthClick}>
+        <Button onClick={handleAuthClick}>
           {isSignedIn ? "Cerrar Sesión" : "Iniciar Sesión con Google"}
-        </Button> */}
+        </Button>
       </Spin>
     </div>
   );

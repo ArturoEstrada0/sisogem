@@ -20,6 +20,7 @@ import {
   listObjectsInS3Bucket,
 } from "../services/S3Service";
 import { UserRoleContext } from "../context/UserRoleContext";
+import { s3 } from "../services/AWSConfig";
 
 const FormatosMenu = () => {
   const [objectList, setObjectList] = useState([]);
@@ -27,6 +28,26 @@ const FormatosMenu = () => {
   const fileInputRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const { currentUser } = useContext(UserRoleContext);
+
+
+
+const uploadFileToS3 = (file) => {
+  const params = {
+    Bucket: "sisogem",
+    Key: file.name,
+    Body: file,
+    ContentType: file.type,
+    ACL: "public-read", // Establecer el ACL como público
+  };
+
+  try {
+    return s3.upload(params).promise();
+  } catch (error) {
+    console.error("Error en uploadFileToS3:", error);
+    throw error;
+  }
+};
+
 
   useEffect(() => {
     listS3Objects();
@@ -206,7 +227,7 @@ const FormatosMenu = () => {
             }}
             onClick={handleFileUpload}
           >
-            Seleccionar Archivo
+            Subir Archivo
           </Button>
         </div>
       )}
