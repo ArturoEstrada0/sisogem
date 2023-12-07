@@ -112,7 +112,7 @@ function BuzonReportes() {
 
   useEffect(() => {
     axios
-      .get('http://localhost:3001/reportes')
+      .get('https://api-sisogem2.onrender.com/reportes')
       .then((response) => {
         const dataKeys = response.data.map((item) => ({
           ...item,
@@ -181,7 +181,7 @@ function BuzonReportes() {
       )
     } else {
       axios
-        .post('http://localhost:3001/email', email)
+        .post('https://api-sisogem2.onrender.com/email', email)
         .then(() => {
           message.success('Reporte enviado con éxito.')
           setTitle('')

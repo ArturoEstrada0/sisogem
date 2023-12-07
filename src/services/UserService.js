@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = 'http://localhost:3001/user'
+const API_URL = 'https://api-sisogem2.onrender.com/user'
 
 export class UserService {
   static async getUserInfoByEmail(userEmail) {

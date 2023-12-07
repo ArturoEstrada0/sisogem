@@ -183,7 +183,7 @@ const FormatosMenu = () => {
           </Space>
         )}
       </Card>
-      {currentUser?.roles === "Secretario Técnico" && (
+      {currentUser?.rol.rol === "Comisario" && (
         <div
           style={{
             marginTop: "20px",

@@ -951,7 +951,7 @@ const ProgramarSesion = () => {
 
   return (
     <div>
-          <Spin spinning={loading} size="large" className="custom-spin" >
+      <Spin spinning={loading} size="large" className="custom-spin">
         <Card>
           <Tabs
             defaultActiveKey="programar"
